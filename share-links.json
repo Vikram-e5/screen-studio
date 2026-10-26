@@ -1,10 +1,27 @@
 {
-  "updated": "2026-10-14T13:12:36.273Z",
+  "updated": "2026-10-26T13:41:43.274Z",
   "deleted": {
     "https://vikram-e5.github.io/screen-studio/13oct/neos-0dbcv.html": 1791964815352,
     "https://vikram-e5.github.io/screen-studio/13oct/neos-o6818.html": 1791964821219
   },
   "links": [
+    {
+      "url": "https://vikram-e5.github.io/screen-studio/26oct/intake-referral.html",
+      "path": "26oct/intake-referral.html",
+      "repo": "Vikram-e5/screen-studio",
+      "branch": "main",
+      "at": 1793022103260,
+      "status": "Publishing",
+      "label": "",
+      "notes": [
+        {
+          "v": 1,
+          "at": 1793022095431,
+          "note": "- E-referral updates",
+          "build": "original"
+        }
+      ]
+    },
     {
       "url": "https://vikram-e5.github.io/screen-studio/13oct/notification-v1.html",
       "path": "13oct/notification-v1.html",
@@ -12,7 +29,8 @@
       "branch": "main",
       "at": 1791983510012,
       "status": "Live",
-      "label": ""
+      "label": "",
+      "notes": []
     }
   ]
 }
