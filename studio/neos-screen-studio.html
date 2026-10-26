@@ -101,6 +101,11 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
               <div style="font:400 12px/17px Roboto;color:{{ studioMsgColor }};word-break:break-word;margin-top:-4px">{{ studioMsg }}</div>
             </sc-if>
             <div style="height:1px;background:#EEF0F3"></div>
+            <button type="button" onClick="{{ toggleGitCfg }}" aria-expanded="{{ gitCfgOpen }}" style="display:flex;align-items:center;gap:6px;background:transparent;border:none;padding:0;cursor:pointer;font:500 12px Roboto;color:#1C2D42;text-align:left">
+              <span style="display:inline-flex;transition:transform .15s;transform:{{ gitCfgChev }};color:#6A717D;font-size:9px">▶</span>
+              <span>Git settings for Screen Studio</span>
+            </button>
+            <sc-if value="{{ gitCfgOpen }}" hint-placeholder-val="{{ false }}">
             <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 10px;align-items:center;font:500 12px Roboto;color:#3A424A">
               <span>Token</span><input type="password" value="{{ gitToken }}" onChange="{{ onGitToken }}" placeholder="github_pat_…" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
               <span>Repository</span><input value="{{ gitRepo }}" onChange="{{ onGitRepo }}" placeholder="owner/repo" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
@@ -117,6 +122,7 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
               <button onClick="{{ gitCommitNow }}" style="flex:1;background:#fff;color:#1677FF;border:1px solid #1677FF;border-radius:4px;padding:7px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ gitCommitLabel }}</button>
               <button onClick="{{ gitOpenPR }}" style="flex:1;background:#fff;color:#1677FF;border:1px solid #1677FF;border-radius:4px;padding:7px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ gitPRLabel }}</button>
             </div>
+            </sc-if>
             <sc-if value="{{ hasGitMsg }}" hint-placeholder-val="{{ false }}">
               <div style="font:400 12px/17px Roboto;color:{{ gitMsgColor }};word-break:break-word">{{ gitMsg }}</div>
             </sc-if>
@@ -935,12 +941,18 @@ class Component extends DCLogic {
   mergeShares(a, b) { const m = new Map(); [...a, ...b].forEach(x => { if (!x || !x.url || this.isDead(x)) return; const p = m.get(x.url); if (!p || (x.at || 0) > (p.at || 0)) m.set(x.url, Object.assign({}, p || {}, x)); }); return [...m.values()].sort((x, y) => (y.at || 0) - (x.at || 0)); }
   async loadShares() {
     const s = this.state, token = (s.pagesToken || "").trim(), repo = s.pagesRepo.trim(), branch = s.pagesBranch.trim() || "main";
-    if (!token || !/^[\w.-]+\/[\w.-]+$/.test(repo)) return;
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return;
     this.setState({ sharesSync: "Fetching links…", sharesLoading: true });
     try {
-      const f = await this.gh("/repos/" + repo + "/contents/" + this.sharesFile() + "?ref=" + encodeURIComponent(branch), { allow404: true, token });
-      this.sharesSha = f ? f.sha : null;
-      const doc = f ? (JSON.parse(this.unb64(f.content) || "{}") || {}) : {};
+      let doc = {};
+      if (token) {
+        const f = await this.gh("/repos/" + repo + "/contents/" + this.sharesFile() + "?ref=" + encodeURIComponent(branch), { allow404: true, token });
+        this.sharesSha = f ? f.sha : null;
+        doc = f ? (JSON.parse(this.unb64(f.content) || "{}") || {}) : {};
+      } else {
+        const r = await fetch("https://raw.githubusercontent.com/" + repo + "/" + branch + "/" + this.sharesFile() + "?t=" + Date.now(), { cache: "no-store" });
+        doc = r.ok ? (JSON.parse(await r.text() || "{}") || {}) : {};
+      }
       this.markDeleted(Array.isArray(doc.deleted) ? {} : doc.deleted);
       const remote = doc.links || [];
       this.setState(x => ({ shares: this.mergeShares(remote, x.shares), sharesSync: "", sharesLoading: false }));
@@ -950,7 +962,7 @@ class Component extends DCLogic {
   async saveShares(retry) {
     const s = this.state, token = (s.pagesToken || "").trim(), repo = s.pagesRepo.trim(), branch = s.pagesBranch.trim() || "main";
     if (!token) return;
-    const body = JSON.stringify({ updated: new Date().toISOString(), deleted: Object.fromEntries(Object.entries(this.deletedUrls()).slice(-500)), links: s.shares.filter(x => x.repo === repo && !this.isDead(x)).map(x => ({ url: x.url, path: x.path, repo: x.repo, branch: x.branch, at: x.at, status: x.status === "Live" ? "Live" : "Publishing", label: x.label || "" })) }, null, 2);
+    const body = JSON.stringify({ updated: new Date().toISOString(), deleted: Object.fromEntries(Object.entries(this.deletedUrls()).slice(-500)), links: s.shares.filter(x => x.repo === repo && !this.isDead(x)).map(x => ({ url: x.url, path: x.path, repo: x.repo, branch: x.branch, at: x.at, status: x.status === "Live" ? "Live" : "Publishing", label: x.label || "", notes: x.notes || [] })) }, null, 2);
     try {
       if (this.sharesSha === undefined) { const f = await this.gh("/repos/" + repo + "/contents/" + this.sharesFile() + "?ref=" + encodeURIComponent(branch), { allow404: true, token }); this.sharesSha = f ? f.sha : null; }
       const r = await this.gh("/repos/" + repo + "/contents/" + this.sharesFile(), { method: "PUT", token, body: JSON.stringify(Object.assign({ message: "Update share links", content: this.b64(body), branch }, this.sharesSha ? { sha: this.sharesSha } : {})) });
@@ -1578,6 +1590,7 @@ class Component extends DCLogic {
       updateUrl: s.updateUrl, onUpdateUrl: e => this.setState({ updateUrl: e.target.value }),
       previewCaption: s.shareAction === "update" ? "Will replace" : "New link",
       publishShare: () => this.publishShare(),
+      gitCfgOpen: !!s.gitCfgOpen, toggleGitCfg: () => this.setState(x => ({ gitCfgOpen: !x.gitCfgOpen })), gitCfgChev: s.gitCfgOpen ? "rotate(90deg)" : "rotate(0deg)",
       relNote: s.relNote, onRelNote: e => this.setState({ relNote: e.target.value }),
       notesOpen: s.notesOpen, closeNotes: () => this.setState({ notesOpen: false }), notesTitle: s.notesTitle, noNotesItems: !s.notesItems.length,
       notesList: s.notesItems.slice().reverse().map((r, i) => ({ tag: "v" + r.v + (i ? "" : " · Latest"), tagBg: i ? "#F1F3F6" : "#E6F4FF", tagColor: i ? "#3A424A" : "#1677FF", when: new Date(r.at).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }), build: r.build ? "Build: " + r.build : "", note: r.note || "No notes added.", noteColor: r.note ? "#3A424A" : "#6A717D", sep: i ? "1px solid #EEF0F3" : "none" })),
