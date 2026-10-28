@@ -270,7 +270,7 @@ window.__renderApp();
 // paint. Sources are fetched in parallel (cached), transpiled one per frame so
 // the UI stays responsive, and the app is re-rendered only once at the end.
 (function(){
-  var deferred = ["rcd-request-view.jsx","rcd-automation-log.jsx","claim-status-view-v2.jsx","claim-batch-view-v2.jsx","notifications-request-view.jsx","notifications-automation-log.jsx","cdm-request-view-v2.jsx","doc-extraction-view-v2.jsx","remits-view-v2.jsx","assessment-request-view.jsx","assessment-drawer.jsx","asv-automation-log.jsx","erv-automation-log.jsx","arv-automation-log.jsx","eligibility-detail.jsx","screen-builder-drawer.jsx","intake-ereferral-view.jsx","intake-preeligibility-view.jsx","intake-patient-view.jsx","intake-patient-detail.jsx","intake-automation-log.jsx","eligibility-summary-view.jsx"];
+  var deferred = ["rcd-request-view.jsx","rcd-automation-log.jsx","claim-status-view-v2.jsx","claim-batch-view-v2.jsx","notifications-request-view.jsx","notifications-automation-log.jsx","cdm-request-view-v2.jsx","doc-extraction-view-v2.jsx","remits-view-v2.jsx","assessment-request-view.jsx","assessment-drawer.jsx","asv-automation-log.jsx","erv-automation-log.jsx","arv-automation-log.jsx","eligibility-detail.jsx","screen-builder-drawer.jsx","intake-ereferral-view-v2.jsx","intake-preeligibility-view.jsx","intake-patient-view.jsx","intake-patient-detail.jsx","intake-automation-log.jsx","eligibility-summary-view.jsx"];
   var srcs = new Array(deferred.length);
   // HCHB demo version: its own Eligibility screens, sandboxed so they don't
   // overwrite the WellSky globals. Exposed as window.HCHB.*

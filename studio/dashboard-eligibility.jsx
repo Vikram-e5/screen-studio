@@ -1704,6 +1704,7 @@ const REF_DASH_FILTER_FIELDS = [
   { key: "zip",       label: "Zipcode" },
 ];
 const REF_RESP = [["Accepted","accepted","#61AA6B"],["Declined","declined","#F87D7C"],["Exceptions","ineligible","#F8C87C"]];
+const REF_RESP_V2 = [["Accepted","accepted","#61AA6B"],["Declined","declined","#F87D7C"],["User Decision","userDecision","#618EAA"],["Ineligible","ineligible","#A18B6D"],["Exceptions","exceptions","#F8C87C"]];
 const REF_HUB_COLORS = ["#156082","#618EAA","#F8C87C","#A18B6D","#7C6BD6","#4FC3B1"];
 function ReferralDashboard({ onNav }) {
   const [aiTab, setAiTab] = useDash("attention");
@@ -1724,12 +1725,12 @@ function ReferralDashboard({ onNav }) {
   const acc = rows.filter(r => r.resp === "accepted"), dec = rows.filter(r => r.resp === "declined"), inel = rows.filter(r => r.resp === "ineligible");
   const valFail = rows.filter(r => r.payerMatched === "No" || r.zipMatched === "No" || r.srcMatched === "No");
   const agPending = rows.filter(r => r.agencyResp === "Pending");
-  const stats = [
-    { label: "All Referrals", value: p2(n), rs: rows },
-    { label: "Accepted", pct: pct(acc.length), count: p2(acc.length), rs: acc },
-    { label: "Declined", pct: pct(dec.length), count: p2(dec.length), rs: dec },
-    { label: "Exceptions", pct: pct(inel.length), count: p2(inel.length), rs: inel },
-  ];
+  // v2 data (window.IER_V2): summary mirrors the Referral Response Summary buckets.
+  const V2 = !!window.IER_V2;
+  const ud = rows.filter(r => r.resp === "userDecision"), exc = rows.filter(r => r.resp === "exceptions");
+  const stat = (label, rs) => ({ label, pct: pct(rs.length), count: p2(rs.length), rs });
+  const stats = [{ label: "All Referrals", value: p2(n), rs: rows }, stat("Accepted", acc), stat("Declined", dec)]
+    .concat(V2 ? [stat("User Decision", ud), stat("Ineligible", inel), stat("Exceptions", exc)] : [stat("Exceptions", inel)]);
   const prod = { perDay: Math.max(1, Math.round(n * 1.6)), avg: (0.6 + (n % 7) / 10).toFixed(1), fte: Math.max(1, Math.round(n / 6)), days: Math.max(1, Math.round(n * 0.5)), cost: (n * 0.045).toFixed(2) };
   // Referral volume — by referral date, per day or per ISO week.
   const trend = (() => {
@@ -1739,7 +1740,7 @@ function ReferralDashboard({ onNav }) {
     const data = [...b.keys()].sort((a, c) => a - c).map(k => { const d = new Date(k); return { label: String(d.getMonth()+1).padStart(2,"0") + "/" + String(d.getDate()).padStart(2,"0") + "/" + d.getFullYear(), value: b.get(k) }; });
     return { data, max: Math.max(4, Math.ceil(Math.max(...data.map(d => d.value), 1) / 4) * 4) };
   })();
-  const respSeg = REF_RESP.map(([l, k, c]) => [l, rows.filter(r => r.resp === k).length, c]);
+  const respSeg = (V2 ? REF_RESP_V2 : REF_RESP).map(([l, k, c]) => [l, rows.filter(r => r.resp === k).length, c]);
   const hubs = (() => { const m = {}; rows.forEach(r => { const k = r.gw || "Direct"; m[k] = (m[k] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map((k, i) => [k, m[k], REF_HUB_COLORS[i % REF_HUB_COLORS.length]]); })();
   const countBy = (k) => { const m = {}; rows.forEach(r => { const v = r[k] || "—"; m[v] = (m[v] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map(l => ({ label: l, value: m[l] })); };
   const planData = countBy("plan"), zipData = countBy("zip");
@@ -1755,7 +1756,9 @@ function ReferralDashboard({ onNav }) {
   const termReasons = reasonsOf(termRows), failReasons = reasonsOf(failRows);
   const valGroups = checks.map(([l, k]) => ({ reason: l + " not matched", rs: rows.filter(r => r[k] === "No") })).filter(x => x.rs.length);
   const agDeclined = rows.filter(r => r.agencyResp === "Declined");
-  const total = inel.length + dec.length + naRows.length;
+  const respAction = V2 ? [["Exceptions", exc], ["Ineligible", inel]] : [["Exceptions", inel], ["Declined", dec]];
+  const respActionN = respAction.reduce((s, x) => s + x[1].length, 0);
+  const total = respActionN + naRows.length;
   return (
     <div style={{ display: "flex", alignItems: "stretch" }}>
       <div style={{ flex: "1 1 0", minWidth: 0 }}>
@@ -1763,8 +1766,8 @@ function ReferralDashboard({ onNav }) {
           filterFields={REF_DASH_FILTER_FIELDS} filterRows={all} fieldFilters={fieldFilters} onFieldFilters={setFieldFilters} />
         <div style={{ padding: "20px 32px 32px" }}>
           <div style={{ font: "500 18px/22px Roboto", color: "#0f172a" }}>E-Referral Summary</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(28, minmax(0, 1fr))", gap: 9, marginTop: 16 }}>
-            {stats.map(s => <div key={s.label} style={{ display: "flex", minWidth: 0, gridColumn: "span 7" }}><PCRStatCard label={s.label} value={s.value} pct={s.pct} count={s.count} fill onClick={() => go(s.label, s.rs)} /></div>)}
+          <div style={{ display: "grid", gridTemplateColumns: V2 ? "repeat(3, minmax(170px, 1fr))" : "repeat(28, minmax(0, 1fr))", gap: 9, marginTop: 16 }}>
+            {stats.map(s => <div key={s.label} style={{ display: "flex", minWidth: 0, gridColumn: V2 ? undefined : "span 7" }}><PCRStatCard label={s.label} value={s.value} pct={s.pct} count={s.count} fill onClick={() => go(s.label, s.rs)} /></div>)}
           </div>
           <div className="ws-scrollbody" style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 24, overflowY: "auto", maxHeight: "calc(100vh - 400px)", paddingRight: 4 }}>
             <div style={{ font: "500 16px/20px Roboto", color: "#3A424A" }}>E-Referral Analytics</div>
@@ -1802,10 +1805,9 @@ function ReferralDashboard({ onNav }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
             <span style={{ font: "500 18px/22px Roboto", color: "#3A424A" }}>Referral Response</span>
-            <span style={{ marginLeft: 10, background: "#FFE7E6", color: "#CF1322", borderRadius: 999, padding: "1px 9px", font: "500 13px Roboto" }}>{p2(inel.length + dec.length)}</span>
+            <span style={{ marginLeft: 10, background: "#FFE7E6", color: "#CF1322", borderRadius: 999, padding: "1px 9px", font: "500 13px Roboto" }}>{p2(respActionN)}</span>
           </div>
-          <BigActionRow noIcon label="Exceptions" count={p2(inel.length)} onClick={() => go("Exceptions", inel)} />
-          <BigActionRow noIcon label="Declined" count={p2(dec.length)} onClick={() => go("Declined", dec)} />
+          {respAction.map(([l, rs]) => <BigActionRow key={l} noIcon label={l} count={p2(rs.length)} onClick={() => go(l, rs)} />)}
           <div style={{ display: "flex", alignItems: "center", marginTop: 20, marginBottom: 12 }}>
             <span style={{ font: "500 18px/22px Roboto", color: "#3A424A" }}>Automation Action Items</span>
             <span style={{ marginLeft: "auto" }}><SortByBtn /></span>

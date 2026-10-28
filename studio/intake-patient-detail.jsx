@@ -6,7 +6,7 @@ const IPD_BASE = {
   BasicInfo:{ BranchAssignment:{ Branch:"BTC - BEAUMONT HOMECARE", Team:"E-BLUE", location:"E-BLUE" }, PatientName:{ LastName:"DOE", FirstName:"JOHN", MI:"A" }, InformationList:[{ Information:"Enter team as location for BTC or NKC branches." }] },
   Demographics:{
     PersonalInformation:{ Gender:"Male", DateOfBirth:"01/15/1950", SSN:"123-45-6789", LegacyMRNumber:"MR12345678" },
-    service_location:{ ServiceLocationType:"Home/Primary Residence", FacilityName:null, Address:"1234 Elm Street", City:"Detroit", State:"MI", Zip:"48201", Phone:"+1 (313) 555-0199", Mobile:"+1 (313) 555-0199", Floor:null, RoomNo:null, VisitInstructions:"Call before visit.", PatientApprovalReceivedForWebAccess:"Yes" },
+    service_location:{ PatientApprovalReceivedForWebAccess:"Yes", ServiceLocationType:"Home/Primary Residence", FacilityName:null, Address:"1234 Elm Street", City:"Detroit", State:"MI", Zip:"48201", Phone:"+1 (313) 555-0199", Mobile:"+1 (313) 555-0199", Floor:null, RoomNo:null, VisitInstructions:"Call before visit.", PatientApprovalReceivedForWebAccess:"Yes" },
     PatientContactInformation:{ PrimaryPhone:"(313) 555-0199", AlternatePhone:"(313) 555-5678", MobilePhone:"(313) 555-0199", EmailAddress:"john.doe@example.com" },
     ContactInformation:[{ ContactType:"EMERGENCY CONTACT 1", RelationshipToPatient:"Spouse", LastName:"Doe", FirstName:"Jane", PrimaryPhone:"(313) 555-1234", AlternatePhone:"(313) 555-5678", Email:"jane.doe@example.com", Notes:"Available after 5 PM" }],
     InformationList:[{ Information:"Patient approval for web access received." }],
@@ -127,8 +127,8 @@ function IPDCard({ id, title, children, refs }) {
 }
 
 const IPD_SECTIONS = [
-  ["status","Intake Status"],["basic","Basic Info"],["demo","Demographics"],["referral","Referral Source"],["other","Other Information"],
-  ["payor","Payor Sources"],["phys","Physicians"],["dx","Diagnoses"],["notes","Clinical Intake Notes"],["sched","Scheduling"],["clinical","Clinical"],["attach","Attachments"],
+  ["status","Intake Status"],["basic","Basic Info"],["demo","Demographics"],["referral","Referral Source"],
+  ["payor","Payor Sources"],["phys","Physicians"],["dx","Diagnoses"],["sched","Scheduling"],["clinical","Clinical"],["attach","Attachments"],
 ];
 
 function IPDIntakeInfo({ d, row }) {
@@ -197,14 +197,13 @@ function IPDIntakeInfo({ d, row }) {
           <IPDFields items={[["Branch",B.BranchAssignment.Branch],["Team",B.BranchAssignment.Team],["Location",B.BranchAssignment.location]]} />
           <IPDSub>Patient Name</IPDSub>
           <IPDFields items={[["Last Name",B.PatientName.LastName],["First Name",B.PatientName.FirstName],["MI",B.PatientName.MI]]} />
-          <IPDNotes list={B.InformationList} />
         </IPDCard>
 
         <IPDCard id="demo" title="Demographics" refs={refs}>
           <IPDSub first>Personal Information</IPDSub>
           <IPDFields items={[["Gender",P.Gender],["Date of Birth",P.DateOfBirth],["SSN",P.SSN],["Legacy MR Number",P.LegacyMRNumber]]} />
           <IPDSub>Service Location</IPDSub>
-          <IPDFields items={[["Service Location Type",SL.ServiceLocationType],["Facility Name",SL.FacilityName],["Address",SL.Address],["City",SL.City],["State",SL.State],["Zip",SL.Zip],["Phone",SL.Phone],["Mobile",SL.Mobile],["Floor",SL.Floor],["Room No",SL.RoomNo],["Web Access Approval",SL.PatientApprovalReceivedForWebAccess],["Visit Instructions",SL.VisitInstructions]]} />
+          <IPDFields items={[["Service Location Type",SL.ServiceLocationType],["Facility Name",SL.FacilityName],["Address",SL.Address],["City",SL.City],["State",SL.State],["Zip",SL.Zip],["Phone",SL.Phone],["Mobile",SL.Mobile],["Floor",SL.Floor],["Room No",SL.RoomNo],["Patient Approval Received for Web Access",SL.PatientApprovalReceivedForWebAccess===true||/^y/i.test(String(SL.PatientApprovalReceivedForWebAccess||""))?"Yes":"No"],["Visit Instructions",SL.VisitInstructions]]} />
           <IPDSub>Patient Contact Information</IPDSub>
           <IPDFields items={[["Primary Phone",PC.PrimaryPhone],["Alternate Phone",PC.AlternatePhone],["Mobile Phone",PC.MobilePhone],["Email Address",PC.EmailAddress]]} />
           <IPDSub>Contact Information</IPDSub>
@@ -212,7 +211,6 @@ function IPDIntakeInfo({ d, row }) {
           <IPDSub>Episode (EOB)</IPDSub>
           <IPDFields items={[["Type",E.Type],["Date",E.Date],["SOC",E.SOC],["SOE",E.SOE],["Number of Discharges",E.NumberOfDischarge]]} />
           {discharges.length>0 && <div style={{marginTop:14,maxWidth:560}}><IPDTable cols={[["#","n","40px"],["Discharge Date","dd"],["Last Day of Service","ld"]]} rows={discharges} /></div>}
-          <IPDNotes list={Dm.InformationList} />
         </IPDCard>
 
         <IPDCard id="referral" title="Referral Source" refs={refs}>
@@ -222,9 +220,7 @@ function IPDIntakeInfo({ d, row }) {
           <IPDFields items={[["Street Address",RA.street_address],["City",RA.city],["State",RA.state],["Zip",RA.zip],["Phone Number",RA.phone_number]]} />
           <IPDSub>Care Types</IPDSub>
           <div style={{maxWidth:560}}><IPDTable cols={[["Care Type","CareType","minmax(0,2fr)"],["Effective From","EffectiveFrom"]]} rows={d.ReferralSource.CareTypes||[]} /></div>
-        </IPDCard>
-
-        <IPDCard id="other" title="Other Information" refs={refs}>
+          <IPDSub>Other Information</IPDSub>
           <IPDFields items={[["Homecare Coordinator",d.OtherInformation.HomecareCoordinator],["Clinical Intake Specialist",d.OtherInformation.ClinicalIntakeSpecialist]]} />
         </IPDCard>
 
@@ -241,7 +237,6 @@ function IPDIntakeInfo({ d, row }) {
               (au.AuthorizationDetailLine||[]).length>0 && <div key={"al"+i} style={{marginTop:14,maxWidth:420}}><IPDTable cols={[["Billing Code","BillingCodes"],["Qty per Period","QtyPerPeriod"]]} rows={au.AuthorizationDetailLine} /></div>,
             ];
           })}
-          <IPDNotes list={d.PayorSources.InformationList} />
         </IPDCard>
 
         <IPDCard id="phys" title="Physicians" refs={refs}>
@@ -252,9 +247,6 @@ function IPDIntakeInfo({ d, row }) {
           <IPDTable cols={[["ICD-10","ICD10Code","90px"],["Description","Description","minmax(0,2.4fr)"],["Primary","PrimaryDiagnosis","80px"],["Type","DiagnosisType"],["Date","Date"]]} rows={d.Diagnoses.Diagnosis||[]} />
         </IPDCard>
 
-        <IPDCard id="notes" title="Clinical Intake Notes" refs={refs}>
-          <div style={{font:"400 13px/20px Roboto",color:IPD.body,maxWidth:760}}>{ipdVal(d.ClinicalIntakeNotes.Notes)}</div>
-        </IPDCard>
 
         <IPDCard id="sched" title="Scheduling" refs={refs}>
           <IPDSub first>Evaluation Visits</IPDSub>
@@ -268,7 +260,6 @@ function IPDIntakeInfo({ d, row }) {
           <IPDFields items={[["Facility",C.OtherFacilities.Facility],["Facility Type",C.OtherFacilities.FacilityType],["Web Access Approval",C.OtherFacilities.PatientApprovalReceivedForWebAccess]]} />
           <IPDSub>Patient Information</IPDSub>
           <IPDFields items={[["Initial Documentation Status",C.PatientInformation.InitialDocumentationStatus],["Pending Reason",C.PatientInformation.PendingReason]]} />
-          <IPDNotes list={C.InstructionList} k="Instruction" />
         </IPDCard>
 
         <IPDCard id="attach" title="Attachments" refs={refs}>
@@ -281,7 +272,7 @@ function IPDIntakeInfo({ d, row }) {
 
 function IntakePatientDetail({ row, onClose }) {
   const d = ipdPayloadFor(row);
-  const fields = [["MRN",row.mrn],["Episode ID",row.episodeId],["DOB",row.dob],["Gender",row.gender],["Branch",d.BasicInfo.BranchAssignment.Branch],["Primary Plan",row.plan],["Policy Number",row.policy],["Referral Hub",row.refHub],["Patient ID",d.PatientID],["Universal Patient ID",d.UniversalPatientID],["Portal Synced",typeof row.ehrSync==="boolean"?(row.ehrSync?"Yes":"No"):null]].filter(f=>ipdPresent(f[1]));
+  const fields = [["MRN",row.mrn],["Episode ID",row.episodeId],["Patient ID",d.PatientID],["Universal Patient ID",d.UniversalPatientID]].filter(f=>ipdPresent(f[1]));
   return (
     <div style={{position:"fixed",inset:0,zIndex:60}}>
       <style>{`@keyframes ipdFade{from{opacity:0}to{opacity:1}} @keyframes ipdSlide{from{transform:translateX(28px);opacity:.6}to{transform:translateX(0);opacity:1}}`}</style>

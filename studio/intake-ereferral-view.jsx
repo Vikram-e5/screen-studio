@@ -222,12 +222,14 @@ const IER_COLS = [
   { key:"zipMatched",   label:"Zipcode Matched",grid:"108px",           sortable:true, align:"center" },
   { key:"srcMatched",   label:"Referral Source Matched", grid:"150px",  sortable:true, align:"center" },
   { key:"rulesResp", label:"Rule Engine Resp.", grid:"118px",          sortable:true, align:"center" },
-  { key:"resp",    label:"Referral Response", grid:"minmax(156px,1.3fr)", sortable:true, align:"center" },
+  { key:"resp",    label:"Referral Response", grid:"156px", sortable:true, align:"center" },
   { key:"ehrSync", label:"Portal Sync",       grid:"80px",                sortable:false, align:"center" },
   { key:"at",      label:"AT Status",         grid:"72px",                sortable:false, align:"center" },
   { key:"docs",    label:"Docs",              grid:"52px",                sortable:false, align:"center" },
   { key:"reviewed",label:"Reviewed?",         grid:"78px",                sortable:false, align:"center" },
 ];
+const IER_STICKY = { resp:312, ehrSync:226, at:148, docs:90, reviewed:0 };
+const ierStk = (k,bg,pad) => IER_STICKY[k]===undefined ? {} : { position:"sticky", right:IER_STICKY[k], zIndex:1, background:bg, alignSelf:"stretch", marginLeft:-6, paddingLeft:6, ...(k==="reviewed"?{marginRight:-pad,paddingRight:pad}:{}), ...(k==="resp"?{boxShadow:"-6px 0 6px -6px rgba(15,23,42,0.15)"}:{}) };
 const IER_GRID = IER_COLS.map(c=>c.grid).join(" ");
 const IER_ACC_FIELDS = [["gender","Gender"],["ssd","SOC"],["comments","Referral Comment"],["pdd","Discharge Date"],["careType","Type of Care"],["refSource","Referral Source"],["rulesResp","Rules Engine Response"],["respReason","Referral Response Reason"],["agencyRespReason","Agency Referral Response Reason"],["docSendStatus","Document Send Status"],["hubAck","Referral Hub Ack Status"],["receiverCode","Receiver Branch Code"]];
 const IER_FLAG_FIELDS = { payerMatched:1, zipMatched:1, srcMatched:1 };
@@ -305,11 +307,11 @@ function IERRow({ row, onDocsClick, onRespClick, onAlertsClick, reviewed, onRevi
         <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.zipMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.zipMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.zipMatched}</span></div>
         <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.srcMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.srcMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.srcMatched}</span></div>
         <div style={cell("center")}>{(()=>{ const c={Accept:["#EFFCEF","#16a34a"],Decline:["#FFEDEC","#dc2626"]}[row.rulesResp]||["#FFF7E6","#D46B08"]; return <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",whiteSpace:"nowrap",background:c[0],color:c[1]}}>{row.rulesResp||"—"}</span>; })()}</div>
-        <div style={cell("center")}><IERRespPill resp={row.resp} onClick={()=>onRespClick(row)} /></div>
-        <div style={cell("center")}><IEREHRSyncIcon synced={row.ehrSync} /></div>
-        <div style={cell("center")}><window.ARVATIcon kind={row.at} /></div>
-        <div style={{...cell("center"),cursor:row.docs?"pointer":"default"}} onClick={row.docs?()=>onDocsClick(row):undefined}><IERDocIcon size={18} faded={!row.docs} /></div>
-        <div style={cell("center")}><IERCheckbox checked={reviewed} onToggle={()=>onReviewed(row.id)} /></div>
+        <div style={{...cell("center"),...ierStk("resp","#fff",11)}}><IERRespPill resp={row.resp} onClick={()=>onRespClick(row)} /></div>
+        <div style={{...cell("center"),...ierStk("ehrSync","#fff",11)}}><IEREHRSyncIcon synced={row.ehrSync} /></div>
+        <div style={{...cell("center"),...ierStk("at","#fff",11)}}><window.ARVATIcon kind={row.at} /></div>
+        <div style={{...cell("center"),...ierStk("docs","#fff",11),cursor:row.docs?"pointer":"default"}} onClick={row.docs?()=>onDocsClick(row):undefined}><IERDocIcon size={18} faded={!row.docs} /></div>
+        <div style={{...cell("center"),...ierStk("reviewed","#fff",11)}}><IERCheckbox checked={reviewed} onToggle={()=>onReviewed(row.id)} /></div>
       </div>
           </div>
   );
@@ -319,7 +321,7 @@ function IERTableHeader() {
   return (
     <div style={{display:"grid",gridTemplateColumns:IER_GRID,alignItems:"center",background:"#f8fafc",borderBottom:"1px solid #e2e8f0",height:40,padding:"0 12px",gap:6}}>
       {[...IER_COLS].map(c=>(
-        <div key={c.key} style={{font:"500 11px/14px Roboto",color:"#64748b",textAlign:c.align||"left",display:"flex",alignItems:"center",justifyContent:c.align==="center"?"center":"flex-start",whiteSpace:"nowrap",overflow:"hidden",...(c.key==="name"?{position:"sticky",left:0,zIndex:2,background:"#f8fafc",alignSelf:"stretch",margin:"0 0 0 -12px",paddingLeft:12,boxShadow:"6px 0 6px -6px rgba(15,23,42,0.15)"}:{})}}>{c.label}</div>
+        <div key={c.key} style={{font:"500 11px/14px Roboto",color:"#64748b",textAlign:c.align||"left",display:"flex",alignItems:"center",justifyContent:c.align==="center"?"center":"flex-start",whiteSpace:"nowrap",overflow:"hidden",...ierStk(c.key,"#f8fafc",12),...(c.key==="name"?{position:"sticky",left:0,zIndex:2,background:"#f8fafc",alignSelf:"stretch",margin:"0 0 0 -12px",paddingLeft:12,boxShadow:"6px 0 6px -6px rgba(15,23,42,0.15)"}:{})}}>{c.label}</div>
       ))}
     </div>
   );

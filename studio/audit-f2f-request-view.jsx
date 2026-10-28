@@ -2912,12 +2912,13 @@ function PBAutomationLogView({ patient, onRefClick }) {
       <div style={{font:"400 13px/18px Roboto",color:"#3A424A",marginTop:8,marginBottom:16}}>Transaction Status of Pre-Bill Audit Workflows</div>
       <div style={{overflowX:"auto"}}>
         <table style={{borderCollapse:"collapse",width:"100%",minWidth:900}}>
-          <thead><tr>{["Ref ID","MRN","Patient Name","Audit Type","Start Time","End Time","AT Status","Reason","Execution halted at","Action required"].map(h=><th key={h} style={hd}>{h}</th>)}</tr></thead>
+          <thead><tr>{["Ref ID","MRN","Patient Name","Audit Type","Stage Name","Start Time","End Time","AT Status","Reason","Execution halted at","Action required"].map(h=><th key={h} style={hd}>{h}</th>)}</tr></thead>
           <tbody>{rows.map((r,i)=>(
             <tr key={i} style={{background:i%2===0?"#fff":"#fafafa"}}>
               <td style={{...td,color:"#1677FF",fontWeight:500,cursor:onRefClick?"pointer":"default"}} onClick={()=>onRefClick && onRefClick(r)}>{r.ref}</td>
               <td style={td}>{r.mrn}</td><td style={td}>{r.name}</td>
               <td style={td}>{r.type}</td>
+              <td style={{...td,whiteSpace:"normal",maxWidth:220}}>{r.stage}</td>
               <td style={td}>{r.ts}</td>
               <td style={td}>{r.te}</td>
               <td style={td}><StatusIcon v={r.status} /></td>
@@ -3287,6 +3288,7 @@ const PB_AL_COLS = [
   { key:"mrn",     label:"MRN",                 w:"minmax(110px,1fr)",   sort:true },
   { key:"name",    label:"Patient Name",        w:"minmax(110px,1fr)",   sort:true },
   { key:"trigger", label:"Audit Type",          w:"minmax(90px,0.85fr)", sort:true },
+  { key:"stage",   label:"Stage Name",          w:"minmax(150px,1.3fr)", sort:true, wrap:true },
   { key:"ts",      label:"Start Time",          w:"minmax(100px,0.95fr)",sort:true },
   { key:"te",      label:"End Time",            w:"minmax(100px,0.95fr)",sort:true },
   { key:"status",  label:"AT Status",           w:"104px",               sort:false, align:"center" },
@@ -3295,7 +3297,7 @@ const PB_AL_COLS = [
   { key:"action",  label:"Action required",     w:"minmax(120px,1.1fr)", sort:false, wrap:true },
 ];
 const PB_AL_STICKY = PB_AL_COLS[PB_AL_COLS.length-1].key;
-const PB_AL_MIN_WIDTH = 1150;
+const PB_AL_MIN_WIDTH = 1320;
 const PB_AL_GRID = PB_AL_COLS.map(c=>c.w).join(" ");
 function PBALHeader({ sortKey, sortDir, onSort }) {
   return (
@@ -3326,6 +3328,7 @@ function PBALRow({ row, onOpenRow }) {
       <div style={cell}>{row.mrn}</div>
       <div style={cell}>{row.name}</div>
       <div style={cell}>{row.trigger}</div>
+      <div style={wrapCell}>{row.stage}</div>
       <div style={cell}>{row.ts}</div>
       <div style={cell}>{row.te}</div>
       <div style={{...cell,justifyContent:"center",gap:6}}><img src={AT_ICON[row.status]||AT_ICON.completed} alt="" style={{width:18,height:18,objectFit:"contain"}} />{AT_LABEL[row.status]||AT_LABEL.completed}</div>

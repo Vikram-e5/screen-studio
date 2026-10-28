@@ -2462,10 +2462,10 @@ function ReferralInfo() {
   const row = (typeof window!=="undefined" && window.__referralForDrawer) || null;
   if (!row) return <div style={{padding:"28px",font:"400 13px/18px Roboto",color:COLORS.textMute}}>No referral record for this patient.</div>;
   const v = (x) => (x===true ? "Yes" : x===false ? "No" : (x && x!=="—") ? x : "-");
-  const respTxt = { accepted:"Accepted", ineligible:"Exceptions", declined:"Declined", pending:"Pending", review:"Manual Review" };
-  const tone = (x) => /^(yes|accepted|accept|acknowledged|sent|synced)$/i.test(x) ? ["#EFFCEF","#16a34a"] : /^(no|declined|decline|ineligible|exceptions|not sent|failed)$/i.test(x) ? ["#FFEDEC","#dc2626"] : /pending|review/i.test(x) ? ["#FFF6E5","#B26A00"] : null;
+  const respTxt = { accepted:"Accepted", ineligible:"Exceptions", exceptions:"Exceptions", userDecision:"User Decision", declined:"Declined", pending:"Pending", review:"Manual Review" };
+  const tone = (x) => /^(yes|accepted|accept|acknowledged|sent|synced)$/i.test(x) ? ["#EFFCEF","#16a34a"] : /^(no|declined|decline|ineligible|exceptions|not sent|failed)$/i.test(x) ? ["#FFEDEC","#dc2626"] : /pending|review/i.test(x) ? ["#FFF7E6","#D46B08"] : /^user decision$/i.test(x) ? ["#EFF6FF","#2563eb"] : /^skip$/i.test(x) ? ["#F1F5F9","#475569"] : null;
   const Val = ({ x, pill }) => { const s = v(x); const t = pill && s!=="-" ? tone(s) : null;
-    return t ? <span style={{display:"inline-flex",alignItems:"center",height:22,padding:"0 10px",borderRadius:11,background:t[0],color:t[1],font:"500 12px/22px Roboto"}}>{s}</span>
+    return t ? <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,background:t[0],color:t[1],font:"500 11px/20px Roboto",whiteSpace:"nowrap"}}>{s}</span>
              : <div style={{font:"500 14px/18px Roboto",color:COLORS.textBody,overflowWrap:"anywhere"}}>{s}</div>; };
   const Section = ({ title, items, first }) => (
     <div style={{border:"1px solid #e2e8f0",borderRadius:6,overflow:"hidden",marginTop:first?0:14,background:"#fff"}}>
@@ -2480,7 +2480,7 @@ function ReferralInfo() {
       </div>
     </div>
   );
-  const resp = respTxt[row.resp] || row.resp;
+  const resp = row.respBlank ? "" : (respTxt[row.resp] || row.resp);
   // Response + its reason stacked as a pair; reason text wraps freely (up to ~255 chars) across the full column.
   const RespPair = ({ label, value, reasonLabel, reason }) => (
     <div style={{minWidth:0,display:"flex",flexDirection:"column",gap:10,padding:"16px 18px",border:"1px solid #eef2f7",borderRadius:6,background:"#FBFCFD"}}>
@@ -2491,16 +2491,16 @@ function ReferralInfo() {
   );
   return (
     <div style={{padding:"22px clamp(16px, 2.4vw, 36px) 40px"}}>
-      <Section title="Referral Details" first items={[["Referral ID",row.refId],["Referral Date",row.refDate],["Referral Hub",row.gw],["Portal Name",row.portalName || "Careport"],["SOC",row.ssd],["Discharge Date",row.pdd,false,false,"Projected Discharge Date"],["Type of Care",row.careType],["Branch",row.branch],["Receiver Branch Code",row.receiverCode],["Sending Facility",row.sendFac],["Sending Organization",row.sendOrg],["Referral Source",row.refSource],["Referral Comment",row.comments,false,true]]} />
+      <Section title="Referral Details" first items={[["Referral ID",row.refId],["Referral Date",row.refDate],["Referral Hub",row.gw],["Portal Name",row.portalName || "Careport"],["SOC",row.ssd],["Discharge Date",row.pdd,false,false,"Projected Discharge Date"],["Type of Care",row.careType],["Branch",row.branch],["Zipcode",row.zip],["Receiver Branch Code",row.receiverCode],["Sending Facility",row.sendFac],["Sending Organization",row.sendOrg],["Referral Source",row.refSource],["Referral Comment",row.comments]]} />
       <Section title="Validation Results" items={[["Payer Matched",row.payerMatched,true],["Zipcode Matched",row.zipMatched,true],["Referral Source Matched",row.srcMatched,true],["Rules Engine Response",row.rulesResp,true]]} />
       <div style={{border:"1px solid #e2e8f0",borderRadius:6,overflow:"hidden",marginTop:14,background:"#fff"}}>
         <div style={{background:"#f8fafc",borderBottom:"1px solid #e2e8f0",padding:"12px 18px",font:"500 14px/18px Roboto",color:"#0f172a"}}>Responses</div>
         <div style={{background:"#fff",padding:18,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,alignItems:"start"}}>
-          <RespPair label="Referral Response" value={resp} reasonLabel="Referral Response Reason" reason={row.respReason} />
+          <RespPair label="Referral Response" value={resp} reasonLabel="Referral Response Reason" reason={row.respBlank ? "" : row.respReason} />
           <RespPair label="Agency Referral Response" value={row.agencyResp} reasonLabel="Agency Referral Response Reason" reason={row.agencyRespReason} />
         </div>
       </div>
-      <Section title="Delivery Acknowledgment" items={[["Document Send Status",row.docSendStatus,true],["Portal Sync",row.ehrSync?"Synced":"Not Synced"]]} />
+      <Section title="Delivery Acknowledgment" items={[["Document Send Status",row.docSendStatus,true],["Portal Synced",row.ehrSync?"Yes":"No",true]]} />
     </div>
   );
 }

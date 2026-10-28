@@ -125,6 +125,13 @@ function TopNav({ section, onSection, onLogo }) {
                     <span style={{fontSize:15}}>📖</span>
                     <span>Screen Builder</span>
                   </div>
+                  {Array.isArray(window.__ssReleaseNotes) && window.__ssReleaseNotes.length > 0 && (
+                    <div onClick={()=>{ setUserMenuOpen(false); window.__ssOpenReleaseNotes && window.__ssOpenReleaseNotes(); }} title="What's in this version" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",font:"400 13px/18px Roboto",color:"#3A424A"}}>
+                      <span style={{width:18,height:18,borderRadius:"50%",border:"1px solid #8C939D",color:"#6A717D",display:"inline-flex",alignItems:"center",justifyContent:"center",font:"600 10px Roboto",flexShrink:0}}>i</span>
+                      <span style={{flex:1}}>Release notes</span>
+                      <span style={{background:"#E6F4FF",color:"#1677FF",borderRadius:4,padding:"0 6px",font:"500 11px/18px Roboto"}}>{"v" + window.__ssReleaseNotes[window.__ssReleaseNotes.length - 1].v}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </React.Fragment>
@@ -2491,7 +2498,7 @@ function Prototype() {
     );
   }
 
-  const EDCComp = (window.__demoVersion==="hchb" && window.HCHB && window.HCHB.EligibilityDetailContainer) || window.EligibilityDetailContainer || (()=>null);
+  const EDCComp = (window.__demoVersion==="hchb" && eligNotifOnly!=="referral" && window.HCHB && window.HCHB.EligibilityDetailContainer) || window.EligibilityDetailContainer || (()=>null);
   return (
     <React.Fragment>
     <div style={{minHeight:"100vh",background:"#fff",font:"400 14px/18px Roboto"}} data-screen-label={

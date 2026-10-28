@@ -382,21 +382,38 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
                 <span style="font:400 12px/16px Menlo,Consolas,monospace;color:#1C2D42;word-break:break-all">{{ sharePreview }}</span>
               </div>
               <div style="display:flex;flex-direction:column;gap:4px">
-                <span style="font:500 12px Roboto;color:#3A424A">Release notes</span>
-                <textarea value="{{ relNote }}" onChange="{{ onRelNote }}" rows="3" placeholder="What's in this release, e.g. Added Rule Engine Resp. column to E-referral" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 9px;font:400 13px/18px Roboto;color:#1C2D42;resize:vertical;min-width:0"></textarea>
-                <span style="font:400 11px/15px Roboto;color:#6A717D">Added to the link's release history. Viewers open it from the Release Notes button on the page.</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font:500 12px Roboto;color:#3A424A">Release notes</span>
+                  <button type="button" onClick="{{ toggleRelInfo }}" aria-expanded="{{ relInfoOpen }}" title="About publishing" style="width:16px;height:16px;border-radius:50%;border:1px solid {{ relInfoColor }};background:#fff;color:{{ relInfoColor }};font:600 10px/14px Roboto;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center">i</button>
+                </div>
+                <sc-if value="{{ relInfoOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#F7F9FC;border:1px solid #EEF0F3;border-radius:4px;padding:8px 10px;font:400 12px/17px Roboto;color:#6A717D;display:flex;flex-direction:column;gap:4px">
+                    <span>{{ shareInfo }}</span>
+                    <span>Notes are added to the link's release history. Viewers open it from the avatar menu → Release notes.</span>
+                    <span>Repo, branch and token: <button onClick="{{ openSettings }}" style="background:transparent;border:none;padding:0;color:#1677FF;font:400 12px Roboto;cursor:pointer">Settings</button>.</span>
+                  </div>
+                </sc-if>
+                <textarea value="{{ relNote }}" onChange="{{ onRelNote }}" rows="6" placeholder="What's in this release" style="border:1px solid #D8D8D8;border-radius:4px;padding:8px 10px;font:400 14px/20px Roboto;color:#1C2D42;resize:vertical;min-width:0;min-height:140px"></textarea>
               </div>
               <button onClick="{{ publishShare }}" style="background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:7px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ shareBtnLabel }}</button>
               <sc-if value="{{ hasShareMsg }}" hint-placeholder-val="{{ false }}">
                 <div style="font:400 12px/17px Roboto;color:{{ shareMsgColor }};word-break:break-word">{{ shareMsg }}</div>
               </sc-if>
             </sc-if>
-            <div style="font:400 12px/17px Roboto;color:#6A717D">{{ shareInfo }} Repo, branch and token: <button onClick="{{ openSettings }}" style="background:transparent;border:none;padding:0;color:#1677FF;font:400 12px Roboto;cursor:pointer">Settings</button>.</div>
             <sc-if value="{{ showUpdateBtn }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:4px">
-                <span style="font:500 12px Roboto;color:#3A424A">Release notes</span>
-                <textarea value="{{ relNote }}" onChange="{{ onRelNote }}" rows="3" placeholder="What's in this release, e.g. Added Rule Engine Resp. column to E-referral" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 9px;font:400 13px/18px Roboto;color:#1C2D42;resize:vertical;min-width:0"></textarea>
-                <span style="font:400 11px/15px Roboto;color:#6A717D">Added to the link's release history. Viewers open it from the Release Notes button on the page.</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font:500 12px Roboto;color:#3A424A">Release notes</span>
+                  <button type="button" onClick="{{ toggleRelInfo }}" aria-expanded="{{ relInfoOpen }}" title="About publishing" style="width:16px;height:16px;border-radius:50%;border:1px solid {{ relInfoColor }};background:#fff;color:{{ relInfoColor }};font:600 10px/14px Roboto;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center">i</button>
+                </div>
+                <sc-if value="{{ relInfoOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#F7F9FC;border:1px solid #EEF0F3;border-radius:4px;padding:8px 10px;font:400 12px/17px Roboto;color:#6A717D;display:flex;flex-direction:column;gap:4px">
+                    <span>{{ shareInfo }}</span>
+                    <span>Notes are added to the link's release history. Viewers open it from the avatar menu → Release notes.</span>
+                    <span>Repo, branch and token: <button onClick="{{ openSettings }}" style="background:transparent;border:none;padding:0;color:#1677FF;font:400 12px Roboto;cursor:pointer">Settings</button>.</span>
+                  </div>
+                </sc-if>
+                <textarea value="{{ relNote }}" onChange="{{ onRelNote }}" rows="6" placeholder="What's in this release" style="border:1px solid #D8D8D8;border-radius:4px;padding:8px 10px;font:400 14px/20px Roboto;color:#1C2D42;resize:vertical;min-width:0;min-height:140px"></textarea>
               </div>
               <button onClick="{{ last.update }}" style="background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:8px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ updateLabel }}</button>
             </sc-if>
@@ -596,7 +613,7 @@ const SS_SET = "neos-studio-settings-v2";
 const SS_SHARE_TOKEN = "";
 const SS_PAGES_KEY = "neos-studio-pages-v2";
 const SS_API_KEY = "";
-const SS_REL_JS = "(function(){\nvar el=document.getElementById('ss-release-notes');if(!el)return;var n;try{n=JSON.parse(el.textContent)}catch(e){return}if(!n||!n.length)return;\nfunction fmt(t){try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return''}}\nfunction mk(tag,css,txt){var d=document.createElement(tag);if(css)d.setAttribute('style',css);if(txt!=null)d.textContent=txt;return d}\nfunction open(){var ov=mk('div','position:fixed;inset:0;z-index:2147483001;background:rgba(6,17,33,.45);display:flex;align-items:center;justify-content:center;padding:24px');\nvar box=mk('div','width:min(520px,100%);max-height:75vh;display:flex;flex-direction:column;background:#fff;border-radius:8px;box-shadow:0 22px 26px rgba(86,86,86,.2);font-family:Roboto,sans-serif;color:#3A424A');\nvar hd=mk('div','display:flex;align-items:center;gap:8px;padding:16px 20px;border-bottom:1px solid #EEF0F3');hd.appendChild(mk('div','flex:1;font:500 16px Roboto,sans-serif;color:#1C2D42','Release Notes'));\nvar x=mk('button','background:transparent;border:none;font:400 18px Roboto,sans-serif;color:#6A717D;cursor:pointer;padding:2px 6px','\\u2715');hd.appendChild(x);box.appendChild(hd);\nvar bd=mk('div','overflow:auto;padding:4px 20px 16px');\nn.slice().reverse().forEach(function(r,i){var it=mk('div','padding:14px 0;'+(i?'border-top:1px solid #EEF0F3':''));var top=mk('div','display:flex;align-items:center;gap:8px;margin-bottom:6px');top.appendChild(mk('span','background:'+(i?'#F1F3F6':'#E6F4FF')+';color:'+(i?'#3A424A':'#1677FF')+';border-radius:4px;padding:1px 8px;font:500 12px/18px Roboto,sans-serif','v'+r.v+(i?'':' \\u00b7 Latest')));top.appendChild(mk('span','font:400 12px Roboto,sans-serif;color:#6A717D',fmt(r.at)));it.appendChild(top);it.appendChild(mk('div','font:400 14px/20px Roboto,sans-serif;color:'+(r.note?'#3A424A':'#6A717D')+';white-space:pre-wrap;word-break:break-word',r.note||'No notes added.'));bd.appendChild(it)});\nbox.appendChild(bd);ov.appendChild(box);function close(){ov.remove();document.removeEventListener('keydown',k)}function k(e){if(e.key==='Escape')close()}x.onclick=close;ov.onclick=function(e){if(e.target===ov)close()};document.addEventListener('keydown',k);document.body.appendChild(ov)}\nvar b=mk('button','position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;align-items:center;gap:8px;background:#1C2D42;color:#fff;border:none;border-radius:999px;padding:5px 14px 5px 5px;font:500 12px Roboto,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(6,17,33,.3)');\nb.title='Release notes';b.appendChild(mk('span','width:26px;height:26px;border-radius:50%;background:#1677FF;display:flex;align-items:center;justify-content:center;font:500 11px Roboto,sans-serif','v'+n[n.length-1].v));b.appendChild(mk('span','','Release Notes'));b.onclick=open;\nfunction add(){document.body.appendChild(b)}if(document.body)add();else document.addEventListener('DOMContentLoaded',add);\n})();"
+const SS_REL_JS = "(function(){\nvar el=document.getElementById('ss-release-notes');if(!el)return;var n;try{n=JSON.parse(el.textContent)}catch(e){return}if(!n||!n.length)return;\nfunction fmt(t){try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return''}}\nfunction mk(tag,css,txt){var d=document.createElement(tag);if(css)d.setAttribute('style',css);if(txt!=null)d.textContent=txt;return d}\nfunction open(){if(!document.body)return;var ov=mk('div','position:fixed;inset:0;z-index:2147483001;background:rgba(6,17,33,.45);display:flex;align-items:center;justify-content:center;padding:24px');\nvar box=mk('div','width:min(520px,100%);max-height:75vh;display:flex;flex-direction:column;background:#fff;border-radius:8px;box-shadow:0 22px 26px rgba(86,86,86,.2);font-family:Roboto,sans-serif;color:#3A424A');\nvar hd=mk('div','display:flex;align-items:center;gap:8px;padding:16px 20px;border-bottom:1px solid #EEF0F3');hd.appendChild(mk('div','flex:1;font:500 16px Roboto,sans-serif;color:#1C2D42','Release Notes'));\nvar x=mk('button','background:transparent;border:none;font:400 18px Roboto,sans-serif;color:#6A717D;cursor:pointer;padding:2px 6px','\\u2715');hd.appendChild(x);box.appendChild(hd);\nvar bd=mk('div','overflow:auto;padding:4px 20px 16px');\nn.slice().reverse().forEach(function(r,i){var it=mk('div','padding:14px 0;'+(i?'border-top:1px solid #EEF0F3':''));var top=mk('div','display:flex;align-items:center;gap:8px;margin-bottom:6px');top.appendChild(mk('span','background:'+(i?'#F1F3F6':'#E6F4FF')+';color:'+(i?'#3A424A':'#1677FF')+';border-radius:4px;padding:1px 8px;font:500 12px/18px Roboto,sans-serif','v'+r.v+(i?'':' \\u00b7 Latest')));top.appendChild(mk('span','font:400 12px Roboto,sans-serif;color:#6A717D',fmt(r.at)));it.appendChild(top);it.appendChild(mk('div','font:400 14px/20px Roboto,sans-serif;color:'+(r.note?'#3A424A':'#6A717D')+';white-space:pre-wrap;word-break:break-word',r.note||'No notes added.'));bd.appendChild(it)});\nbox.appendChild(bd);ov.appendChild(box);function close(){ov.remove();document.removeEventListener('keydown',k)}function k(e){if(e.key==='Escape')close()}x.onclick=close;ov.onclick=function(e){if(e.target===ov)close()};document.addEventListener('keydown',k);document.body.appendChild(ov)}\nwindow.__ssReleaseNotes=n;window.__ssOpenReleaseNotes=open;\n})();"
 const SS_OPEN = "<" + "script";
 const SS_CLOSE = "</" + "script>";
 const SS_LOCK_RE = /^(TopNav|SectionBand|\w*FilterBar\w*|\w*TitleCluster\w*)$/;
@@ -904,8 +921,8 @@ class Component extends DCLogic {
   withNotes(html, notes) {
     const j = JSON.stringify(notes).replace(/</g, "\\u003c");
     const block = SS_OPEN + ' type="application/json" id="ss-release-notes">' + j + SS_CLOSE + "\n" + SS_OPEN + ">" + SS_REL_JS + SS_CLOSE;
-    const k = html.toLowerCase().lastIndexOf("</body>");
-    return k >= 0 ? html.slice(0, k) + block + "\n" + html.slice(k) : html + block;
+    const m = html.match(/<head[^>]*>/i);
+    return m ? html.slice(0, m.index + m[0].length) + "\n" + block + "\n" + html.slice(m.index + m[0].length) : block + "\n" + html;
   }
   async publishShare() {
     const s = this.state; if (s.shareBusy) return;
@@ -1590,6 +1607,7 @@ class Component extends DCLogic {
       updateUrl: s.updateUrl, onUpdateUrl: e => this.setState({ updateUrl: e.target.value }),
       previewCaption: s.shareAction === "update" ? "Will replace" : "New link",
       publishShare: () => this.publishShare(),
+      relInfoOpen: !!s.relInfoOpen, toggleRelInfo: () => this.setState(x => ({ relInfoOpen: !x.relInfoOpen })), relInfoColor: s.relInfoOpen ? "#1677FF" : "#8C939D",
       gitCfgOpen: !!s.gitCfgOpen, toggleGitCfg: () => this.setState(x => ({ gitCfgOpen: !x.gitCfgOpen })), gitCfgChev: s.gitCfgOpen ? "rotate(90deg)" : "rotate(0deg)",
       relNote: s.relNote, onRelNote: e => this.setState({ relNote: e.target.value }),
       notesOpen: s.notesOpen, closeNotes: () => this.setState({ notesOpen: false }), notesTitle: s.notesTitle, noNotesItems: !s.notesItems.length,
