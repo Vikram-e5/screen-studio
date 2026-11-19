@@ -128,6 +128,7 @@ function DocExtractionView({ review }) {
   const docIcon = (on) => <img src={(window.__resources&&window.__resources.attachmentType)||"icons/attachment-type.svg"} width="18" height="18" alt="" style={{display:"block",opacity:on?1:0.35,cursor:on?"pointer":"default"}} />;
   let rows = s.rows;
   if (review) rows = rows.filter(r=>r.at==="warning" && !reviewed[r.id]);
+  window.useBRScope("dx", rows, reviewed, setReviewed);
   const cell = (k,r)=>{
     if (k==="name") return <a href="#" onClick={e=>{ e.preventDefault(); window.__v2OpenDetail&&window.__v2OpenDetail("docext",r); }} style={{color:"#2563eb",font:"500 13px/16px Roboto",textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</a>;
     if (k==="episodeId") return <span style={{color:"#1e40af"}}>{r.episodeId}</span>;
@@ -135,9 +136,9 @@ function DocExtractionView({ review }) {
     if (k==="download") { const p=DX_DL[r.download]; return <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"4px 12px",borderRadius:4,background:p.bg,border:"1px solid "+p.bd,color:p.c,font:"500 11px/16px Roboto",minWidth:100,boxSizing:"border-box"}}>{p.label}</span>; }
     if (k==="at") return ARVATIcon ? <ARVATIcon kind={r.at} /> : null;
     if (k==="reviewed") { const on=!!reviewed[r.id]; return (
-      <span role="checkbox" aria-checked={on} tabIndex={0} onClick={()=>setReviewed(m=>({...m,[r.id]:!m[r.id]}))} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:"1px solid "+(on?"#2563eb":"#d8d8d8"),borderRadius:3,background:on?"#2563eb":"#fff",cursor:"pointer"}}>
+      <window.BRCell scope="dx" id={r.id} reviewed={on}><span role="checkbox" aria-checked={on} tabIndex={0} onClick={()=>setReviewed(m=>({...m,[r.id]:true}))} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:"1px solid "+(on?"#2563eb":"#d8d8d8"),borderRadius:3,background:on?"#2563eb":"#fff",cursor:"pointer"}}>
         {on&&<span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}
-      </span>); }
+      </span></window.BRCell>); }
     return r[k];
   };
   return (

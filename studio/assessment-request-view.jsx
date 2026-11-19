@@ -564,9 +564,9 @@ function ASVTableRow({ row, expanded, onToggle, onPatient, reviewed, onReviewed,
         <div style={{...cell(),...asvFreezeStyle("valStatus","#fff")}}><ASVValPill kind={row.valStatus} /></div>
         <div style={{...cell("center"),...asvFreezeStyle("docs","#fff"),cursor:row.docs?"pointer":"default"}} onClick={row.docs&&onDocs?()=>onDocs(row):undefined} title={row.docs?"View documents":undefined}><ASVDocIcon faded={!row.docs} /></div>
         <div style={{...cell("center"),...asvFreezeStyle("reviewed","#fff")}}>
-          <span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed(row.id)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:`1px solid ${reviewed?accent:"#d8d8d8"}`,borderRadius:3,background:reviewed?accent:"#fff",cursor:"pointer",transition:"all .12s"}}>
+          <window.BRCell scope="asv" id={row.id} reviewed={!!reviewed}><span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed(row.id)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:`1px solid ${reviewed?accent:"#d8d8d8"}`,borderRadius:3,background:reviewed?accent:"#fff",cursor:"pointer",transition:"all .12s"}}>
             {reviewed && <span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}
-          </span>
+          </span></window.BRCell>
         </div>
       </div>
       {expanded && <ASVChildSection row={row} hope={hope} />}
@@ -790,7 +790,7 @@ function AssessmentRequestView({ onPatient, review }) {
   const [docsRow, setDocsRow]         = useASV(null);
 
   const dateInRange = (typeof window!=="undefined" && window.dateInRange) || (()=>true);
-  const toggleReviewed = id => setReviewedSet(s=>({...s,[id]:!s[id]}));
+  const toggleReviewed = id => setReviewedSet(s=>s[id]?s:({...s,[id]:true}));
   const toggleExpand = id => setExpandedId(v=>v===id?null:id);
   const handleSort = k => { if(sortKey===k) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortKey(k); setSortDir("asc"); } };
   useASVE(()=>{ setPage(1); }, [searchQ, statusFilter, atFilter, atReasonFilter, modeFilter, fieldFilters, initDate, review, perPage, viewTab]);
@@ -810,12 +810,13 @@ function AssessmentRequestView({ onPatient, review }) {
   const reasoned = atReasonFilter && atReasonFilter.length ? atScoped.filter(r=>r.at==="warning" && atReasonFilter.includes(r.atReason)) : atScoped;
   const counts = { ...asvCountsFor(reasoned), all: searched.length, at: asvCountsFor(searched).at };
   let rows = statusFilter && statusFilter!=="all" ? reasoned.filter(r=>r.valStatus===statusFilter) : reasoned;
-  if (review) rows = rows.filter(r=>r.at==="warning" || r.valStatus==="rejected");
+  if (review) rows = rows.filter(r=>(r.at==="warning" || r.valStatus==="rejected") && !reviewedSet[r.id]);
 
   if (sortKey) rows = [...rows].sort((a,b)=>{ const av=String(a[sortKey]||""), bv=String(b[sortKey]||""); return sortDir==="asc"?av.localeCompare(bv):bv.localeCompare(av); });
 
   const total = rows.length;
   const paged = rows;
+  window.useBRScope("asv", viewTab==="editlock" ? [] : rows, reviewedSet, setReviewedSet);
 
   const chips = [];
   if (statusFilter && statusFilter!=="all") chips.push({ label:"Validation: "+((ASV_STATUS.find(s=>s.id===statusFilter)||{}).label||statusFilter), onRemove:()=>setStatusFilter(null) });

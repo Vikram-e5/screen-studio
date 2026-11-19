@@ -228,9 +228,6 @@ const IER_COLS = [
   { key:"plan",    label:"Primary Plan",      grid:"minmax(100px,1fr)",   sortable:true },
   { key:"refId",   label:"Referral ID",       grid:"minmax(110px,1.1fr)", sortable:true },
   { key:"refDate", label:"Referral Date",     grid:"minmax(92px,0.9fr)",  sortable:true },
-  { key:"payerMatched", label:"Payer Matched",  grid:"96px",            sortable:true, align:"center" },
-  { key:"zipMatched",   label:"Zipcode Matched",grid:"108px",           sortable:true, align:"center" },
-  { key:"srcMatched",   label:"Referral Source Matched", grid:"150px",  sortable:true, align:"center" },
   { key:"resp",    label:"Referral Response", grid:"156px", sortable:true, align:"center" },
   { key:"ehrSync", label:"Portal Sync",       grid:"80px",                sortable:false, align:"center" },
   { key:"at",      label:"AT Status",         grid:"72px",                sortable:false, align:"center" },
@@ -315,14 +312,11 @@ function IERRow({ row, onDocsClick, onRespClick, onAlertsClick, reviewed, onRevi
         <div style={cell()} title={row.plan}>{row.plan}</div>
         <div style={{...cell(),color:"#1e40af"}}>{row.refId}</div>
         <div style={cell()}>{row.refDate}</div>
-        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.payerMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.payerMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.payerMatched}</span></div>
-        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.zipMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.zipMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.zipMatched}</span></div>
-        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.srcMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.srcMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.srcMatched}</span></div>
         <div style={{...cell("center"),...ierStk("resp","#fff",11)}}><IERRespPill resp={row.resp} onClick={()=>onRespClick(row)} /></div>
         <div style={{...cell("center"),...ierStk("ehrSync","#fff",11)}}><IEREHRSyncIcon synced={row.ehrSync} /></div>
         <div style={{...cell("center"),...ierStk("at","#fff",11)}}><window.ARVATIcon kind={row.at} /></div>
         <div style={{...cell("center"),...ierStk("docs","#fff",11),cursor:row.docs?"pointer":"default"}} onClick={row.docs?()=>onDocsClick(row):undefined}><IERDocIcon size={18} faded={!row.docs} /></div>
-        <div style={{...cell("center"),...ierStk("reviewed","#fff",11)}}><IERCheckbox checked={reviewed} onToggle={()=>onReviewed(row.id)} /></div>
+        <div style={{...cell("center"),...ierStk("reviewed","#fff",11)}}><window.BRCell scope="ier" id={row.id} reviewed={!!reviewed}><IERCheckbox checked={reviewed} onToggle={()=>onReviewed(row.id)} /></window.BRCell></div>
       </div>
           </div>
   );
@@ -434,7 +428,7 @@ function IntakeEReferralView({ review }) {
   const [reviewedSet, setReviewedSet] = useIER({});
   const [alertsRow, setAlertsRow] = useIER(null);
   const [alertReviewed, setAlertReviewed] = useIER({});
-  const toggleReviewed = id => setReviewedSet(s=>({...s,[id]:!s[id]}));
+  const toggleReviewed = id => setReviewedSet(s=>s[id]?s:({...s,[id]:true}));
   const toggleAlert = (rowId, idx, total) => {
     setAlertReviewed(s=>{
       const arr = (s[rowId] ? [...s[rowId]] : Array(total).fill(false));
@@ -454,7 +448,8 @@ function IntakeEReferralView({ review }) {
   if (focus) rows = rows.filter(r=>focus.ids.includes(r.id));
   else rows = rows.filter(r=>window.dateInRange(r.refDate, initDate));
   if (search.trim()) { const q=search.toLowerCase(); rows = rows.filter(r=>r.name.toLowerCase().includes(q)||r.refId.toLowerCase().includes(q)||String(r.zip||"").includes(q)); }
-  if (review) rows = rows.filter(r=>r.at==="warning"||r.resp==="exceptions"||r.resp==="ineligible");
+  if (review) rows = rows.filter(r=>(r.at==="warning"||r.resp==="exceptions"||r.resp==="ineligible") && !reviewedSet[r.id]);
+  window.useBRScope("ier", rows, reviewedSet, setReviewedSet);
 
   const respScoped = atFilter ? IER_ROWS.filter(r=>r.at===IER_AT_MAP[atFilter]) : IER_ROWS;
   const respCounts = { all: ierPad(respScoped.length) }; ["accepted","declined","userDecision","ineligible","exceptions"].forEach(k=>{ respCounts[k]=ierPad(respScoped.filter(r=>r.resp===k).length); });

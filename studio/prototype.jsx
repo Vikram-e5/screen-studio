@@ -3,15 +3,23 @@
 // Each screen has sub-tabs that swap the main content. Patient rows → detail (full Auth dashboard).
 const { useState: useP } = React;
 
+// ── Persona (Team Lead / Collector) ──
+window.__persona = (()=>{ try { const j = JSON.parse(localStorage.getItem("__persona")); if (j && j.role) return j; } catch(e){} return { role:"lead", name:"Team Lead" }; })();
+window.__setPersona = (p) => { window.__persona = p; try { localStorage.setItem("__persona", JSON.stringify(p)); } catch(e){} document.dispatchEvent(new CustomEvent("personaChange", { detail:p })); };
+function usePersona(){ const [pp,setPp] = useP(window.__persona); React.useEffect(()=>{ const h=(e)=>setPp(e.detail); document.addEventListener("personaChange",h); return ()=>document.removeEventListener("personaChange",h); },[]); return pp; }
 // ── Shared chrome (dark navy) ────────────────────────────────
 function TopNav({ section, onSection, onLogo }) {
   const [builder, setBuilder] = useP(false);
   const [auditOpen, setAuditOpen] = useP(false);
   const [userMenuOpen, setUserMenuOpen] = useP(false);
+  const persona = usePersona(), isCol = persona.role==="collector", collectors = ((window.SEED&&window.SEED.USERS)||[]).filter(u=>u.role==="collector");
+  const initials = isCol ? persona.name.split(" ").map(w=>w[0]).join("").slice(0,2) : "JM";
   const [inspectOn, setInspectOn] = useP(()=>{ try { return localStorage.getItem("__inspectModeEnabled")==="1"; } catch(e){ return false; } });
   // Demo version — WellSky (full prototype) vs HCHB (hides pending-submission flows).
   const [demoVer, setDemoVer] = useP(()=>{ try { return localStorage.getItem("__demoVersion") || "wellsky"; } catch(e){ return "wellsky"; } });
   const [verMenu, setVerMenu] = useP(false);
+  const [collView, setCollViewS] = useP(()=>{ try { return localStorage.getItem("__collView")==="claim" ? "claim" : "both"; } catch(e) { return "both"; } }), [cmMenu, setCmMenu] = useP(false), [gridSt, setGridSt] = useP(()=>{ try { return localStorage.getItem("__collGrid")==="regular" ? "regular" : "combined"; } catch(e) { return "combined"; } });
+  React.useEffect(()=>{ const h=(e)=>setCollViewS(e.detail); document.addEventListener("collViewChange",h); return ()=>document.removeEventListener("collViewChange",h); },[]);
   React.useEffect(()=>{ window.__demoVersion = demoVer; try { localStorage.setItem("__demoVersion", demoVer); } catch(e){}
     document.dispatchEvent(new CustomEvent("demoVersionChange",{detail:demoVer})); }, [demoVer]);
   // HCHB labels every "Ref ID" as "E5 ID"; WellSky keeps "Ref ID".
@@ -42,56 +50,46 @@ function TopNav({ section, onSection, onLogo }) {
   const scheduleCloseAudit = () => { auditCloseTimer.current = setTimeout(() => setAuditOpen(false), 250); };
   const items = [
     { key: "dashboard",     label: "Dashboard"     },
-    { key: "intake",        label: "Intake"        },
     { key: "eligibility",   label: "Eligibility"   },
     { key: "authorization", label: "Authorization" },
-    { key: "cdm",           label: "CDM"           },
-    { key: "assessments",   label: "Assessments"   },
-    { key: "notifications", label: "Notifications" },
-    { key: "preclaims",     label: "PCR"           },
     { key: "rcd",           label: "Claims"        },
     { key: "remits",        label: "Remits"        },
-    { key: "docext",        label: "Doc Extraction" },
+    { key: "collections",   label: "Collections"   },
   ];
+  const navItems = isCol ? items.filter(i=>i.key==="rcd"||i.key==="collections") : items;
   const auditActive = section==="audit_f2f" || section==="audit_prebill";
   return (
     <div style={{height:72,background:"linear-gradient(to right, rgb(56,71,90) 0%, rgb(28,45,66) 100%)",display:"flex",alignItems:"center",padding:"0 32px",color:"#fff",gap:28,position:"relative"}}>
       <div style={{position:"absolute",bottom:0,left:32,right:32,height:1,background:"#4B586A"}}></div>
-      <img src={(window.__resources&&window.__resources.neosLogo)||"../../assets/neos-logo.png"} style={{height:20,cursor:"pointer"}} alt="neos" onClick={onLogo} />
+      <img src={(window.__resources&&window.__resources.neosLogo)||"assets/neos-logo.png"} style={{height:24,width:96,objectFit:"contain",flexShrink:0,display:"block",cursor:"pointer"}} alt="neos" onClick={onLogo} />
       <div style={{display:"flex",gap:28,marginLeft:20}}>
-        {items.map(it=>{
+        {navItems.map(it=>{
           const act = section===it.key;
           return (
             <button key={it.key} onClick={()=>onSection(it.key)} style={{background:"transparent",border:"none",padding:"0 2px 0",cursor:"pointer",color:act?"#fff":"rgba(255,255,255,.55)",borderBottom:"2px solid transparent",font:`${act?500:400} 14px/18px Roboto`}}>{it.label}</button>
           );
         })}
-        <div style={{position:"relative"}} onMouseEnter={openAudit} onMouseLeave={scheduleCloseAudit}>
-          <button onClick={()=>{ if (auditCloseTimer.current) clearTimeout(auditCloseTimer.current); setAuditOpen(v=>!v); }} style={{background:"transparent",border:"none",padding:"0 2px 0",cursor:"pointer",color:auditActive?"#fff":"rgba(255,255,255,.55)",borderBottom:"2px solid transparent",font:`${auditActive?500:400} 14px/18px Roboto`,display:"inline-flex",alignItems:"center",gap:6}}>
-            Audit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{transform:auditOpen?"rotate(180deg)":"none",transition:"transform .12s"}}><path d="M6 9.5l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          {auditOpen && (
-            <div style={{position:"absolute",top:"100%",left:0,paddingTop:16,minWidth:190,zIndex:50}}>
-              <div style={{background:"#fff",borderRadius:6,boxShadow:"0 8px 24px rgba(6,17,33,.3)",overflow:"hidden"}}>
-                {[["F2F Audit","audit_f2f"],["Pre-Bill Audit","audit_prebill"]].map(([label,key])=>(
-                  <div key={key} onClick={()=>{ if (auditCloseTimer.current) clearTimeout(auditCloseTimer.current); onSection(key); setAuditOpen(false); }} style={{padding:"10px 16px",font:"400 13px/18px Roboto",color:section===key?"#1677FF":"#3A424A",cursor:"pointer",background:section===key?"#F0F5FF":"transparent"}}>{label}</div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
       <div style={{marginLeft:"auto",display:"flex",gap:18,alignItems:"center"}}>
         <img src={(window.__resources&&window.__resources.navReports)||"icons/nav-reports.svg"} alt="Reports" title="Reports" onClick={()=>window.__openReports && window.__openReports()} style={{height:25,width:81,cursor:"pointer",display:"block"}} />
         {window.ReportsDrawer && <window.ReportsDrawer section={section} />}
+        {!isCol && window.CollSettings && <window.CollSettings />}
+        {!isCol && <svg role="button" aria-label="Settings" onClick={()=>document.dispatchEvent(new CustomEvent("openCollSettings"))} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{cursor:"pointer",display:"block",flexShrink:0}}><title>Settings</title><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>}
         <img src={(window.__resources&&window.__resources.navUserGuide)||"icons/nav-user-guide.svg"} alt="User Guide" title="User Guide" onClick={()=>window.open("NEOS%20User%20Guide.dc.html","_blank")} style={{height:28,width:28,cursor:"pointer",display:"block"}} />
         {window.ScreenBuilderDrawer && <window.ScreenBuilderDrawer open={builder} onClose={()=>setBuilder(false)} />}
         <div style={{position:"relative"}}>
-          <div onClick={()=>setUserMenuOpen(v=>!v)} style={{width:28,height:28,borderRadius:"50%",background:"#C6A78F",display:"flex",alignItems:"center",justifyContent:"center",font:"500 12px Roboto",cursor:"pointer"}}>JM</div>
+          <div onClick={()=>setUserMenuOpen(v=>!v)} style={{width:28,height:28,borderRadius:"50%",background:"#C6A78F",display:"flex",alignItems:"center",justifyContent:"center",font:"500 12px Roboto",cursor:"pointer"}} title={persona.role==="lead"?"Team Lead":"Collector · "+persona.name}>{initials}</div>
           {userMenuOpen && (
             <React.Fragment>
               <div onClick={()=>setUserMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:59}} />
               <div style={{position:"absolute",top:"100%",right:0,paddingTop:12,minWidth:220,zIndex:60}}>
                 <div style={{background:"#fff",borderRadius:8,boxShadow:"0 8px 24px rgba(6,17,33,.3)",overflow:"visible",padding:"6px 0"}}>
+                  <div style={{padding:"10px 16px 6px",font:"400 13px/18px Roboto",color:"#3A424A"}}>
+                    <div style={{marginBottom:6,font:"500 11px/16px Roboto",color:"#6A717D",letterSpacing:".06em",textTransform:"uppercase"}}>Signed in as</div>
+                    <div style={{maxHeight:210,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:6,padding:4}}>
+                      {[{role:"lead",name:"Team Lead",sub:"All collections"},...collectors.map(u=>({role:"collector",name:u.name,sub:"Collector · "+u.scope}))].map(o=>{ const sel = persona.role===o.role && (o.role==="lead" || persona.name===o.name); return <button key={o.name} type="button" onClick={()=>{ window.__setPersona({role:o.role,name:o.name}); setUserMenuOpen(false); }} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,width:"100%",background:sel?"#eff6ff":"transparent",border:"none",borderRadius:4,padding:"6px 8px",cursor:"pointer",textAlign:"left"}}><span><span style={{display:"block",font:`${sel?500:400} 13px/18px Roboto`,color:sel?"#1d4ed8":"#3A424A"}}>{o.name}</span><span style={{display:"block",font:"400 11px/14px Roboto",color:"#6A717D"}}>{o.sub}</span></span>{sel && <span style={{fontSize:11,color:"#1d4ed8"}}>✓</span>}</button>; })}
+                    </div>
+                  </div>
                   <div style={{padding:"10px 16px",font:"400 13px/18px Roboto",color:"#3A424A"}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:8}}>
                       <span>Demo Version</span>
@@ -111,6 +109,23 @@ function TopNav({ section, onSection, onLogo }) {
                           })}
                         </div>
                       )}
+                    </div>
+                  </div>
+                  <div style={{padding:"4px 16px 10px",font:"400 13px/18px Roboto",color:"#3A424A"}}>
+                    <div style={{marginBottom:8}}>Collections View</div>
+                    <div style={{position:"relative"}}>
+                      <button type="button" onClick={()=>setCmMenu(v=>!v)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,background:"#fff",border:"1px solid #d8dee6",borderRadius:6,padding:"6px 10px",font:"400 13px/18px Roboto",color:"#3A424A",cursor:"pointer"}}>
+                        <span>{collView==="claim" ? "Claim status only" : "Claim + collection status"}</span><span style={{fontSize:11,color:"#64748b"}}>▾</span>
+                      </button>
+                      {cmMenu && <div style={{position:"absolute",top:"100%",left:0,right:0,marginTop:4,background:"#fff",border:"1px solid #e2e8f0",borderRadius:6,boxShadow:"0 8px 24px rgba(15,23,42,.14)",padding:4,zIndex:70}}>
+                        {[["both","Claim + collection status"],["claim","Claim status only"]].map(([id,lbl])=>{ const sel = collView===id; return <button key={id} type="button" onClick={()=>{ window.__setCollView && window.__setCollView(id); setCollViewS(id); setCmMenu(false); }} style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",background:sel?"#eff6ff":"transparent",border:"none",borderRadius:4,padding:"7px 8px",font:`${sel?500:400} 13px/18px Roboto`,color:sel?"#1d4ed8":"#3A424A",cursor:"pointer",textAlign:"left"}}><span>{lbl}</span>{sel && <span style={{fontSize:11}}>✓</span>}</button>; })}
+                      </div>}
+                    </div>
+                  </div>
+                  <div style={{padding:"4px 16px 10px",font:"400 13px/18px Roboto",color:"#3A424A"}}>
+                    <div style={{marginBottom:8}}>Collections Grid</div>
+                    <div style={{display:"flex",gap:4,padding:3,background:"#EEF1F5",borderRadius:6}}>
+                      {[["combined","Combined grid"],["regular","Regular grid"]].map(([id,lbl])=>{ const sel = gridSt===id; return <button key={id} type="button" onClick={()=>{ window.__setCollGrid && window.__setCollGrid(id); setGridSt(id); }} style={{flex:1,border:"none",borderRadius:4,padding:"6px 8px",background:sel?"#fff":"transparent",boxShadow:sel?"0 1px 2px rgba(15,23,42,.12)":"none",font:`${sel?500:400} 12px/16px Roboto`,color:sel?"#1d4ed8":"#3A424A",cursor:"pointer"}}>{lbl}</button>; })}
                     </div>
                   </div>
                   <div style={{height:1,background:"#eef2f6",margin:"4px 0"}}></div>
@@ -142,8 +157,69 @@ function TopNav({ section, onSection, onLogo }) {
   );
 }
 
+// ── Shared Bulk Review (PCR-style) for module grids ─────────────
+const BRStore = { active:null, sel:{}, visible:[], mark:null, ls:new Set(),
+  emit(){ this.ls.forEach(f=>f()); },
+  start(scope){ this.active=scope; this.sel={}; this.emit(); },
+  stop(){ if(!this.active) return; this.active=null; this.sel={}; this.mark=null; this.emit(); },
+  toggle(id){ this.sel={...this.sel,[id]:!this.sel[id]}; this.emit(); },
+  count(){ return Object.keys(this.sel).filter(k=>this.sel[k]).length; },
+};
+function useBRStore(){ const [,f]=React.useReducer(x=>x+1,0); React.useEffect(()=>{ BRStore.ls.add(f); return ()=>{ BRStore.ls.delete(f); }; },[]); return BRStore; }
+function BRBox({ on, locked, onClick, title }) {
+  const c = locked ? "#BFC5CD" : "#2563eb";
+  return <span role="checkbox" aria-checked={!!on} aria-disabled={locked||undefined} title={title} onClick={locked?undefined:(e)=>{ e.stopPropagation(); onClick&&onClick(); }}
+    style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:`1px solid ${on?c:"#d8d8d8"}`,borderRadius:3,background:on?c:"#fff",cursor:locked?"not-allowed":"pointer",flex:"none"}}>
+    {on && <span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}</span>;
+}
+// Wraps a grid's Reviewed? checkbox: locked grey tick once reviewed, selection box during Bulk Review.
+function BRCell({ scope, id, reviewed, children }) {
+  const s = useBRStore();
+  if (reviewed) return <BRBox on locked title="Reviewed" />;
+  if (s.active===scope) return <BRBox on={!!s.sel[id]} onClick={()=>s.toggle(id)} title="Select record" />;
+  return children;
+}
+// Called by a grid view: registers its visible, not-yet-reviewed ids and how to mark them reviewed.
+function useBRScope(scope, rows, reviewedSet, setReviewedSet) {
+  const ids = (rows||[]).filter(r=>!(reviewedSet||{})[r.id]).map(r=>r.id);
+  if (BRStore.active===scope) { BRStore.visible = ids; BRStore.mark = (sel)=>setReviewedSet(m=>{ const n={...m}; sel.forEach(id=>{ n[id]=true; }); return n; }); }
+  React.useEffect(()=>()=>{ if (BRStore.active===scope) BRStore.stop(); },[]);
+}
+// Only-mark-never-unmark toggle for single-record review.
+const brMarkOnly = (set) => (id) => set(m => m[id] ? m : ({...m,[id]:true}));
+Object.assign(window, { BRStore, BRCell, useBRScope, brMarkOnly });
+function BRBandControls({ scope, onReviewOff }) {
+  const s = useBRStore();
+  const [confirm, setConfirm] = useP(false);
+  React.useEffect(()=>()=>{ if (BRStore.active===scope) BRStore.stop(); },[scope]);
+  const active = s.active===scope;
+  if (!active) return (
+    <React.Fragment>
+      <span onClick={()=>s.start(scope)} style={{color:"#fff",font:"400 13px Roboto",cursor:"pointer",opacity:.85}}>Bulk Review</span>
+      <span style={{width:1,height:16,background:"#fff",opacity:.5}}></span>
+    </React.Fragment>
+  );
+  const n = s.count(); const vis = s.visible||[]; const allOn = vis.length>0 && vis.every(id=>s.sel[id]);
+  const Modal = window.PCRMarkReviewedModal;
+  return (
+    <React.Fragment>
+      <div style={{position:"absolute",left:"50%",top:-6,transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:12,background:"#fff",borderRadius:999,padding:"7px 10px 7px 18px",boxShadow:"0 8px 24px rgba(6,17,33,.35)",zIndex:20,whiteSpace:"nowrap"}}>
+        <span style={{display:"inline-flex",alignItems:"center",gap:8,font:"400 13px/18px Roboto",color:"#334155",cursor:vis.length?"pointer":"default"}} onClick={()=>{ if(!vis.length) return; const n2={...s.sel}; vis.forEach(id=>{ n2[id]=!allOn; }); s.sel=n2; s.emit(); }}>
+          <BRBox on={allOn} locked={!vis.length} onClick={()=>{}} />Select all
+        </span>
+        <span style={{width:1,height:16,background:"#e2e8f0"}}></span>
+        <span style={{font:"500 13px/18px Roboto",color:"#0f172a"}}>{n} selected</span>
+        <button type="button" disabled={!n} onClick={()=>setConfirm(true)} style={{background:n?"#1677FF":"#f4f6f9",border:"none",borderRadius:999,padding:"7px 16px",font:"500 13px/18px Roboto",color:n?"#fff":"#b6bcc6",cursor:n?"pointer":"default"}}>Mark as Reviewed</button>
+        <button type="button" onClick={()=>s.stop()} title="Close bulk selection" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",border:"none",background:"#f1f3f5",color:"#64748b",font:"400 13px/1 Roboto",cursor:"pointer",padding:0}}>✕</button>
+      </div>
+      {confirm && Modal && <Modal noun="" count={n} onClose={()=>{ setConfirm(false); s.stop(); }} onConfirm={()=>{ const ids=Object.keys(s.sel).filter(k=>s.sel[k]); s.mark && s.mark(ids); s.sel={}; s.emit(); }} />}
+    </React.Fragment>
+  );
+}
+
 // ── Section header band (contains sub-tabs + review toggle + download) ─
-function SectionBand({ title, subTabs, activeSub, onSub, review, onReview, showReview, breadcrumb, onBack, bulk, onBulk, bulkApi, bulkKind, onBulkKind }) {
+window.SectionBand = SectionBand;
+function SectionBand({ title, subTabs, activeSub, onSub, review, onReview, showReview, breadcrumb, onBack, bulk, onBulk, bulkApi, bulkKind, onBulkKind, onBulkReview, bulkScope }) {
   const [bulkMenu, setBulkMenu] = useP(false);
   return (
     <div style={{background:"linear-gradient(to right, rgb(56,71,90) 0%, rgb(28,45,66) 100%)",padding:"18px 32px 16px",color:"#fff"}}>
@@ -197,6 +273,13 @@ function SectionBand({ title, subTabs, activeSub, onSub, review, onReview, showR
                     </React.Fragment>
                   )}
                 </span>
+                <span style={{width:1,height:16,background:"#fff",opacity:.5}}></span>
+              </React.Fragment>
+            )}
+            {bulkScope && <BRBandControls scope={bulkScope} />}
+            {onBulkReview && !bulk && (
+              <React.Fragment>
+                <span onClick={onBulkReview} style={{color:"#fff",font:"400 13px Roboto",cursor:"pointer",opacity:.85}}>Bulk Review</span>
                 <span style={{width:1,height:16,background:"#fff",opacity:.5}}></span>
               </React.Fragment>
             )}
@@ -264,7 +347,7 @@ function EligibilitySection({ sub, onSub, onPatient, alertFilter, onClearAlert, 
   const [batchRecords, setBatchRecords] = useP(null);
   return (
     <div>
-      <SectionBand title="Eligibility Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub===1} review={review} onReview={()=>setReview(v=>!v)} />
+      <SectionBand title="Eligibility Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub===1} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===1 && hchbVer && !secFocus ? "elig" : undefined} />
       {sub===3
         ? (window.EligibilitySummaryView
             ? <window.EligibilitySummaryView onPatient={onPatient} sharedInitDate={eligFilters&&eligFilters.initDate} setSharedInitDate={eligFilters&&eligFilters.setInitDate} sharedFieldFilters={eligFilters&&eligFilters.fieldFilters} setSharedFieldFilters={eligFilters&&eligFilters.setFieldFilters} />
@@ -292,15 +375,19 @@ function IntakeSection({ sub, onSub }) {
     { label: "Automation Log",   icon: ""  },
   ];
   const [review, setReview] = useP(false);
+  const [iBulk, setIBulk] = useP(false);
+  const [iBulkApi, setIBulkApi] = useP(null);
+  React.useEffect(()=>{ if(sub!==1){ setIBulk(false); setIBulkApi(null); } },[sub]);
   const EReferral = typeof window !== "undefined" && window.IntakeEReferralView;
   const PatientIn = typeof window !== "undefined" && window.IntakePatientView;
   const AutoLog   = typeof window !== "undefined" && window.IntakeAutomationLogView;
   const loading = (what)=><div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading {what}…</div>;
   return (
     <div>
-      <SectionBand title="Intake Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub!==2} review={review} onReview={()=>setReview(v=>!v)} />
+      <SectionBand title="Intake Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub!==2} review={review} onReview={()=>setReview(v=>!v)}
+        bulk={sub===1 ? iBulk : undefined} bulkKind="review" bulkApi={iBulkApi} onBulk={()=>{ setIBulk(false); setIBulkApi(null); }} onBulkReview={sub===1 ? (()=>setIBulk(true)) : undefined} bulkScope={sub===0 ? "ier" : undefined} />
       {sub===0 && (EReferral ? <EReferral review={review} /> : loading("E-referral view"))}
-      {sub===1 && (PatientIn ? <PatientIn review={review} /> : loading("Patient intake view"))}
+      {sub===1 && (PatientIn ? <PatientIn review={review} bulkMode={iBulk} onBulkApi={setIBulkApi} onExitBulk={()=>{ setIBulk(false); setIBulkApi(null); }} /> : loading("Patient intake view"))}
       {sub===2 && (AutoLog ? <AutoLog onRefClick={()=>{}} /> : loading("log"))}
     </div>
   );
@@ -317,7 +404,7 @@ function DocExtractionSection({ sub, onSub }) {
   const loading = <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading…</div>;
   return (
     <div>
-      <SectionBand title="Documents Extraction Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub===0} review={review} onReview={()=>setReview(v=>!v)} />
+      <SectionBand title="Documents Extraction Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub===0} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===0 ? "dx" : undefined} />
       {sub===0 ? (View ? <View review={review} /> : loading) : (Log ? <Log /> : loading)}
     </div>
   );
@@ -334,7 +421,7 @@ function CDMSection({ sub, onSub }) {
   const CDMAutoLog = typeof window !== "undefined" && window.CDMAutomationLogView;
   return (
     <div>
-      <SectionBand title="CDM Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={true} review={review} onReview={()=>setReview(v=>!v)} />
+      <SectionBand title="CDM Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={true} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===0 ? "cdm" : undefined} />
       {sub===0
         ? (CDMReqView ? <CDMReqView review={review} /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading CDM view…</div>)
         : (CDMAutoLog ? <CDMAutoLog /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading log…</div>)}
@@ -356,7 +443,7 @@ function RemitsSection({ sub, onSub }) {
   const loading = (what)=><div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading {what}…</div>;
   return (
     <div>
-      <SectionBand title="Remits Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub===0} review={review} onReview={()=>setReview(v=>!v)} />
+      <SectionBand title="Remits Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub===0} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===0 ? "remits" : undefined} />
       {sub===0 && (Denial ? <Denial review={review} /> : loading("Denial Management"))}
       {sub===1 && (Cash ? <Cash /> : loading("Cash Posting"))}
       {sub===2 && (AutoLog ? <AutoLog /> : loading("log"))}
@@ -376,7 +463,7 @@ function NotificationsSection({ sub, onSub, focus }) {
   return (
     <div>
       <SectionBand title="Notifications Center" subTabs={subTabs} activeSub={sub} onSub={onSub}
-        showReview={true} review={review} onReview={()=>setReview(v=>!v)} />
+        showReview={true} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===0 ? "notif" : undefined} />
       {sub===0
         ? (ReqView ? <ReqView review={review} onExitReview={()=>setReview(false)} focus={focus} /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading Notifications view…</div>)
         : (AutoLog ? <AutoLog onRefClick={()=>onSub(0)} /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading log…</div>)}
@@ -450,7 +537,7 @@ function AssessmentsSection({ sub, onSub, logFocus, onLogFocus, onClearLogFocus 
   const AutoLog = typeof window !== "undefined" && window.AssessmentAutomationLogView;
   return (
     <div>
-      <SectionBand title="Assessment Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={true} review={review} onReview={()=>setReview(v=>!v)} />
+      <SectionBand title="Assessment Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={true} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===0 ? "asv" : undefined} />
       {sub===0
         ? (ReqView ? <ReqView review={review} onPatient={(row)=>{ onLogFocus(row.id); onSub(1); }} /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading Assessment view…</div>)
         : (AutoLog ? <AutoLog focusId={logFocus} onClearFocus={onClearLogFocus} /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading log…</div>)}
@@ -1063,8 +1150,31 @@ function DatePicker({ value, available = [], onChange }) {
   );
 }
 
-function ARVFilterBarChips({ chips = [], dateLabel = "Auth Initiated Date : 01/01/25 – 05/103/25", datePicker = null, hideSearch = false, searchPlaceholder = "Search Patient Records", filterFields = [], filterRows = [], fieldFilters = [], onFieldFilters = null, onClearFilters = null, searchValue = "", onSearch = null }) {
+function InlineFilterBtn({ field, rows, fieldFilters, onFieldFilters }) {
+  const [o, setO] = useP(false), r = React.useRef(null);
+  React.useEffect(()=>{ if(!o) return; const h=(e)=>{ if(r.current && !r.current.contains(e.target)) setO(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [o]);
+  const opts = [...new Set(rows.map(x=>x[field.key]).filter(v=>v&&v!=="-"&&v!=="—"))].sort((a,b)=>String(a).localeCompare(String(b)));
+  const cur = ((fieldFilters||[]).find(f=>f.field===field.key)||{}).values || [];
+  const set = (vals) => onFieldFilters([...(fieldFilters||[]).filter(f=>f.field!==field.key), ...(vals.length?[{field:field.key,values:vals}]:[])]);
+  const tog = (v) => set(cur.includes(v) ? cur.filter(x=>x!==v) : [...cur,v]);
+  return (<div style={{position:"relative",flexShrink:0,borderLeft:"1px solid #b9c8dc"}} ref={r}>
+    <button type="button" onClick={()=>setO(v=>!v)} style={{background:"transparent",border:"none",width:field.w||148,padding:"5px 10px 5px 12px",font:"400 12px/16px Roboto",color:"#0f172a",cursor:"pointer",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap",textAlign:"left"}}>
+      <span style={{flexShrink:0}}>{field.label} :</span>
+      <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{cur.length===0 ? "All "+field.label : cur.length===1 ? cur[0] : cur.length+" selected"}</span>
+      <span style={{color:"#64748b",fontSize:15,lineHeight:"10px",flexShrink:0}}>▾</span>
+    </button>
+    {o && (<div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,minWidth:220,maxHeight:300,overflowY:"auto",background:"#fff",border:"1px solid #e2e8f0",borderRadius:6,boxShadow:"0 8px 24px rgba(15,23,42,0.12)",padding:4}}>
+      <div onClick={()=>set([])} style={{padding:"7px 12px",font:(cur.length?"400":"500")+" 12px/16px Roboto",color:cur.length?"#0f172a":"#2563eb",cursor:"pointer",borderRadius:4}} onMouseEnter={e=>e.currentTarget.style.background="#f1f5f9"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>All</div>
+      {opts.map(v => { const on = cur.includes(v); return (<div key={v} onClick={()=>tog(v)} onMouseEnter={e=>e.currentTarget.style.background="#f1f5f9"} onMouseLeave={e=>e.currentTarget.style.background="transparent"} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",font:"400 12px/16px Roboto",color:"#0f172a",cursor:"pointer",borderRadius:4}}>
+        <span style={{width:14,height:14,borderRadius:3,border:"1px solid "+(on?"#2563eb":"#c5ccd6"),background:on?"#2563eb":"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{on && <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5.2 4.2 7.4 8 2.8" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}</span>{v}</div>); })}
+    </div>)}
+  </div>);
+}
+function ARVFilterBarChips({ inlineFilters = null, chips = [], dateLabel = "Auth Initiated Date : 01/01/25 – 05/103/25", datePicker = null, hideSearch = false, searchPlaceholder = "Search Patient Records", filterFields = [], filterRows = [], fieldFilters = [], onFieldFilters = null, onClearFilters = null, searchValue = "", onSearch = null, assignee = null, hideDate = false, trailing = null }) {
   const [open, setOpen] = useP(false);
+  const [asOpen, setAsOpen] = useP(false);
+  const aref = React.useRef(null);
+  React.useEffect(()=>{ if(!asOpen) return; const h=(e)=>{ if(aref.current && !aref.current.contains(e.target)) setAsOpen(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [asOpen]);
   const [dpOpen, setDpOpen] = useP(false);
   const dref = React.useRef(null);
   React.useEffect(()=>{ if(!dpOpen) return; const h=(e)=>{ if(dref.current && !dref.current.contains(e.target)) setDpOpen(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [dpOpen]);
@@ -1076,7 +1186,7 @@ function ARVFilterBarChips({ chips = [], dateLabel = "Auth Initiated Date : 01/0
   })));
   return (
     <div style={{background:"#eef4fb",borderBottom:"1px solid #e2e8f0",padding:"10px 32px",display:"flex",alignItems:"center",gap:14,flexWrap:"nowrap"}}>
-      <div style={{position:"relative",flexShrink:0}} ref={dref}>
+      {!hideDate && <div style={{position:"relative",flexShrink:0}} ref={dref}>
         <button type="button" onClick={()=> datePicker && setDpOpen(v=>!v)} style={{background:"#fff",border:"1px solid #d8d8d8",borderRadius:4,padding:"5px 12px",font:"400 12px/16px Roboto",color:"#0f172a",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,flexShrink:0,whiteSpace:"nowrap"}}>
           {datePicker ? `${datePicker.label} : ${datePicker.value ? datePicker.value.start + " – " + datePicker.value.end : "All"}` : dateLabel}
           <span style={{color:"#94a3b8",fontSize:9}}>▾</span>
@@ -1085,8 +1195,18 @@ function ARVFilterBarChips({ chips = [], dateLabel = "Auth Initiated Date : 01/0
           <DatePicker value={datePicker.value} available={datePicker.available}
             onChange={(d)=>{ datePicker.onChange(d); setDpOpen(false); }} />
         )}
-      </div>
-      <div style={{position:"relative",flexShrink:0}}>
+      </div>}
+      <div style={{display:"flex",alignItems:"center",flexShrink:0}}>{assignee && (<div style={{position:"relative",flexShrink:0}} ref={aref}>
+        <button type="button" onClick={()=>setAsOpen(v=>!v)} style={inlineFilters ? {background:"transparent",border:"none",width:178,padding:"5px 10px 5px 0",font:"400 12px/16px Roboto",color:"#0f172a",cursor:"pointer",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap",textAlign:"left"} : {background:"#e3ebf5",border:"1px solid #c5d3e6",borderRadius:4,padding:"5px 12px",font:"400 12px/16px Roboto",color:"#0f172a",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,whiteSpace:"nowrap"}}>
+          <span style={inlineFilters?{flexShrink:0}:undefined}>{assignee.label} :</span> <span style={inlineFilters?{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}:undefined}>{inlineFilters && assignee.value==="All" ? "All Assignees" : assignee.value}</span>
+          <span style={{color:"#64748b",fontSize:15,lineHeight:"10px",flexShrink:0}}>▾</span>
+        </button>
+        {asOpen && (<div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,minWidth:240,background:"#fff",border:"1px solid #e2e8f0",borderRadius:6,boxShadow:"0 8px 24px rgba(15,23,42,0.12)",padding:4}}>
+          {assignee.options.map(o => (<div key={o} onClick={()=>{ assignee.onChange(o); setAsOpen(false); }} onMouseEnter={e=>e.currentTarget.style.background="#f1f5f9"} onMouseLeave={e=>e.currentTarget.style.background=assignee.value===o?"#eef4fb":"transparent"} style={{padding:"7px 12px",font:(assignee.value===o?"500":"400")+" 12px/16px Roboto",color:assignee.value===o?"#2563eb":"#0f172a",cursor:"pointer",borderRadius:4,background:assignee.value===o?"#eef4fb":"transparent"}}>{o}</div>))}
+        </div>)}
+      </div>)}
+      {inlineFilters && inlineFilters.map(f => <InlineFilterBtn key={f.key} field={f} rows={filterRows} fieldFilters={fieldFilters} onFieldFilters={onFieldFilters} />)}</div>
+      {!inlineFilters && <div style={{position:"relative",flexShrink:0}}>
         <button type="button" onClick={()=> filterFields && setOpen(v=>!v)} style={{background:"transparent",border:"none",cursor:"pointer",color:"#2563eb",font:"500 12px/16px Roboto",display:"inline-flex",alignItems:"center",gap:6,padding:"5px 4px",whiteSpace:"nowrap"}}>
           <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:14,height:14,borderRadius:"50%",background:"#2563eb",color:"#fff",fontSize:10,fontWeight:600,lineHeight:1}}>+</span>
           Add More Filters
@@ -1095,16 +1215,17 @@ function ARVFilterBarChips({ chips = [], dateLabel = "Auth Initiated Date : 01/0
           <FilterPopover fields={filterFields} rows={filterRows} initial={fieldFilters}
             onApply={(f)=>{ onFieldFilters(f); setOpen(false); }} onClose={()=>setOpen(false)} />
         )}
-      </div>
+      </div>}
       <div className="chip-scroll" style={{display:"flex",alignItems:"center",gap:14,flexWrap:"nowrap",overflowX:"auto",flex:"1 1 auto",minWidth:0}}>
         {chips.map(c => (<ARVFilterChip key={c.id} label={c.label} onRemove={c.onRemove} />))}
-        {fieldTags.map(t => (<ARVFilterChip key={t.id} label={t.label} onRemove={t.onRemove} />))}
+        {!inlineFilters && fieldTags.map(t => (<ARVFilterChip key={t.id} label={t.label} onRemove={t.onRemove} />))}
       </div>
       {onClearFilters && (<button type="button" onClick={onClearFilters} style={{background:"transparent",border:"none",cursor:"pointer",color:"#2563eb",font:"500 12px/16px Roboto",padding:"5px 4px",flexShrink:0,whiteSpace:"nowrap"}}>Clear filters</button>)}
       {!hideSearch && (<div style={{position:"relative",flexShrink:0}}>
         <img src={(window.__resources&&window.__resources.searchIcon)||"icons/search.svg"} alt="search" style={{width:14,height:14,objectFit:"contain",position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}} />
         <input type="text" value={searchValue} onChange={e=>onSearch&&onSearch(e.target.value)} placeholder={searchPlaceholder} style={{width:240,background:"#fff",border:"1px solid #93c5e8",borderRadius:6,padding:"6px 12px 6px 32px",font:"400 12px/16px Roboto",color:"#0f172a",outline:"none"}} />
       </div>)}
+      {trailing}
     </div>
   );
 }
@@ -1169,8 +1290,8 @@ const ARV_SUBSTATUS = {
   exception: [ {id:"denied",label:"Denied",count:"07"}, {id:"term",label:"Term Expired",count:"02"} ],
   warning:   [ {id:"terminated",label:"Terminated",count:"02"}, {id:"failed",label:"Failed",count:"03"} ],
 };
-function ARVSubStatusMenu({ items, disabled, onClose, alignRight }) {
-  const [checked, setChecked] = useP(() => { const m={}; items.forEach(i=>m[i.id]=true); return m; });
+function ARVSubStatusMenu({ items, disabled, onClose, alignRight, onApply, initial }) {
+  const [checked, setChecked] = useP(() => { const m={}; items.forEach(i=>m[i.id]=!initial || initial.includes(i.id)); return m; });
   const allOn = items.every(i=>checked[i.id]);
   const toggle = (id) => { if(disabled) return; setChecked(c=>({...c,[id]:!c[id]})); };
   const toggleAll = () => { if(disabled) return; const v=!allOn; const m={}; items.forEach(i=>m[i.id]=v); setChecked(m); };
@@ -1194,12 +1315,14 @@ function ARVSubStatusMenu({ items, disabled, onClose, alignRight }) {
       ))}
       {!disabled && (
         <div style={{display:"flex",justifyContent:"flex-end",padding:"10px 16px 12px"}}>
-          <button type="button" onClick={onClose} style={{border:"none",borderRadius:6,padding:"6px 14px",font:"500 12px/16px Roboto",cursor:"pointer",background:"#2563eb",color:"#fff"}}>Show Records</button>
+          <button type="button" onClick={()=>{ onApply && onApply(items.filter(i=>checked[i.id]).map(i=>i.id)); onClose && onClose(); }} style={{border:"none",borderRadius:6,padding:"6px 14px",font:"500 12px/16px Roboto",cursor:"pointer",background:"#2563eb",color:"#fff"}}>Show Records</button>
         </div>
       )}
     </div>
   );
 }
+
+if (typeof window !== "undefined") window.ARVSubStatusMenu = ARVSubStatusMenu;
 
 // === Needs Attention breakdown menu (grouped, per Figma frame) ==
 // The Needs Attention "wire": one source of truth shared by the Auth Req View
@@ -2392,7 +2515,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 // ── Root router ──────────────────────────────────────────────
 function Prototype() {
   // Default landing = Dashboard
-  const [section, setSection] = useP("dashboard");   // dashboard | intake | eligibility | authorization | cdm
+  const persona = usePersona();
+  const [section, setSection] = useP(window.__persona.role==="collector" ? "collections" : "dashboard");   // dashboard | intake | eligibility | authorization | cdm
   const [intakeSub, setIntakeSub] = useP(0);
   const [eligSub, setEligSub] = useP(0);
   const [cdmSub, setCdmSub] = useP(0);
@@ -2455,8 +2579,10 @@ function Prototype() {
   window.__pcrTerminate = (r) => { setPcrTermReturn(eligDrawer || "medicare_advantage"); setEligDrawer(null); setPcrTermRow(r); };
   const rowToPatient = (r) => r ? { name:r.name, mrn:r.mrn, memberId:r.mid || r.memId, payorType:r.ptype || r.payor, payorSource:r.src || r.payorSrc, gateway:(r.gw && r.gw!=="-") ? r.gw : undefined, mode:r.mode } : null;
 
-  const goHome = () => { setDetail(null); setEligDrawer(null); setAuthReasonFilter(null); setDashTab(section==="authorization"?"auth":section==="preclaims"?"pcr":section==="intake"?"referral":section==="notifications"?"notif":"elig"); setSection("dashboard"); setEligSub(0); };
-  const goSection = (k) => { setDetail(null); setEligAlert(null); setAuthReasonFilter(null); if(k==="dashboard") setDashTab(section==="authorization"?"auth":section==="preclaims"?"pcr":section==="intake"?"referral":section==="notifications"?"notif":"elig"); setSection(k); };
+  const syncDash = () => { if (section==="dashboard") return; const M={authorization:"auth",preclaims:"pcr",notifications:"notif",cdm:"cdm",docext:"docext",remits:"remits",collections:"coll",rcd:"claim",assessments:"assess",audit_f2f:"audit",audit_prebill:"audit",eligibility:"elig"}; const k = section==="intake" ? (intakeSub===1?"intakePt":"referral") : (M[section]||"elig"); window.__v2LastDash = null; setDashTab(k); };
+  React.useEffect(()=>{ if (persona.role==="collector" && section!=="rcd" && section!=="collections") { setDetail(null); setEligDrawer(null); setSection("collections"); } },[persona, section]);
+  const goHome = () => { setDetail(null); setEligDrawer(null); setAuthReasonFilter(null); syncDash(); setSection("dashboard"); setEligSub(0); };
+  const goSection = (k) => { setDetail(null); setEligAlert(null); setAuthReasonFilter(null); if(k==="dashboard") syncDash(); setSection(k); };
   React.useEffect(()=>{
     window.__openNotifDrawer = (r) => { window.__notifForDrawer = r; const noMrn = r && r.notifOption!=="Notification"; setEligInitAutoLog(false); setEligNotifOnly(!!noMrn); setEligTab("notif"); const pt = rowToPatient(r); if (noMrn && pt) { pt.mrn = "—"; pt.memberId = "—"; } setDrawerPatient(pt); setEligDrawer(/cameron/i.test(r&&r.name||"")?"cameron_williamson":"medicare_advantage"); };
     window.__openPreEligDrawer = (r) => { window.__preEligForDrawer = r; setEligInitAutoLog(false); setEligNotifOnly("elig"); setEligTab("elig"); setDrawerPatient(r ? { name:r.name, mrn:"—", memberId:r.policy || "—", payorType:r.plan, payorSource:r.plan, gateway:r.gw || undefined } : null); setEligDrawer(/cameron/i.test(r&&r.name||"")?"cameron_williamson":"medicare_advantage"); };
@@ -2474,6 +2600,7 @@ function Prototype() {
       window.__recForDrawer = { kind:ctxKind, row }; setEligInitAutoLog(false); setEligNotifOnly(hasMrn ? false : "rec_" + ctxKind); setEligTab("rec_" + ctxKind);
       const pt = rowToPatient(pr) || {}; if (!hasMrn) { pt.mrn = "—"; pt.memberId = "—"; } setDrawerPatient(pt); setEligDrawer(/cameron/i.test(pr&&pr.name||"")?"cameron_williamson":"medicare_advantage"); };
     window.__openBatchEligDrawer = (r) => { window.__batchForDrawer = r; setEligInitAutoLog(false); setEligNotifOnly("eligStd"); setEligTab("elig"); setDrawerPatient(rowToPatient(r)); setEligDrawer(/cameron/i.test(r&&r.name||"")?"cameron_williamson":"medicare_advantage"); };
+    window.__goSection = (k) => { setEligDrawer(null); goSection(k); };
     window.__openV2Drawer = (kind, r) => { window.__v2DrawerFocus = { kind, row:r }; setEligInitAutoLog(false); setEligNotifOnly(false); setEligTab("v2" + kind); setDrawerPatient(rowToPatient(r)); setEligDrawer(/cameron/i.test(r&&r.name||"")?"cameron_williamson":"medicare_advantage"); };
     window.__openReferralDrawer = (r) => { window.__referralForDrawer = r; setEligInitAutoLog(false); setEligNotifOnly("referral"); setEligTab("referral"); setDrawerPatient(rowToPatient(r)); setEligDrawer(/cameron/i.test(r&&r.name||"")?"cameron_williamson":"medicare_advantage"); };
     window.__openDocs = (row, fromDetail, entry) => {
@@ -2576,6 +2703,7 @@ function Prototype() {
       {section==="docext" && (
         <DocExtractionSection sub={docxSub} onSub={setDocxSub} />
       )}
+      {section==="collections" && window.CollectionsSection && <window.CollectionsSection />}
       {section==="remits" && (
         <RemitsSection sub={remitsSub} onSub={setRemitsSub} />
       )}
@@ -2632,7 +2760,7 @@ function Prototype() {
       initialAutoLogSubTab={eligAutoLogSubTab}
       onEditDetails={eligIsPending ? ()=>{ setEligDrawer(null); setEligIsPending(false); setSection("eligibility"); setEligSub(1); setOpenManageRow(pendingRow); } : eligEntry ? ()=>{ setEligDrawer(null); setSection("eligibility"); setEligSub(1); setOpenManageRow(eligEntryRow); } : null}
       onEditAuthDetails={()=>{ const ctx=window.__authForDrawer; const row=ctx&&arvRows.find(r=>r.name===ctx.name); if(row){ setEligDrawer(null); setSection("authorization"); setAuthSub(1); setAuthOpenManageRow(row); } }}
-      onClose={()=>{ window.__recForDrawer = null; setEligDrawer(null); setEligNotifOnly(false); setEligEntry(null); setEligEntryRow(null); setEligIsPending(false); setPendingRow(null); setOpenManageRow(null); setEligInitAutoLog(false); setEligAutoLogSubTab("elig"); }}
+      onClose={()=>{ window.__recForDrawer = null; try { window.dispatchEvent(new Event("v2drawerclose")); } catch(e) {} setEligDrawer(null); setEligNotifOnly(false); setEligEntry(null); setEligEntryRow(null); setEligIsPending(false); setPendingRow(null); setOpenManageRow(null); setEligInitAutoLog(false); setEligAutoLogSubTab("elig"); }}
     />}
     {pcrTermRow && window.RCDInProgressDrawer && React.createElement(window.RCDInProgressDrawer, {
       row: pcrTermRow, title:"Terminate",

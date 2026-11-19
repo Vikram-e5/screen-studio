@@ -6,8 +6,8 @@ const { useState: useNOT, useEffect: useNOTE, useRef: useNOTR } = React;
 
 // ── Mock data ─────────────────────────────────────────────────
 const NOT_ROWS = [
-  { id:"n1", name:"Marvin Mckinney", mrn:"01500017797001", episodeId:"12345", serviceLine:"Home Health", branchId:"015", event:"EOE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/20/26", reportName:"REVIEW EPISODE SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 1", faxNumber:"(916)703-7979", commMethod:"Website", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
-  { id:"n2", name:"Brooklyn Simmons", mrn:"01500017797002", episodeId:"12576", serviceLine:"Home Health", branchId:"016", event:"DISCHARGE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/21/26", reportName:"REVIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 2", faxNumber:"(916)703-7980", commMethod:"F-Paper", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"Communication method is not applicable", status:"In Progress" },
+  { id:"n1", name:"Marvin Mckinney", mrn:"01500017797001", episodeId:"12345", serviceLine:"Home Health", branchId:"015", event:"EOE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/20/26", reportName:"REVIEW EPISODE SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 1", faxNumber:"(916)703-7979", commMethod:"F-Fax", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
+  { id:"n2", name:"Brooklyn Simmons", mrn:"01500017797002", episodeId:"12576", serviceLine:"Home Health", branchId:"016", event:"DISCHARGE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/21/26", reportName:"REVIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 2", faxNumber:"(916)703-7980", commMethod:"F-Circle", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"Communication method is not applicable", status:"In Progress" },
   { id:"n3", name:"Darrell Steward", mrn:"01500017797003", episodeId:"12789", serviceLine:"Home Health", branchId:"017", event:"TRANSFER TO INPATIENT FACILITY", notifOption:"Notification", taskType:"FAX EPISODE SUMMARY REPORT TO HOSPITAL", dueDate:"10/22/26", reportName:"VIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Facility", physFacilityName:"Facitlity name 1", faxNumber:"(916)703-7981", commMethod:"", delivery:"delivered", ehr:{ coord:"failed", stage:"pending" }, at:"warning", atGroup:"failed", atReason:"Unable to enter coordination notes", status:"In Progress" },
   { id:"n4", name:"Jane Cooper", mrn:"01500017797004", episodeId:"12458", serviceLine:"Hospice", branchId:"018", event:"HOSPICE DISCHARGE", notifOption:"Notification", taskType:"NOTIFY PRIMARY PHYSICIAN OF CLIENT REVOCATION", dueDate:"10/23/26", reportName:"DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 3", faxNumber:"(916)703-7982", commMethod:"", delivery:"failed", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
   { id:"n5", name:"Cameron Williamson", mrn:"01500017797005", episodeId:"12345", serviceLine:"Hospice", branchId:"019", event:"HOSPICE ADD ON", notifOption:"Notification", taskType:"SEND HOSPICE ORDER AND POC UPDATE TO FACILITY", dueDate:"10/24/26", reportName:"NEW ORDER REPORT", physFacility:"Facility", physFacilityName:"Facitlity name 2", faxNumber:"(916)703-7983", commMethod:"", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
@@ -17,11 +17,15 @@ const NOT_ROWS = [
   { id:"n9", name:"Kathryn Hughes", mrn:"", episodeId:"12438", serviceLine:"Hospice", branchId:"023", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"FAX FOLLOW-UP NOTE FOR MD-NURSING", dueDate:"10/29/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"", physFacilityName:"", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"failed", atReason:"Unable to extract physician details", status:"In Progress" },
   { id:"n10", name:"Albert Flores", mrn:"01500017797023", episodeId:"12656", serviceLine:"Home Health", branchId:"023", event:"DISCHARGE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/28/26", reportName:"REVIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 5", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"Office address inactive", status:"In Progress" },
   { id:"n11", name:"Bessie Cooper", mrn:"01500017797025", episodeId:"12438", serviceLine:"Hospice", branchId:"025", event:"HOSPICE PHYSICIAN ORDER", notifOption:"Notification", taskType:"SEND HOSPICE ORDER AND POC UPDATE TO FACILITY", dueDate:"10/29/26", reportName:"NEW ORDER REPORT", physFacility:"Facility", physFacilityName:"facility name 4", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"failed", atReason:"Unable to access record from grid in Maintain Facility", status:"In Progress" },
+  // Not Sent — Website recipient, so the fax stage is skipped. PHI is junk data.
+  { id:"n13", name:"Thistlewood, Orla", mrn:"01500017797031", episodeId:"12814", serviceLine:"Home Health", branchId:"015", event:"DISCHARGE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY TO PHYSICIAN", dueDate:"10/25/26", reportName:"REVIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 4", faxNumber:"", commMethod:"Website", delivery:"failed", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed", skipFax:true },
+  // Needs Intervention — the order report is unsigned, so the fax could not go out. PHI is junk data.
+  { id:"n12", name:"QWERTY, ZELDA D", mrn:"93200000000412", episodeId:"12902", serviceLine:"Hospice", branchId:"025", event:"HOSPICE PHYSICIAN ORDER", notifOption:"Notification", taskType:"SEND HOSPICE ORDER AND POC UPDATE TO FACILITY", dueDate:"10/29/26", reportName:"NEW ORDER REPORT", physFacility:"Facility", physFacilityName:"Facility name 5", faxNumber:"(916)703-7994", commMethod:"", delivery:"exception", ehr:{ coord:null, stage:null }, at:"intervention", atReason:"Order report is unsigned", interventions:[{ key:"SEND FAX", value:"", reason:"Order report is unsigned", stage:"Sending of Fax" }], status:"In Progress" },
 ];
 NOT_ROWS.forEach(r=>{
   // Exception ⇔ AT Needs Attention (the automation couldn't send it).
   // Not Sent ⇔ AT Completed with no notification needed.
-  if (r.at==="warning") r.delivery = "exception";
+  if (r.at==="warning" || r.at==="intervention") r.delivery = "exception";
   else if (r.delivery==="failed" || r.delivery==="exception") { r.delivery = "failed"; r.at = "thumb"; r.atGroup = null; r.atReason = null; }
   r.assessmentType = ""; r.clinician = ""; r.mode = "gear";
   r.coordNote = r.notifOption==="Notification"
@@ -32,20 +36,31 @@ if (typeof window !== "undefined") window.NOT_ROWS = NOT_ROWS;
 
 // ── Helpers ───────────────────────────────────────────────────
 const notPad = (n) => String(n).padStart(2, "0");
-const NOT_AT_MAP = { completed:"thumb", warning:"warning", inprogress:"hourglass" };
+const NOT_AT_MAP = { completed:"thumb", warning:"warning", intervention:"intervention", inprogress:"hourglass" };
 const notIcon = (k, fb) => (typeof window !== "undefined" && window.__resources && window.__resources[k]) || fb;
 
 // Automation (AT) Status row — icons match the row-level AT Status cell exactly.
 const NOT_AT_ITEMS = [
   { id:"completed",  label:"Completed",       kind:"thumb",     get icon(){ return notIcon("atCompleted","icons/at-completed.png"); } },
   { id:"warning",    label:"Needs Attention", kind:"warning",   get icon(){ return notIcon("atNeedsAttention","icons/at-needs-attention.png"); }, num:"#d97706", caret:true },
+  { id:"intervention", label:"Needs Intervention", kind:"intervention", num:"#d97706" },
   { id:"inprogress", label:"In Progress",     kind:"hourglass", get icon(){ return notIcon("atInProgress","icons/at-in-progress.png"); } },
 ];
 
+function NOTInterventionGlyph({ size=18, title="Needs Intervention" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" role="img" aria-label={title} style={{display:"block"}}><title>{title}</title>
+      <circle cx="10" cy="10" r="9" fill="#fff7ed" stroke="#d97706" strokeWidth="1.4" />
+      <path d="M12.7 5.1a2.9 2.9 0 0 0-3.6 3.6l-3.6 3.6a1 1 0 0 0 0 1.4l.8.8a1 1 0 0 0 1.4 0l3.6-3.6a2.9 2.9 0 0 0 3.6-3.6l-1.6 1.6-1.4-.2-.2-1.4 1.6-1.6z" fill="#d97706" />
+    </svg>
+  );
+}
+if (typeof window !== "undefined") window.NOTInterventionGlyph = NOTInterventionGlyph;
 function NOTATIcon({ kind, reason, group }) {
   if (kind === "thumb")     return <img title="Completed"       alt="Completed"       src={notIcon("atCompleted","icons/at-completed.png")} style={{width:18,height:18,objectFit:"contain"}} />;
-  if (kind === "warning")   return <img title={reason ? "Needs Attention — " + (group==="failed"?"Failed":"Terminated") + ": " + reason : "Needs Attention"} alt="Needs Attention" src={notIcon("atNeedsAttention","icons/at-needs-attention.png")} style={{width:18,height:18,objectFit:"contain"}} />;
+  if (kind === "warning")   return <img title={reason ? (group==="failed"?"Failed":"Terminated") + " - " + reason : "Needs Attention"} alt="Needs Attention" src={notIcon("atNeedsAttention","icons/at-needs-attention.png")} style={{width:18,height:18,objectFit:"contain"}} />;
   if (kind === "hourglass") return <img title="In Progress"     alt="In Progress"     src={notIcon("atInProgress","icons/at-in-progress.png")} style={{width:18,height:18,objectFit:"contain"}} />;
+  if (kind === "intervention") { const G = typeof window!=="undefined" && window.RCDInterventionGlyph; const tip = reason ? "Needs Intervention- " + reason : "Needs Intervention"; return <span title={tip} style={{display:"inline-flex"}}><NOTInterventionGlyph size={18} title={tip} /></span>; }
   return <span style={{color:"#cbd5e1"}}>—</span>;
 }
 
@@ -225,6 +240,7 @@ const NOT_AT_STATUS = [
   { id:"all",        label:"All Records",     color:"#64748b" },
   { id:"completed",  label:"Completed",       color:"#16a34a" },
   { id:"warning",    label:"Needs Attention", color:"#d97706", caret:true },
+  { id:"intervention", label:"Needs Intervention", color:"#d97706" },
   { id:"inprogress", label:"In Progress",     color:"#3f7ba8" },
 ];
 
@@ -486,6 +502,10 @@ function NOTNotifCard({ r, open, onToggle, current }) {
             {field(r.physFacility==="Facility" ? "Facility Name" : "Physician Name", r.physFacilityName)}
             {field("Fax Number", r.faxNumber)}
             {field("Communication Method", r.commMethod)}
+            {field("Report Name", r.reportName)}
+            {field("Fax Sent Status", r.delivery==="delivered" ? "Sent" : r.delivery==="exception" ? "Failed" : "")}
+            {field("Add Coordination Notes Status", r.ehr && NOT_EHR_ST[r.ehr.coord] ? NOT_EHR_ST[r.ehr.coord].l : "")}
+            {field("Stage Complete Status", r.ehr && NOT_EHR_ST[r.ehr.stage] ? NOT_EHR_ST[r.ehr.stage].l : "")}
             {r.at==="warning" && r.atReason ? field("Needs Attention Reason", r.atReason) : null}
           </div>
         </div>
@@ -572,6 +592,58 @@ function NOTPatientDrawer({ row, onClose }) {
   );
 }
 
+// Needs Intervention section (PCR style, pending only, no actions) — shown only for intervention records.
+const NOT_MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function NOTInterventionSection({ r }) {
+  const [open, setOpen] = useNOT(true);
+  const [tab, setTab] = useNOT("pending");
+  const [mm,dd,yy] = String(r.dueDate||"").split("/");
+  const created = dd ? `${dd} ${NOT_MON[(+mm||1)-1]} 20${yy} 09:52 AM` : "—";
+  const n = notPad(r.interventions.length);
+  const cols = "minmax(0,1fr) minmax(0,0.8fr) minmax(0,1.4fr) minmax(0,1.1fr) minmax(0,1.2fr)";
+  return (
+    <div style={{marginBottom:14}}>
+      <div role="button" onClick={()=>setOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 4px",borderBottom:"1px solid #e2e8f0",cursor:"pointer",font:"400 14px/20px Roboto",color:"#333"}}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{transform:open?"none":"rotate(-90deg)",transition:"transform .2s"}}><path d="M6 9l6 6 6-6" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        Needs Intervention (Active: {n}, Completed: 00)
+      </div>
+      {open && (
+        <div style={{paddingTop:6}}>
+          <div style={{display:"flex",borderBottom:"1px solid #e2e8f0",margin:"0 0 14px"}}>
+            {[["pending","Pending Interventions ("+n+")"],["done","Completed Interventions (00)"]].map(([k,l])=>{ const on = tab===k; return (
+              <span key={k} role="button" onClick={()=>setTab(k)} style={{padding:"12px 4px",marginRight:36,cursor:"pointer",font:(on?500:400)+" 14px/18px Roboto",color:on?"#2563eb":"#64748b",borderBottom:"2px solid "+(on?"#2563eb":"transparent"),marginBottom:-1}}>{l}</span>); })}
+          </div>
+          {tab==="done" ? (
+          <div style={{border:"1px solid #e2e8f0",borderRadius:6,overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:cols,background:"#f8fafc",borderBottom:"1px solid #e2e8f0",font:"500 12px/16px Roboto",color:"#333"}}>
+              {["Key","Value","Reason","Stage","Date Created"].map((h,i)=><div key={h} style={{padding:"12px 14px",borderLeft:i?"1px solid #e2e8f0":"none"}}>{h}</div>)}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:cols,alignItems:"center",font:"400 12px/17px Roboto"}}>
+              {[0,1,2,3,4].map(i=><div key={i} style={{padding:"14px"}}>{NOT_DASH}</div>)}
+            </div>
+          </div>
+          ) : (
+          <div style={{border:"1px solid #e2e8f0",borderRadius:6,overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:cols,background:"#f8fafc",borderBottom:"1px solid #e2e8f0",font:"500 12px/16px Roboto",color:"#333"}}>
+              {["Key","Value","Reason","Stage","Date Created"].map((h,i)=><div key={h} style={{padding:"12px 14px",borderLeft:i?"1px solid #e2e8f0":"none"}}>{h}</div>)}
+            </div>
+            {r.interventions.map(it=>(
+              <div key={it.key} style={{display:"grid",gridTemplateColumns:cols,alignItems:"center",font:"400 12px/17px Roboto",color:"#333"}}>
+                <div style={{padding:"14px",fontWeight:600,color:"#0f172a"}}>{it.key}</div>
+                <div style={{padding:"14px"}}>{it.value || NOT_DASH}</div>
+                <div style={{padding:"14px",color:"#b45309"}}>{it.reason}</div>
+                <div style={{padding:"14px"}}>{it.stage}</div>
+                <div style={{padding:"14px"}}>{created}</div>
+              </div>
+            ))}
+          </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Notification Info tab content for the shared patient detail slider.
 function NOTPatientNotifications({ row }) {
   const [openId, setOpenId] = useNOT(row ? row.id : null);
@@ -580,10 +652,12 @@ function NOTPatientNotifications({ row }) {
   const gk = notGroupKey(row);
   const list = NOT_ROWS.filter(r=>notGroupKey(r)===gk).sort((a,b)=>notToTime(b.dueDate)-notToTime(a.dueDate));
   const cnt = (k)=>list.filter(r=>r.delivery===k).length;
+  const niRec = row.at==="intervention" && row.interventions ? row : null;
   return (
     <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:10}}>
+      {niRec && <NOTInterventionSection r={niRec} />}
       <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap",marginBottom:4}}>
-        <span style={{font:"500 15px/20px Roboto",color:"#0f172a"}}>Notifications</span>
+        <span style={{font:"500 15px/20px Roboto",color:"#0f172a"}}>Notifications Details</span>
       </div>
       {list.map(r=>(<NOTNotifCard key={r.id} r={r} current={r.id===row.id} open={openId===r.id} onToggle={()=>setOpenId(id=>id===r.id?null:r.id)} />))}
     </div>
@@ -615,10 +689,10 @@ function NOTTableRow({ row, reviewed, onReviewed, onNotes, onPatient, accent="#2
       <div style={{...cell("center"),...notFreezeStyle("ehrSync","#fff")}}><NOTEhrSync ehr={row.ehr} /></div>
       <div style={{...cell("center"),...notFreezeStyle("at","#fff")}}><NOTATIcon kind={row.at} reason={row.atReason} group={row.atGroup} /></div>
       <div style={{...cell("center"),...notFreezeStyle("reviewed","#fff")}} onClick={(e)=>e.stopPropagation()}>
-        <span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed(row.id)}
+        <window.BRCell scope="notif" id={row.id} reviewed={!!reviewed}><span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed(row.id)}
           style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:`1px solid ${reviewed?accent:"#d8d8d8"}`,borderRadius:3,background:reviewed?accent:"#fff",cursor:"pointer"}}>
           {reviewed && <span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}
-        </span>
+        </span></window.BRCell>
       </div>
     </div>
   );
@@ -670,7 +744,8 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
 
   const [noteRow, setNoteRow]           = useNOT(null);
   const [patientRow, setPatientRow]     = useNOT(null);
-  const toggleReviewed = (id) => setReviewedSet(m=>{ const nx = {...m,[id]:!m[id]}; window.__notReviewed = nx; return nx; });
+  const setRevPersist = (fn) => setReviewedSet(m=>{ const nx = typeof fn==="function"?fn(m):fn; window.__notReviewed = nx; return nx; });
+  const toggleReviewed = (id) => setRevPersist(m=> m[id] ? m : ({...m,[id]:true}));
   // Dashboard drill-down: land on the same records the dashboard card / action item counted.
   useNOTE(()=>{ if(!focus) return;
     setFieldFilters([]); setSearchQ("");
@@ -691,7 +766,7 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
   let base = NOT_ROWS.filter(r => fieldFilters.every(f => f.values.includes(r[f.field])));
   if (searchQ.trim()) { const q = searchQ.toLowerCase(); base = base.filter(r=>[r.name,r.assessmentType,r.status].join(" ").toLowerCase().includes(q)); }
   if (dateRange) base = base.filter(r=>window.dateInRange(r.dueDate, dateRange));
-  const needsReview = (r) => r.at==="warning" || r.status==="Overdue";
+  const needsReview = (r) => r.at==="warning" || r.at==="intervention" || r.status==="Overdue";
   if (review) base = base.filter(r => needsReview(r) && !reviewedSet[r.id]);
 
   const atCounts = { all: base.length };
@@ -714,6 +789,7 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
   }
   const total = rows.length;
   const pageRows = rows;
+  window.useBRScope("notif", pageRows, reviewedSet, setRevPersist);
 
   const chips = [];
   if (idFilter) chips.push({ id:"ids", label:`${idFilter.label} (${notPad(idFilter.ids.length)})`, onRemove:()=>setIdFilter(null) });
@@ -723,6 +799,7 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
   if (review) {
     [
       { id:"rv-at",  label:"Automation Status: Needs Attention" },
+      { id:"rv-ni",  label:"Automation Status: Needs Intervention" },
       { id:"rv-od",  label:"Status: Overdue" },
       { id:"rv-nr",  label:"Reviewed : Not Reviewed" },
     ].forEach(c=>chips.push({ ...c, onRemove:()=>onExitReview&&onExitReview() }));

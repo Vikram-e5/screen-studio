@@ -202,7 +202,16 @@ const PCR_FAILED_REASONS = [
   "Previous submission is not available in HCHB",
   "Application error popup occurred while downloading the task file.",
 ];
-function PCRStatCard({ label, value, pct, count, group, growth, growthTip, onClick, fill }) {
+function PCRTipDot({ text }) {
+  const [pos, setPos] = useDash(null);
+  return (
+    <span onClick={e=>e.stopPropagation()} onMouseEnter={e=>{ const b=e.currentTarget.getBoundingClientRect(); setPos({ x:Math.min(b.left+b.width/2, window.innerWidth-140), y:b.bottom+6 }); }} onMouseLeave={()=>setPos(null)}
+      style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:14,height:14,borderRadius:"50%",border:"1px solid rgb(126,139,153)",color:"rgb(126,139,153)",font:"600 9px/1 Roboto",flexShrink:0,cursor:"default"}}>i
+      {pos && <span style={{position:"fixed",left:pos.x,top:pos.y,transform:"translateX(-50%)",zIndex:950,width:240,background:"#1F2530",color:"#fff",borderRadius:6,padding:"8px 10px",font:"400 12px/17px Roboto",boxShadow:"0 6px 18px rgba(28,45,66,.2)",pointerEvents:"none",whiteSpace:"normal",textAlign:"left"}}>{text}</span>}
+    </span>
+  );
+}
+function PCRStatCard({ label, value, pct, count, group, growth, growthTip, tip, onClick, fill }) {
   const isPct = pct !== undefined;
   const [hov, setHov] = useDash(false);
   const growthColor = growth ? (growth.dir==="up" ? { bg:"#fdecec", c:"#c92a2a" } : growth.dir==="down" ? { bg:"#e9f7ef", c:"#1e8e50" } : { bg:"#f1f3f5", c:"#64748b" }) : null;
@@ -215,6 +224,7 @@ function PCRStatCard({ label, value, pct, count, group, growth, growthTip, onCli
           <div title={fill ? label : undefined} style={{ font: "400 16px/19px Roboto", color: "rgb(126,139,153)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>{label}</div>
           {group && <PCRInfoDot statuses={group} />}
           {growthTip && <PCRInfoDot compare={growthTip} />}
+          {tip && <PCRTipDot text={tip} />}
         </div>
         <div style={{display:"flex",alignItems:"baseline",gap:8,marginTop:3}}>
           <div style={{ font: "500 24px/1 Roboto", color: "#000" }}>{isPct ? pct : value}</div>
@@ -279,10 +289,10 @@ function BarRow({ label, value, max }) {
 }
 
 // ── action-item rows ─────────────────────────────────────────
-function BigActionRow({ label, count, onClick, noIcon }) {
+function BigActionRow({ label, count, onClick, noIcon, icon }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "#fff", border: "1px solid #F1E4E4", borderRadius: 9, marginBottom: 12, boxShadow: "0 1px 3px rgba(86,86,86,.06)" }}>
-      {!noIcon && <UserGlyph />}
+      {icon || (!noIcon && <UserGlyph />)}
       <span style={{ flex: 1, font: "500 16px/20px Roboto", color: "#3A424A" }}>{label}</span>
       <span onClick={onClick} style={{ font: "400 16px Roboto", color: "#CF1322", borderBottom: "1px solid #CF1322", lineHeight: "20px", cursor: onClick ? "pointer" : "default" }}>{count}</span>
     </div>
@@ -1766,8 +1776,8 @@ function ReferralDashboard({ onNav }) {
           filterFields={REF_DASH_FILTER_FIELDS} filterRows={all} fieldFilters={fieldFilters} onFieldFilters={setFieldFilters} />
         <div style={{ padding: "20px 32px 32px" }}>
           <div style={{ font: "500 18px/22px Roboto", color: "#0f172a" }}>E-Referral Summary</div>
-          <div style={{ display: "grid", gridTemplateColumns: V2 ? "repeat(3, minmax(170px, 1fr))" : "repeat(28, minmax(0, 1fr))", gap: 9, marginTop: 16 }}>
-            {stats.map(s => <div key={s.label} style={{ display: "flex", minWidth: 0, gridColumn: V2 ? undefined : "span 7" }}><PCRStatCard label={s.label} value={s.value} pct={s.pct} count={s.count} fill onClick={() => go(s.label, s.rs)} /></div>)}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(" + stats.length + ", minmax(0, 1fr))", gap: 9, marginTop: 16 }}>
+            {stats.map(s => <div key={s.label} style={{ display: "flex", minWidth: 0 }}><PCRStatCard label={s.label} value={s.value} pct={s.pct} count={s.count} fill onClick={() => go(s.label, s.rs)} /></div>)}
           </div>
           <div className="ws-scrollbody" style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 24, overflowY: "auto", maxHeight: "calc(100vh - 400px)", paddingRight: 4 }}>
             <div style={{ font: "500 16px/20px Roboto", color: "#3A424A" }}>E-Referral Analytics</div>
@@ -2173,6 +2183,7 @@ function NotifHeadline({ value, growth, goodDown }) {
   );
 }
 function NotificationsDashboard({ onNav }) {
+  const [actTab, setActTab] = useDash("na");
   const [grain, setGrain] = useDash("week");
   const [tpGrain, setTpGrain] = useDash("week");
   const [hrGrain, setHrGrain] = useDash("week");
@@ -2252,6 +2263,8 @@ function NotificationsDashboard({ onNav }) {
     return { g, title, sub, rows: gr, reasons: Object.keys(m).map(k => [k, m[k]]).sort((a, b) => b[1] - a[1]) };
   }).filter(x => x.rows.length);
   const naTotal = naOpen.length;
+  const niOpen = rows.filter(r => r.at === "intervention" && !reviewed[r.id]);
+  const niGroups = (() => { const m = {}; niOpen.forEach(r => (r.interventions || [{ key: "Intervention", reason: r.atReason }]).forEach(it => { const g = (m[it.key] = m[it.key] || { g: it.key, rows: [], reasons: {} }); if (!g.rows.includes(r)) g.rows.push(r); g.reasons[it.reason] = (g.reasons[it.reason] || 0) + 1; })); return Object.values(m).map(g => ({ ...g, title: "Pending Interventions", sub: "Open - Awaiting Action", reasons: Object.entries(g.reasons) })); })();
   const idsOf = (rs) => rs.map(r => r.id);
 
   // Insight — terminated records whose Physician/Facility has no fax number on file.
@@ -2339,7 +2352,7 @@ function NotificationsDashboard({ onNav }) {
               <WarnGlyph />
               <span style={{ font: "500 19px/23px Roboto", color: "#3A424A" }}>Notification Action Items</span>
             </div>
-            <span style={{ marginLeft: "auto", font: "400 15px/20px Roboto", color: "#6A717D" }}><span style={{ color: "#CF1322" }}>{naTotal + failOpen.length} Items</span> Needs Review</span>
+            <span style={{ marginLeft: "auto", font: "400 15px/20px Roboto", color: "#6A717D" }}><span style={{ color: "#CF1322" }}>{naTotal + niOpen.length + failOpen.length} Items</span> Needs Review</span>
           </div>
           <BigActionRow label="Exception - Fax Status" count={p2(failOpen.length)} onClick={() => onNav && onNav({ ids: idsOf(failOpen), label: "Exception - Fax Status", dateRange })} />
           <div style={{ display: "flex", alignItems: "center", marginTop: 8, marginBottom: 12 }}>
@@ -2348,12 +2361,18 @@ function NotificationsDashboard({ onNav }) {
           </div>
           <div className="ws-scrollbody" style={{ border: "1px solid #F1E4E4", borderRadius: 9, background: "#fff", overflow: "hidden auto", boxShadow: "0 1px 3px rgba(86,86,86,.06)", flex: "1 1 auto", minHeight: 0 }}>
             <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #F1E4E4", padding: "0 18px" }}>
-              <span style={{ padding: "14px 4px 12px", display: "inline-flex", alignItems: "center", gap: 8, font: "500 15px/20px Roboto", color: "#3A424A", borderBottom: "2px solid #CF1322", marginBottom: -1 }}>
-                Needs Attention
-                <span style={{ background: "#CF1322", color: "#fff", borderRadius: 999, padding: "1px 8px", font: "500 12px/18px Roboto" }}>{p2(naTotal)}</span>
-              </span>
+              {[["na", "Needs Attention", naTotal], ["ni", "Needs Intervention", niOpen.length]].map(([k, l, c]) => { const on = actTab === k; return (
+                <span key={k} role="button" onClick={() => setActTab(k)} style={{ padding: "14px 4px 12px", marginRight: 22, display: "inline-flex", alignItems: "center", gap: 8, font: "500 15px/20px Roboto", color: on ? "#3A424A" : "#8A94A6", borderBottom: "2px solid " + (on ? "#CF1322" : "transparent"), marginBottom: -1, cursor: "pointer" }}>
+                  {l}
+                  <span style={{ background: on ? "#CF1322" : "#E2E8F0", color: on ? "#fff" : "#475569", borderRadius: 999, padding: "1px 8px", font: "500 12px/18px Roboto" }}>{p2(c)}</span>
+                </span>); })}
             </div>
-            {naGroups.length ? naGroups.map((grp, gi) => (
+            {actTab === "ni" ? (niGroups.length ? niGroups.map((grp, gi) => (
+              <AutomationGroup key={grp.g} title={grp.title} sub={grp.sub} count={p2(grp.rows.length)} defaultOpen={gi === 0}
+                onNav={() => onNav && onNav({ ids: idsOf(grp.rows), label: "Needs Intervention - " + grp.title, dateRange })}>
+                {grp.reasons.map(([reason, c]) => <AutomationItem key={reason} label={reason} count={p2(c)} onClick={() => onNav && onNav({ ids: idsOf(grp.rows.filter(r => (r.interventions || []).some(it => it.reason === reason))), label: reason, dateRange })} />)}
+              </AutomationGroup>
+            )) : <div style={{ padding: "18px", font: "400 14px/20px Roboto", color: "#8A94A6" }}>No open Needs Intervention records</div>) : naGroups.length ? naGroups.map((grp, gi) => (
               <AutomationGroup key={grp.g} title={grp.title} sub={grp.sub} count={p2(grp.rows.length)} defaultOpen={gi === 0}
                 onNav={() => onNav && onNav({ ids: idsOf(grp.rows), label: grp.title + " - " + grp.sub, dateRange })}>
                 {grp.reasons.map(([reason, c]) => <AutomationItem key={reason} label={reason} count={p2(c)} onClick={() => onNav && onNav({ ids: idsOf(grp.rows.filter(r => r.atReason === reason)), label: reason, dateRange })} />)}

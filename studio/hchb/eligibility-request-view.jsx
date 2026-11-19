@@ -1365,7 +1365,7 @@ function ERVTableRow({ row, onPatient, onManage, reviewed, onReviewed, onFollowU
     docs: <div style={cellBase("center")}>{row.docs ? <DocIcon size={18} /> : <DocIcon size={18} faded={true} />}</div>,
     reviewed: (
       <div style={cellBase("center")} onClick={stop}>
-        <span
+        <window.BRCell scope="elig" id={row.id} reviewed={!!reviewed}><span
           role="checkbox"
           aria-checked={!!reviewed}
           tabIndex={0}
@@ -1373,7 +1373,7 @@ function ERVTableRow({ row, onPatient, onManage, reviewed, onReviewed, onFollowU
           style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:`1px solid ${reviewed ? accent : "#d8d8d8"}`,borderRadius:3,background: reviewed ? accent : "#fff",cursor:"pointer"}}
         >
           {reviewed && <span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}
-        </span>
+        </span></window.BRCell>
       </div>
     ),
   };
@@ -2459,7 +2459,7 @@ function EligibilityRequestView({ batchFilter, onClearBatch, onViewBatch, onPati
   const [expandedId, setExpandedId] = useERV(null);
   const toggleExpand = (id) => setExpandedId(cur => cur === id ? null : id);
 
-  const toggleReviewed = (id) => setReviewed(s => ({ ...s, [id]: !s[id] }));
+  const toggleReviewed = (id) => setReviewed(s => s[id] ? s : ({ ...s, [id]: true }));
   const onFollowUp = (id, v) => setFollowUp(s => ({ ...s, [id]: v }));
   const onSort = (k) => {
     if (sortKey === k) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -2511,6 +2511,7 @@ function EligibilityRequestView({ batchFilter, onClearBatch, onViewBatch, onPati
   // and reviewed ones keep their checkmark.
   const needsReview = (r) => r.at === "warning" || r.cov === "inactive" || r.alerts > 0 || r.cov === "exception";
   if (review) rows = rows.filter(r => needsReview(r) && !reviewedSet[r.id]);
+  window.useBRScope("elig", rows, reviewedSet, setReviewed);
   // Sort (simple string compare)
   if (sortKey) {
     rows = [...rows].sort((a,b) => {

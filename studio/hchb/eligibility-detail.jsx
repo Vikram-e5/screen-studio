@@ -442,7 +442,7 @@ function TabBar({ active, onTab, onAutoLog, notifOnly }) {
       {<Tab k="hoIntake" label="HO Intake" />}
       <Tab k="notif" label="Notification Info" />
       {typeof window!=="undefined" && window.__recForDrawer && window.REC_TAB_LABEL && <Tab k={"rec_" + window.__recForDrawer.kind} label={window.REC_TAB_LABEL[window.__recForDrawer.kind]} />}
-      {!only && <a href="#" onClick={(e)=>{e.preventDefault(); onAutoLog&&onAutoLog();}} style={{marginLeft:"auto",marginBottom:10,font:"400 13px/16px Roboto",color:COLORS.blue,textDecoration:"none"}}>Automation Log</a>}
+      {(!only || only==="notif") && <a href="#" onClick={(e)=>{e.preventDefault(); onAutoLog&&onAutoLog();}} style={{marginLeft:"auto",marginBottom:10,font:"400 13px/16px Roboto",color:COLORS.blue,textDecoration:"none"}}>Automation Log</a>}
     </div>
   );
 }
@@ -2301,7 +2301,7 @@ function PatientAutomationLog({ patient, onBack, initialSubTab, onSubTab }) {
   return (
     <div style={{padding:"0 28px 32px"}}>
         <div style={{display:"flex",alignItems:"flex-end",borderBottom:"1px solid #e2e8f0",marginBottom:14}}>
-          {[["elig","Eligibility"],["auth","Authorization"],["pcr","PCR"]].map(([k,lbl])=>{
+          {[["elig","Eligibility"],["auth","Authorization"],["pcr","PCR"],["notif","Notifications"]].map(([k,lbl])=>{
             const isSel=subTab===k;
             return <button key={k} type="button" onClick={()=>setSubTab(k)} style={{background:"transparent",border:"none",cursor:"pointer",padding:"10px 2px",font:`${isSel?500:400} 14px/18px Roboto`,color:isSel?COLORS.blue:"#64748b",borderBottom:`2px solid ${isSel?COLORS.blue:"transparent"}`,marginRight:28,marginBottom:-1}}>{lbl}</button>;
           })}
@@ -2522,7 +2522,7 @@ function PCRTerminateModal({ row, count, onClose, onTerminate }) {
   );
 }
 
-function PCRMarkReviewedModal({ count, onClose, onConfirm }) {
+function PCRMarkReviewedModal({ count, onClose, onConfirm, noun="PCR" }) {
   const [phase, setPhase] = useED("confirm");
   const [frozenCount] = useED(count);
   useEDEffect(()=>{
@@ -2536,7 +2536,7 @@ function PCRMarkReviewedModal({ count, onClose, onConfirm }) {
         <div style={{padding:"20px 26px",borderBottom:"1px solid #e2e8f0",font:"600 16px/20px Roboto",color:"#1e293b"}}>Mark as Reviewed</div>
         {phase==="confirm" ? (
           <div style={{padding:"22px 26px"}}>
-            <div style={{font:"500 13px/18px Roboto",color:"#1e293b"}}>Mark {frozenCount} PCR record{frozenCount===1?"":"s"} as reviewed?</div>
+            <div style={{font:"500 13px/18px Roboto",color:"#1e293b"}}>Mark {frozenCount} {noun?noun+" ":""}record{frozenCount===1?"":"s"} as reviewed?</div>
           </div>
         ) : (
           <div style={{padding:"40px 26px",display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
@@ -2549,7 +2549,7 @@ function PCRMarkReviewedModal({ count, onClose, onConfirm }) {
             ) : (
               <React.Fragment>
                 <div style={{width:40,height:40,borderRadius:"50%",background:"#16a34a",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 18px/1 Roboto"}}>✓</div>
-                <div style={{font:"500 14px/20px Roboto",color:"#1e293b"}}>{frozenCount} PCR record{frozenCount===1?"":"s"} marked as reviewed.</div>
+                <div style={{font:"500 14px/20px Roboto",color:"#1e293b"}}>{frozenCount} {noun?noun+" ":""}record{frozenCount===1?"":"s"} marked as reviewed.</div>
               </React.Fragment>
             )}
           </div>
@@ -2716,10 +2716,10 @@ function EligibilityDetail({ data, onClose, showPayloadToggle, payloadKey, onPay
         <div style={{flexShrink:0,background:"#fff"}}>
           <PatientHeader patient={(notifOnly === "elig" && window.__preEligForDrawer) ? (r => ({ name:r.name, mrn:"—", dob:r.dob, memberId:r.policy, payorSource:r.plan, gateway:r.gw || undefined }))(window.__preEligForDrawer) : (notifOnly === "eligStd" && window.__batchForDrawer) ? (r => ({ name:r.name, mrn:r.mrn || "—", payorName:r.payerName }))(window.__batchForDrawer) : patient} plan={plan} onClose={onClose} slim={(tab==="pcr" && !showAutoLog) || (showAutoLog && autoLogSub==="pcr")} />
           <div style={{margin:"0 20px",height:1,background:"#CFCFCF"}} />
-          {!showAutoLog && <div style={{margin:"0 20px"}}><TabBar active={tab} onTab={setTab} notifOnly={notifOnly} onAutoLog={()=>{ setAutoLogSub(tab==="pcr" ? "pcr" : tab==="auth" ? "auth" : "elig"); setShowAutoLog(true); }} /></div>}
+          {!showAutoLog && <div style={{margin:"0 20px"}}><TabBar active={tab} onTab={setTab} notifOnly={notifOnly} onAutoLog={()=>{ setAutoLogSub(tab==="notif" ? "notif" : tab==="pcr" ? "pcr" : tab==="auth" ? "auth" : "elig"); setShowAutoLog(true); }} /></div>}
           {showAutoLog && (
             <div style={{margin:"0 20px",padding:"10px 0 0"}}>
-              <a href="#" onClick={(e)=>{e.preventDefault(); setTab(autoLogSub==="pcr" ? "pcr" : autoLogSub==="auth" ? "auth" : "elig"); setShowAutoLog(false);}} style={{display:"inline-flex",alignItems:"center",gap:6,font:"400 13px/18px Roboto",color:COLORS.blue,textDecoration:"none",marginBottom:8,paddingTop:6,paddingBottom:6}}>
+              <a href="#" onClick={(e)=>{e.preventDefault(); setTab((notifOnly===true || autoLogSub==="notif") ? "notif" : autoLogSub==="pcr" ? "pcr" : autoLogSub==="auth" ? "auth" : "elig"); setShowAutoLog(false);}} style={{display:"inline-flex",alignItems:"center",gap:6,font:"400 13px/18px Roboto",color:COLORS.blue,textDecoration:"none",marginBottom:8,paddingTop:6,paddingBottom:6}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 19l-7-7 7-7" stroke={COLORS.blue} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Back to Patient Information
               </a>
@@ -2732,7 +2732,7 @@ function EligibilityDetail({ data, onClose, showPayloadToggle, payloadKey, onPay
         {/* Scroll region — borders start right below the tab bar */}
         <div className="ed-scroll" style={{flex:1,overflowY:"auto",overflowX:"hidden",background:"#fff",margin:"0 20px 20px",borderLeft:"1px solid #CFCFCF",borderRight:"1px solid #CFCFCF",borderBottom:"1px solid #CFCFCF",borderRadius:"0 0 6px 6px"}}>
           {showAutoLog
-            ? <PatientAutomationLog patient={patient} onBack={()=>setShowAutoLog(false)} initialSubTab={autoLogSub} onSubTab={setAutoLogSub} />
+            ? (autoLogSub==="notif" && window.NOTPatientAutoLog) ? <window.NOTPatientAutoLog notifOnly={notifOnly===true} onSubTab={setAutoLogSub} /> : <PatientAutomationLog patient={patient} onBack={()=>setShowAutoLog(false)} initialSubTab={autoLogSub} onSubTab={setAutoLogSub} />
             : (notifOnly === "eligStd" && window.RecordInfo && window.__batchForDrawer
                 ? <window.RecordInfo kind="batch" row={window.__batchForDrawer} />
                 : /^rec_/.test(tab) && window.RecordInfo && window.__recForDrawer

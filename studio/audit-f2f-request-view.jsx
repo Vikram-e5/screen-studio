@@ -361,6 +361,7 @@ function F2FAuditRequestView({ review, onExitReview }) {
   const [statusFilter, setStatusFilter] = useF(null);
   const [sourceFilter, setSourceFilter] = useF(null);
   const [atFilter, setAtFilter] = useF(null);
+  const [reasonFilter, setReasonFilter] = useF(null);
   const [searchQ, setSearchQ] = useF("");
   const [fieldFilters, setFieldFilters] = useF([]);
   const [reviewed, setReviewed] = useF({});
@@ -415,7 +416,7 @@ function F2FAuditRequestView({ review, onExitReview }) {
       <div style={{padding:"20px 24px 0",display:"flex",alignItems:"flex-start",gap:32,flexWrap:"wrap"}}>
         <div style={{flex:"1 1 380px",minWidth:0}}><F2FTitleCluster /></div>
         <div style={{flex:"1 1 640px",minWidth:0}}>
-          <F2FStatusStrip counts={counts} active={statusFilter} onPick={(v)=>{ setStatusFilter(v); if(!v) setSourceFilter(null); }} anyFilter={!!(statusFilter||atFilter)} onReset={()=>{ setStatusFilter(null); setAtFilter(null); setSourceFilter(null); }} sourceFilter={sourceFilter} onSourceFilter={setSourceFilter} />
+          <F2FStatusStrip counts={counts} active={statusFilter} onPick={(v)=>{ setStatusFilter(v); if(!v) setSourceFilter(null); }} anyFilter={!!(statusFilter||atFilter)} onReset={()=>{ setStatusFilter(null); setAtFilter(null); setReasonFilter(null); setSourceFilter(null); }} sourceFilter={sourceFilter} onSourceFilter={setSourceFilter} />
         </div>
       </div>
       <div style={{padding:"8px 24px",display:"flex",justifyContent:"flex-end",position:"relative",top:-8}}>
@@ -630,6 +631,48 @@ const PB_SUBSTATUS_OPTS = [ {id:"ai", label:"AI Processed"}, {id:"override", lab
 const pbPad2 = (n)=>String(n).padStart(2,"0");
 // Automation status is independent of the business result — a record can be
 // AT-complete and still have unmet audit requirements.
+const PB_REASON_GROUPS = [
+  { id:"terminated", label:"Terminated", note:"Business Exception", reasons:["Unable to fetch documentation for audit","Face-to-face encounter date missing","Physician signature not found on 485 order"] },
+  { id:"failed", label:"Failed", note:"Technical Exception", reasons:["HCHB session timed out during audit","Unable to download 485 order from HCHB"] },
+];
+const PB_ALL_REASONS = PB_REASON_GROUPS.flatMap(g=>g.reasons);
+function pbReasonsOf(r) {
+  if (pbAtOf(r)!=="incomplete") return [];
+  const k = pbRowKey(r); let h = 0; for (let i=0;i<k.length;i++) h = (h*31 + k.charCodeAt(i)) >>> 0;
+  const n = 1 + (h % 3), start = (h>>3) % PB_ALL_REASONS.length;
+  return Array.from({length:n}, (_,i)=>PB_ALL_REASONS[(start+i)%PB_ALL_REASONS.length]);
+}
+function PBIncompleteMenu({ selected, onApply, onClose }) {
+  const [checked, setChecked] = useF(()=>{ const m={}; PB_ALL_REASONS.forEach(l=>m[l]= selected&&selected.length ? selected.includes(l) : true); return m; });
+  const [open, setOpen] = useF({terminated:true, failed:true});
+  const allOn = PB_ALL_REASONS.every(l=>checked[l]);
+  const toggleAll = ()=>{ const m={}; PB_ALL_REASONS.forEach(l=>m[l]=!allOn); setChecked(m); };
+  const gOn = g=>g.reasons.every(l=>checked[l]);
+  const toggleG = g=>{ const v=!gOn(g); setChecked(c=>{ const m={...c}; g.reasons.forEach(l=>m[l]=v); return m; }); };
+  const box = (on)=>(<span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:3,border:"1px solid "+(on?"#2563eb":"#cbd5e1"),background:on?"#2563eb":"#fff",flexShrink:0}}>{on && <span style={{color:"#fff",fontSize:11,fontWeight:700,lineHeight:1}}>✓</span>}</span>);
+  const chosen = PB_ALL_REASONS.filter(l=>checked[l]);
+  return (
+    <div onClick={(e)=>e.stopPropagation()} style={{position:"absolute",top:"100%",right:0,marginTop:8,background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,boxShadow:"0 16px 40px rgba(15,23,42,0.18)",width:440,zIndex:60,overflow:"hidden",textAlign:"left"}}>
+      <label onClick={toggleAll} style={{display:"flex",alignItems:"center",gap:10,padding:"14px 18px",borderBottom:"1px solid #f1f5f9",cursor:"pointer",font:"600 14px/18px Roboto",color:"#2563eb"}}>{box(allOn)} Select All /Unselect All</label>
+      <div style={{maxHeight:420,overflow:"auto"}}>
+        {PB_REASON_GROUPS.map(g=>(
+          <div key={g.id}>
+            <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 18px",background:"#f7f9fc",borderTop:"1px solid #f1f5f9"}}>
+              <span onClick={()=>setOpen(o=>({...o,[g.id]:!o[g.id]}))} style={{display:"inline-flex",cursor:"pointer",transition:"transform .15s",transform:open[g.id]?"none":"rotate(-90deg)"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 8 L19 8 L12 17 Z" fill="currentColor" /></svg></span>
+              <label onClick={()=>toggleG(g)} style={{display:"inline-flex",alignItems:"center",gap:10,cursor:"pointer"}}>{box(gOn(g))}<span style={{font:"500 14px/18px Roboto",color:"#1f2937"}}>{g.label}</span><span style={{font:"400 12px/16px Roboto",color:"#94a3b8"}}>- {g.note}</span></label>
+            </div>
+            {open[g.id] && g.reasons.map(l=>(
+              <label key={l} onClick={()=>setChecked(c=>({...c,[l]:!c[l]}))} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px 10px 42px",cursor:"pointer"}}>{box(!!checked[l])}<span style={{font:"400 13px/17px Roboto",color:"#334155"}}>{l}</span></label>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"flex-end",padding:"12px 18px",borderTop:"1px solid #f1f5f9"}}>
+        <button type="button" onClick={()=>{ onApply(chosen.length===PB_ALL_REASONS.length?null:chosen); onClose(); }} style={{background:"#2563eb",border:"none",borderRadius:6,padding:"7px 16px",font:"500 13px/18px Roboto",color:"#fff",cursor:"pointer"}}>Show Records</button>
+      </div>
+    </div>
+  );
+}
 function pbAtOf(r) { return r.at || (r.met ? "complete" : "incomplete"); }
 // Business status buckets are mutually exclusive and sum to All Records:
 // a record whose documentation never synced could not be audited at all.
@@ -752,8 +795,11 @@ function PBStatusStrip({ counts, activeStatus, onPick, anyFilter, onReset, sourc
   );
 }
 
-function PBAutomationStatus({ counts, atFilter, onFilter }) {
+function PBAutomationStatus({ counts, atFilter, onFilter, reasonFilter, onReasonFilter }) {
   const at = counts.at;
+  const [menu, setMenu] = useF(false);
+  const wrapRef = React.useRef(null);
+  React.useEffect(()=>{ if(!menu) return; const h=(e)=>{ if(wrapRef.current && !wrapRef.current.contains(e.target)) setMenu(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); },[menu]);
   const items = [
     { id:"completed",  label:"Complete",       n:at.completed,  icon:(window.__resources&&window.__resources.atCompleted)||"icons/at-completed.png" },
     { id:"warning",    label:"Incomplete",     n:at.needsAttn,  icon:(window.__resources&&window.__resources.atNeedsAttention)||"icons/at-needs-attention.png" },
@@ -768,12 +814,18 @@ function PBAutomationStatus({ counts, atFilter, onFilter }) {
         return (
           <React.Fragment key={s.id}>
             {i>0 && <span style={{width:1,height:18,background:"#e2e8f0",margin:"0 12px"}}></span>}
-            <button type="button" onClick={()=>onFilter(active?null:s.id)} title={`Filter: ${s.label}`}
+            <button type="button" onClick={()=>{ if(active && s.id==="warning") onReasonFilter && onReasonFilter(null); onFilter(active?null:s.id); }} title={`Filter: ${s.label}`}
               style={{background:"transparent",border:"none",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,padding:"2px 6px",borderRadius:4,opacity:dim?0.4:1,transition:"opacity .12s"}}>
               <img src={s.icon} alt="" style={{width:18,height:18,objectFit:"contain"}} />
               <span style={{color:"#0f172a",fontSize:14}}>{s.label}</span>
               <span style={{fontWeight:600,color:"#0f172a",fontSize:15}}>{s.n}</span>
             </button>
+            {s.id==="warning" && (
+              <span ref={wrapRef} style={{position:"relative",display:"inline-flex"}}>
+                <button type="button" title="Incomplete reasons" onClick={()=>setMenu(m=>!m)} style={{width:18,height:18,display:"inline-flex",alignItems:"center",justifyContent:"center",border:"none",background:"transparent",cursor:"pointer",color:"#2563eb",padding:0}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 8 L19 8 L12 17 Z" fill="currentColor" /></svg></button>
+                {menu && <PBIncompleteMenu selected={reasonFilter} onApply={(r)=>{ onReasonFilter(r); onFilter("warning"); }} onClose={()=>setMenu(false)} />}
+              </span>
+            )}
           </React.Fragment>
         );
       })}
@@ -792,6 +844,7 @@ function PreBillRequestView({ review, onExitReview, onOpenLog, openRow, onOpenRo
   React.useEffect(()=>{ if (openRow) { setDrawerRow(openRow); onOpenRowConsumed && onOpenRowConsumed(); } }, [openRow]);
   const [statusFilter, setStatusFilter] = useF(null);
   const [atFilter, setAtFilter] = useF(null);
+  const [reasonFilter, setReasonFilter] = useF(null);
   const [searchQ, setSearchQ] = useF("");
   const [fieldFilters, setFieldFilters] = useF([]);
   // audit date defaults to the last 7 days of audit activity in the data
@@ -820,21 +873,21 @@ function PreBillRequestView({ review, onExitReview, onOpenLog, openRow, onOpenRo
   }, [fieldFilters, searchQ, dateRange, liveRows]);
   const atScope = (list)=>{
     if (atFilter === "completed") return list.filter(r=>pbAtOf(r)==="complete");
-    if (atFilter === "warning") return list.filter(r=>pbAtOf(r)==="incomplete");
+    if (atFilter === "warning") return list.filter(r=>pbAtOf(r)==="incomplete" && (!reasonFilter || pbReasonsOf(r).some(x=>reasonFilter.includes(x))));
     if (atFilter === "inprogress") return list.filter(r=>pbAtOf(r)==="inprogress");
     return list;
   };
-  const counts = React.useMemo(()=>pbCounts(atScope(searched), statusFilter), [searched, statusFilter, atFilter]);
+  const counts = React.useMemo(()=>pbCounts(atScope(searched), statusFilter), [searched, statusFilter, atFilter, reasonFilter]);
   const [sourceFilter, setSourceFilter] = useF(null);
   const rows = React.useMemo(()=>{
     let out = pbFilterByStatus(searched, statusFilter);
     if (sourceFilter && sourceFilter.status===statusFilter) out = out.filter(r=>sourceFilter.sources.includes(r.source));
     if (atFilter === "completed") out = out.filter(r=>pbAtOf(r)==="complete");
-    if (atFilter === "warning") out = out.filter(r=>pbAtOf(r)==="incomplete");
+    if (atFilter === "warning") out = out.filter(r=>pbAtOf(r)==="incomplete" && (!reasonFilter || pbReasonsOf(r).some(x=>reasonFilter.includes(x))));
     if (atFilter === "inprogress") out = out.filter(r=>pbAtOf(r)==="inprogress");
     if (review) out = out.filter((r,i)=>(!r.met || r.pct<100) && !reviewedSet[pbRowKey(r)]);
     return out;
-  }, [searched, statusFilter, atFilter, review, reviewedSet]);
+  }, [searched, statusFilter, atFilter, reasonFilter, review, reviewedSet]);
 
   const chips = [];
   if (statusFilter) {
@@ -843,7 +896,7 @@ function PreBillRequestView({ review, onExitReview, onOpenLog, openRow, onOpenRo
   }
   if (atFilter) {
     const labels = { completed:"Complete", warning:"Incomplete", inprogress:"In Progress" };
-    chips.push({ id:"at", label:`AT Status: ${labels[atFilter]}`, onRemove:()=>setAtFilter(null) });
+    chips.push({ id:"at", label:`AT Status: ${labels[atFilter]}${atFilter==="warning"&&reasonFilter?" ("+reasonFilter.length+" reasons)":""}`, onRemove:()=>{ setAtFilter(null); setReasonFilter(null); } });
   }
   if (review) {
     [{ id:"rv-unmet", label:"Audit Result: Requirements Unmet" },{ id:"rv-nr", label:"Reviewed : Not Reviewed" }]
@@ -858,11 +911,11 @@ function PreBillRequestView({ review, onExitReview, onOpenLog, openRow, onOpenRo
       <div style={{padding:"20px 24px 0",display:"flex",alignItems:"flex-start",gap:32,flexWrap:"wrap"}}>
         <div style={{flex:"1 1 380px",minWidth:0}}><PBTitleCluster /></div>
         <div style={{flex:"1 1 640px",minWidth:0}}>
-          <PBStatusStrip counts={counts} activeStatus={statusFilter} onPick={(v)=>{ setStatusFilter(v); if(!v) setSourceFilter(null); }} anyFilter={!!(statusFilter||atFilter)} onReset={()=>{ setStatusFilter(null); setAtFilter(null); setSourceFilter(null); }} sourceFilter={sourceFilter} onSourceFilter={setSourceFilter} />
+          <PBStatusStrip counts={counts} activeStatus={statusFilter} onPick={(v)=>{ setStatusFilter(v); if(!v) setSourceFilter(null); }} anyFilter={!!(statusFilter||atFilter)} onReset={()=>{ setStatusFilter(null); setAtFilter(null); setReasonFilter(null); setSourceFilter(null); }} sourceFilter={sourceFilter} onSourceFilter={setSourceFilter} />
         </div>
       </div>
       <div style={{padding:"8px 24px",display:"flex",justifyContent:"flex-end",position:"relative",top:-8}}>
-        <PBAutomationStatus counts={counts} atFilter={atFilter} onFilter={(v)=>setAtFilter(v)} />
+        <PBAutomationStatus counts={counts} atFilter={atFilter} onFilter={(v)=>setAtFilter(v)} reasonFilter={reasonFilter} onReasonFilter={setReasonFilter} />
       </div>
       <PreBillAuditGrid rows={rows} onView={setDrawerRow} reviewed={reviewedSet} autoReviewed={autoReviewed} flagCounts={flagCounts} onReviewed={toggleReviewed} />
       {drawerRow && <PBDetailDrawer key={pbRowKey(drawerRow)} row={drawerRow} instant={!!drawerRow._switched} onSwitchAudit={(nx)=>setDrawerRow({ ...nx, _switched:true })} preVerified={!!(reviewedSet[pbRowKey(drawerRow)] || autoReviewed[pbRowKey(drawerRow)])} onClose={()=>setDrawerRow(null)} onOpenLog={onOpenLog} onResultChange={(key,met)=>setMetOverride(m=>({ ...m, [key]:met }))} onAllVerified={(key)=>setAutoReviewed(m=>({ ...m, [key]:true }))} onFlagsChange={(key,count)=>setFlagCounts(m=>({ ...m, [key]:count }))} />}
@@ -3292,12 +3345,12 @@ const PB_AL_COLS = [
   { key:"ts",      label:"Start Time",          w:"minmax(100px,0.95fr)",sort:true },
   { key:"te",      label:"End Time",            w:"minmax(100px,0.95fr)",sort:true },
   { key:"status",  label:"AT Status",           w:"104px",               sort:false, align:"center" },
-  { key:"reason",  label:"Reason",              w:"minmax(160px,1.5fr)", sort:false, wrap:true },
+  { key:"reason",  label:"Reason",              w:"minmax(340px,2.6fr)", sort:false, wrap:true },
   { key:"haltedAt",label:"Execution halted at", w:"minmax(125px,1.15fr)",sort:false, wrap:true },
   { key:"action",  label:"Action required",     w:"minmax(120px,1.1fr)", sort:false, wrap:true },
 ];
 const PB_AL_STICKY = PB_AL_COLS[PB_AL_COLS.length-1].key;
-const PB_AL_MIN_WIDTH = 1320;
+const PB_AL_MIN_WIDTH = 1500;
 const PB_AL_GRID = PB_AL_COLS.map(c=>c.w).join(" ");
 function PBALHeader({ sortKey, sortDir, onSort }) {
   return (
@@ -3313,6 +3366,8 @@ function PBALHeader({ sortKey, sortDir, onSort }) {
   );
 }
 function PBALRow({ row, onOpenRow }) {
+  const [tip, setTip] = useF(false);
+  const rs = row.reasons || [];
   const cell = {font:"500 12px/16px Roboto",color:"#333333",display:"flex",alignItems:"center",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0,padding:"0 2px"};
   const wrapCell = {font:"400 12px/16px Roboto",color:"#334155",display:"flex",alignItems:"center",minWidth:0,padding:"0 2px",whiteSpace:"normal",overflowWrap:"anywhere",textWrap:"pretty"};
   const AT_ICON = {
@@ -3332,7 +3387,7 @@ function PBALRow({ row, onOpenRow }) {
       <div style={cell}>{row.ts}</div>
       <div style={cell}>{row.te}</div>
       <div style={{...cell,justifyContent:"center",gap:6}}><img src={AT_ICON[row.status]||AT_ICON.completed} alt="" style={{width:18,height:18,objectFit:"contain"}} />{AT_LABEL[row.status]||AT_LABEL.completed}</div>
-      <div style={{...wrapCell,color:row.status==="needs-attention"?"#D6392C":"#94a3b8"}}>{row.reason}</div>
+      <div style={{...wrapCell,color:row.status==="needs-attention"?"#D6392C":"#94a3b8",flexWrap:"nowrap",gap:6,alignItems:"center"}}>{rs.length===0 ? row.reason : tip ? (<div style={{display:"flex",flexDirection:"column",gap:4,minWidth:0}}>{rs.map((x,k)=><span key={k}>{x}</span>)}{rs.length>1 && <span onClick={()=>setTip(false)} style={{color:"#2563eb",cursor:"pointer",font:"500 11px/16px Roboto"}}>Show less</span>}</div>) : (<><span title={rs[0]} style={{maxWidth:rs.length>1?"100%":"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block",minWidth:0,flex:"0 1 auto"}}>{rs[0]}</span>{rs.length>1 && <span onClick={()=>setTip(true)} title="Show all reasons" style={{display:"inline-flex",alignItems:"center",background:"#FDECEA",color:"#D6392C",border:"1px solid #F5C2BD",borderRadius:2,padding:"0 6px",font:"500 11px/18px Roboto",cursor:"pointer",whiteSpace:"nowrap"}}>+ {rs.length-1} more</span>}</>)}</div>
       <div style={{...wrapCell,color:row.status==="needs-attention"?"#334155":"#94a3b8"}}>{row.haltedAt}</div>
       <div style={{...wrapCell,color:row.status==="needs-attention"?"#334155":"#94a3b8",position:"sticky",right:-12,background:"#fff",boxShadow:"-8px 0 8px -6px rgba(15,23,42,.14)",paddingRight:14,zIndex:2}}>{row.action}</div>
     </div>
@@ -3359,7 +3414,8 @@ function PBCenterAutomationLogView({ rows, onOpenRow, initialSearch }) {
       ts: (r.auditDate||"07/18/25")+" "+(r.auditTime||"09:04 AM"),
       te: status==="in-progress" ? "—" : (r.auditDate||"07/18/25")+" "+(r.auditEndTime||"09:11 AM"),
       haltedAt: attention ? "Download 485 order from HCHB" : "—",
-      reason: attention ? "Unable to fetch documentation for audit" : "—",
+      reasons: pbReasonsOf(r),
+      reason: attention ? pbReasonsOf(r)[0] : "—",
       action: attention ? "Audit the record manually" : "—",
     };
   }), [rows]);

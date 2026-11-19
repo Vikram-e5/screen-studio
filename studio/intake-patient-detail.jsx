@@ -49,7 +49,7 @@ function ipdPayloadFor(row) {
   d.Demographics.service_location.Zip = row.zip;
   d.PayorSources.PayorSource[0].PolicyNumber = row.policy;
   d.PayorSources.PayorSource[0].Payor_Source = row.plan;
-  d.RPA_Chart_Status = String(row.chartPct);
+  d.RPA_Chart_Status = row.chartPct==null ? "" : String(row.chartPct);
   d.DataEntryStatus = row.chartPct===100 ? "Completed" : row.terminatedOn ? "Terminated" : row.at==="warning" ? "Failed" : "Pending";
   return d;
 }
@@ -103,6 +103,21 @@ function IPDTable({ cols, rows }) {
 }
 // Each IPDSub starts its own box, so sub-categories read as separate cards
 // instead of stacking inside one shared container.
+function IPDErrList({ errs }) {
+  const LIMIT = 4;
+  const [open, setOpen] = useIPD(false);
+  const list = open ? errs : errs.slice(0, LIMIT);
+  return (
+    <div>
+      {list.map((e,i)=>(
+        <div key={i} style={{display:"flex",gap:12,padding:"12px 14px",background:"#fef2f2",border:"1px solid #fecaca",borderRadius:6,marginBottom:8}}>
+          <div style={{font:"400 13px/19px Roboto",color:"#334155"}}>{e.desc}</div>
+        </div>
+      ))}
+      {errs.length > LIMIT && <button type="button" onClick={()=>setOpen(v=>!v)} style={{background:"transparent",border:"none",padding:"2px 0",cursor:"pointer",color:"#1677FF",font:"500 13px/18px Roboto"}}>{open ? "Show less" : "Show more (" + (errs.length - LIMIT) + ")"}</button>}
+    </div>
+  );
+}
 function IPDCard({ id, title, children, refs }) {
   const groups = [], notes = [];
   React.Children.toArray(children).forEach(ch => {
@@ -127,7 +142,7 @@ function IPDCard({ id, title, children, refs }) {
 }
 
 const IPD_SECTIONS = [
-  ["status","Intake Status"],["basic","Basic Info"],["demo","Demographics"],["referral","Referral Source"],
+  ["status","Intake Status"],["errors","Error Reasons"],["basic","Basic Info"],["demo","Demographics"],["referral","Referral Source"],
   ["payor","Payor Sources"],["phys","Physicians"],["dx","Diagnoses"],["sched","Scheduling"],["clinical","Clinical"],["attach","Attachments"],
 ];
 
@@ -148,6 +163,8 @@ function IPDIntakeInfo({ d, row }) {
   const pct=Number(d.RPA_Chart_Status)||0;
   const errs=row.errorReasons||[];
   const stTone={ Completed:["#E6F7E0","#9FCB8A","#1F7A3A"], Pending:["#FFFBF0","#F1D89A","#8A6A14"], Failed:["#FBE4E4","#E8A1A1","#B92D2D"], Terminated:["#f1f5f9","#cbd5e1","#475569"] }[d.DataEntryStatus] || ["#f1f5f9","#cbd5e1","#475569"];
+  const pv = row.preVal || "Yes";
+  const pvTone = pv==="Yes" ? ["#E6F7E0","#9FCB8A","#1F7A3A"] : ["#FBE4E4","#E8A1A1","#B92D2D"];
   const discharges=[]; const dz=(E.Discharges&&E.Discharges[0])||{};
   for (let i=1;i<=5;i++) if (ipdPresent(dz["DischargeDate"+i])||ipdPresent(dz["LastDayOfService"+i])) discharges.push({ n:i, dd:dz["DischargeDate"+i], ld:dz["LastDayOfService"+i] });
   const fileName = u => (u||"").split("/").pop();
@@ -164,36 +181,25 @@ function IPDIntakeInfo({ d, row }) {
         <IPDCard id="status" title="Intake Status" refs={refs}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:"16px 32px",alignItems:"start"}}>
             <div>
-              <div style={{font:"400 11px/14px Roboto",color:IPD.mute}}>Data Entry Status</div>
-              <span style={{display:"inline-block",marginTop:6,padding:"3px 12px",borderRadius:999,background:stTone[0],border:`1px solid ${stTone[1]}`,color:stTone[2],font:"500 12px/16px Roboto"}}>{d.DataEntryStatus}</span>
-            </div>
-            <div>
               <div style={{font:"400 11px/14px Roboto",color:IPD.mute}}>Chart Status</div>
               <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}>
                 <div style={{flex:1,maxWidth:160,height:6,borderRadius:3,background:IPD.divider,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:pct===100?"#16a34a":errs.length?"#dc2626":"#64748b"}}></div></div>
-                <span style={{font:"500 13px/16px Roboto",color:IPD.pri}}>{pct}%</span>
+                <span style={{font:"500 13px/16px Roboto",color:IPD.pri}}>{d.RPA_Chart_Status==="" ? "—" : pct+"%"}</span>
               </div>
-            </div>
-            <div>
-              <div style={{font:"400 11px/14px Roboto",color:IPD.mute}}>Referral Document</div>
-              <a href="#" onClick={e=>e.preventDefault()} style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:4,font:"500 13px/18px Roboto",color:IPD.blue,textDecoration:"none",overflowWrap:"anywhere"}}>
-                <img src={(window.__resources&&window.__resources.attachmentType)||"icons/attachment-type.svg"} width="16" height="16" alt="" />{d.ReferralDocumentFileName}
-              </a>
             </div>
           </div>
-          <IPDSub>Error Reasons</IPDSub>
+        </IPDCard>
+
+        <IPDCard id="errors" title="Error Reasons" refs={refs}>
           {errs.length===0
             ? <div style={{font:"400 13px/18px Roboto",color:IPD.faint}}>No error reasons recorded.</div>
-            : errs.map((e,i)=>(
-              <div key={i} style={{display:"flex",gap:12,padding:"12px 14px",background:"#fef2f2",border:"1px solid #fecaca",borderRadius:6,marginBottom:8}}>
-                <span style={{font:"700 12px/18px Roboto",color:"#dc2626",flexShrink:0}}>{String(i+1).padStart(2,"0")}</span>
-                <div style={{font:"400 13px/19px Roboto",color:"#334155"}}><span style={{color:"#dc2626",fontWeight:500}}>{e.loc}</span> {e.desc}</div>
-              </div>
-            ))}
+            : <IPDErrList errs={errs} />}
         </IPDCard>
 
         <IPDCard id="basic" title="Basic Info" refs={refs}>
-          <IPDSub first>Branch Assignment</IPDSub>
+          <IPDSub first>Patient Identifiers</IPDSub>
+          <IPDFields items={[["MRN",row.mrn],["Episode ID",row.episodeId],["Patient ID",d.PatientID]]} />
+          <IPDSub>Branch Assignment</IPDSub>
           <IPDFields items={[["Branch",B.BranchAssignment.Branch],["Team",B.BranchAssignment.Team],["Location",B.BranchAssignment.location]]} />
           <IPDSub>Patient Name</IPDSub>
           <IPDFields items={[["Last Name",B.PatientName.LastName],["First Name",B.PatientName.FirstName],["MI",B.PatientName.MI]]} />
@@ -263,16 +269,89 @@ function IPDIntakeInfo({ d, row }) {
         </IPDCard>
 
         <IPDCard id="attach" title="Attachments" refs={refs}>
-          <IPDTable cols={[["File",r=><a href="#" onClick={e=>e.preventDefault()} style={{color:IPD.blue,textDecoration:"none"}}>{fileName(r.URL)}</a>,"minmax(0,2fr)"],["File Type","FileType","80px"],["Attachment Type","AttachmentType"],["Location","Location"],["Effective Range",r=>{const e=r.EffectiveDateRange||{}; return ipdPresent(e.FromDate)||ipdPresent(e.ToDate) ? `${e.FromDate||"—"} → ${e.ToDate||"—"}` : "";}],["Comments","Comments"]]} rows={d.Attachments||[]} />
+          <IPDTable cols={[["File",r=><a href="#" onClick={e=>e.preventDefault()} style={{color:IPD.blue,textDecoration:"none"}}>{fileName(r.URL)}</a>,"minmax(0,2fr)"],["File Type","FileType","minmax(0,1fr)"]]} rows={d.Attachments||[]} />
         </IPDCard>
       </div>
     </div>
   );
 }
 
-function IntakePatientDetail({ row, onClose }) {
+// Per-patient run log, one row per stage up to the record's current stage (same shape as the PCR log).
+function ipdAddMins(s, mins) {
+  const m = /^(\d\d\/\d\d\/\d\d) (\d\d):(\d\d) (AM|PM)$/.exec(s||""); if (!m) return "—";
+  const t = (+m[2] % 12 + (m[4]==="PM"?12:0)) * 60 + +m[3] + mins, h = Math.floor(t/60)%24, mm = t%60;
+  return m[1]+" "+String(h%12||12).padStart(2,"0")+":"+String(mm).padStart(2,"0")+" "+(h>=12?"PM":"AM");
+}
+function ipdRuns(row) {
+  const all = window.IPT_ROWS || [], idx = Math.max(0, all.findIndex(x=>x.id===row.id));
+  const e5 = "IPT" + String(idx+1).padStart(9,"0");
+  const tasks = row.ehrTasks || [];
+  const stages = [["Pre-Validation", row.preVal!=="No"], ["Chart Creation", tasks[0] ? tasks[0][1] : true], ["Task 1 Stage Completion", tasks[0] ? tasks[0][1] : true], ["Task 2 Stage Completion", tasks[1] ? tasks[1][1] : true], ["Upload Attachments", tasks[2] ? tasks[2][1] : true], ["EHR Sync", !!row.ehrSync]];
+  const start = row.arrivedDate || "04/16/25 08:30 AM";
+  const out = [];
+  let clock = 4;
+  if (idx===0 || row.at==="thumb" || row.at==="warning") {
+    const S=["STAGE I - VALIDATE THE PATIENT INFORMATION","STAGE II - UPDATING PATIENT INFORMATION INTO HCHB","STAGE III - STAGE COMPLETE THE RECORD"];
+    S.forEach((stage,i)=>{ const st=ipdAddMins(start,clock), dur=3+(i*2)%5, last=i===S.length-1;
+      const cur = window.ialPIStage ? window.ialPIStage(row) : S[2];
+      if (row.at==="hourglass" && cur===S[1] && i===2) return;
+      if (row.at==="hourglass" && stage===cur) out.push({ e5, stage, st, et:"—", status:"In Progress", at:"hourglass" });
+      else if (row.at==="hourglass" && i>S.indexOf(cur)) return;
+      else if (row.at==="warning" && i===2) return;
+      else if (row.at==="warning" && i===1) out.push({ e5, stage, st, et:ipdAddMins(start,clock+dur), status:row.atGroup==="failed"?"Failed":"Terminated", at:"warning", atGroup:row.atGroup, atReason:row.atReason });
+      else if (last && row.at==="warning") out.push({ e5, stage, st, et:ipdAddMins(start,clock+dur), status:"Needs Attention", at:"warning", atGroup:row.atGroup, atReason:row.atReason });
+      else out.push({ e5, stage, st, et:ipdAddMins(start,clock+dur), status:"Completed", at:"thumb" });
+      clock+=dur+1; });
+    return out.map(r=>({ ...r, agency:row.agency, episodeId:row.episodeId, patientId:row.patientId, sparcId:row.sparcId, preVal:row.preVal||"Yes", queued:ipdAddMins(start, 0) }));
+  }
+  for (let i=0; i<stages.length; i++) {
+    const [stage, ok] = stages[i];
+    const st = ipdAddMins(start, clock), dur = 3 + (i*2) % 5;
+    const blankChart = row.chartPct==null && i>=1;
+    if (row.at==="hourglass" && (blankChart || (!ok && i>0))) { out.push({ e5, stage, st, et:"—", status:"In Progress", at:"hourglass" }); break; }
+    if (row.at==="warning" && (!ok || blankChart || i===stages.length-1 && !ok)) { out.push({ e5, stage, st, et:ipdAddMins(start, clock+dur), status:"Needs Attention", at:"warning", atGroup:row.atGroup, atReason:row.atReason }); break; }
+    out.push({ e5, stage, st, et:ipdAddMins(start, clock+dur), status:"Completed", at:"thumb" });
+    clock += dur + 1;
+    if (row.at==="hourglass" && i>=Math.min(4, Math.floor((row.chartPct||0)/20))) { out.push({ e5, stage:stages[i+1]?stages[i+1][0]:"EHR Sync", st:ipdAddMins(start, clock), et:"—", status:"In Progress", at:"hourglass" }); break; }
+  }
+  return out.map(r=>({ ...r, agency:row.agency, wf:"Intake - Patient Intake Processing", episodeId:row.episodeId, patientId:row.patientId, sparcId:row.sparcId, preVal:row.preVal||"Yes", queued:ipdAddMins(start, 0) }));
+}
+const IPD_LOG_COLS = [["e5","E5 ID","minmax(110px,1fr)"],["agency","Agency","minmax(90px,0.8fr)"],["stage","Current Stage","minmax(220px,2fr)"],["episodeId","Episode ID","minmax(90px,0.8fr)"],["patientId","Patient ID","minmax(80px,0.7fr)"],["sparcId","Sparc ID","minmax(90px,0.8fr)"],["queued","Queue Added Time","minmax(130px,1.1fr)"],["st","Start Time","minmax(130px,1.1fr)"],["et","End Time","minmax(130px,1.1fr)"],["status","Status","minmax(110px,1fr)"],["at","AT Status","70px"]];
+function IPDAutoLog({ row }) {
+  const runs = ipdRuns(row), grid = IPD_LOG_COLS.map(c=>c[2]).join(" ");
+  const ARVATIcon = window.ARVATIcon, H = window.IPTATHover;
+  const tone = { "Completed":"#334155", "In Progress":"#1D4ED8", "Needs Attention":"#B45309", "Terminated":"#B45309", "Failed":"#B45309" };
+  return (
+    <div style={{height:"100%",overflow:"auto",padding:"16px 20px 24px"}}>
+      <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block",marginBottom:14}}>Stage-wise automation runs for this intake transaction</div>
+      <div style={{minWidth:1220}}>
+        <div style={{display:"grid",gridTemplateColumns:grid,gap:6,alignItems:"center",background:"#f8fafc",borderBottom:"1px solid #e2e8f0",minHeight:40,padding:"0 12px"}}>
+          {IPD_LOG_COLS.map(c=><div key={c[0]} style={{font:"500 11px/14px Roboto",color:"#64748b",whiteSpace:"nowrap",textAlign:c[0]==="at"||c[0]==="preVal"?"center":"left"}}>{c[1]}</div>)}
+        </div>
+        <div style={{paddingTop:6}}>
+          {runs.map((r,i)=>(
+            <div key={i} style={{display:"grid",gridTemplateColumns:grid,gap:6,alignItems:"center",minHeight:48,padding:"6px 12px",border:"1px solid #e2e8f0",borderRadius:6,marginBottom:6,background:"#fff",position:"relative"}}>
+              <div style={{position:"absolute",left:8,top:8,bottom:8,width:3,background:"#6660A6",borderRadius:2}}></div>
+              {IPD_LOG_COLS.map(([k])=> k==="at" ? (
+                <div key={k} style={{display:"flex",justifyContent:"center"}}>{H ? <H row={r} label={r.status} icon={ARVATIcon ? <ARVATIcon kind={r.at} /> : null} /> : null}</div>
+              ) : k==="preVal" ? (
+                <div key={k} style={{display:"flex",justifyContent:"center"}}><span style={{padding:"1px 10px",borderRadius:999,font:"500 11px/16px Roboto",background:r.preVal==="Yes"?"#E6F7E0":"#FBE4E4",border:`1px solid ${r.preVal==="Yes"?"#9FCB8A":"#E8A1A1"}`,color:r.preVal==="Yes"?"#1F7A3A":"#B92D2D"}}>{r.preVal}</span></div>
+              ) : (
+                <div key={k} title={String(r[k])} style={{font:"500 12px/16px Roboto",color:k==="e5"?"#2563eb":k==="status"?(tone[r.status]||"#333"):"#333",paddingLeft:k==="e5"?14:0,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0}}>{r[k]}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IntakePatientDetail({ row, onClose, initialLog }) {
+  const [showLog, setShowLog] = useIPD(!!initialLog);
   const d = ipdPayloadFor(row);
-  const fields = [["MRN",row.mrn],["Episode ID",row.episodeId],["Patient ID",d.PatientID],["Universal Patient ID",d.UniversalPatientID]].filter(f=>ipdPresent(f[1]));
+  if (row.patientId) d.PatientID = row.patientId;
+  const fields = [["MRN",row.mrn],["DOB",row.dob]].filter(f=>ipdPresent(f[1]));
   return (
     <div style={{position:"fixed",inset:0,zIndex:60}}>
       <style>{`@keyframes ipdFade{from{opacity:0}to{opacity:1}} @keyframes ipdSlide{from{transform:translateX(28px);opacity:.6}to{transform:translateX(0);opacity:1}}`}</style>
@@ -298,12 +377,14 @@ function IntakePatientDetail({ row, onClose }) {
           </div>
           <div style={{margin:"0 20px",height:1,background:IPD.tab}}></div>
           <div style={{margin:"0 20px",display:"flex",alignItems:"flex-end",padding:"12px 0 0",borderBottom:`1px solid ${IPD.tab}`}}>
-            <div style={{background:"#fff",border:`1px solid ${IPD.tab}`,borderBottom:"1px solid #fff",borderRadius:"6px 6px 0 0",padding:"9px 18px",font:"500 14px/18px Roboto",color:IPD.blue,marginBottom:-1,position:"relative",zIndex:2}}>Intake Info</div>
-            <a href="#" onClick={e=>e.preventDefault()} style={{marginLeft:"auto",marginBottom:10,font:"400 13px/16px Roboto",color:IPD.blue,textDecoration:"none"}}>Automation Log</a>
+            <div style={{background:"#fff",border:`1px solid ${IPD.tab}`,borderBottom:"1px solid #fff",borderRadius:"6px 6px 0 0",padding:"9px 18px",font:"500 14px/18px Roboto",color:IPD.blue,marginBottom:-1,position:"relative",zIndex:2}}>{showLog ? "Automation Log" : "Patient Intake Info"}</div>
+            {showLog
+              ? <a href="#" onClick={e=>{ e.preventDefault(); setShowLog(false); }} style={{marginLeft:"auto",marginBottom:10,font:"400 13px/16px Roboto",color:IPD.blue,textDecoration:"none"}}>← Back to Patient Intake Info</a>
+              : <a href="#" onClick={e=>{ e.preventDefault(); setShowLog(true); }} style={{marginLeft:"auto",marginBottom:10,font:"400 13px/16px Roboto",color:IPD.blue,textDecoration:"none"}}>Automation Log</a>}
           </div>
         </div>
         <div style={{flex:1,minHeight:0,overflow:"hidden",background:"#fff",margin:"0 20px 20px",borderLeft:`1px solid ${IPD.tab}`,borderRight:`1px solid ${IPD.tab}`,borderBottom:`1px solid ${IPD.tab}`,borderRadius:"0 0 6px 6px"}}>
-          <IPDIntakeInfo d={d} row={row} />
+          {showLog ? <IPDAutoLog row={row} /> : <IPDIntakeInfo d={d} row={row} />}
         </div>
       </div>
     </div>

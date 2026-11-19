@@ -4,10 +4,13 @@ const RPT_SKIP = /^(docs|reviewed\??|view details|action|key|value|alerts|elig a
 const rptCols = (...lists) => { const seen = new Set(), out = []; lists.flat().forEach(l => { const k = l.toLowerCase(); if (!RPT_SKIP.test(l) && !seen.has(k)) { seen.add(k); out.push(l); } }); return out; };
 
 const RPT_SERVICES = [
-  { key:"intake", label:"Intake", sections:["intake"],
+  { key:"ereferral", label:"E-referral", sections:["intake"],
     filters:["date","branch","agency","referralHub"],
     cols: rptCols(["Patient Name","Patient DOB","Gender","Agency","Policy Number","Referral Hub","Portal Sync","Patient Zipcode","Primary Plan","Referral ID","Referral Date","SOC","Referral Comment","Discharge Date","Type of Care","Branch","Sending Facility","Sending Organization","Referral Source","Payer Matched","Zipcode Matched","Referral Source Matched","Rules Engine Response","Referral Response","Referral Response Reason","Agency Referral Response","Agency Referral Response Reason","Document Send Status","Referral Hub Ack Status","Receiver Branch Code","AT Status"],
-                  ["MRN","Episode ID","EHR Sync","Chart Status","Error Reasons"]) },
+                  ) },
+  { key:"intake", label:"Patient Intake", sections:["intake"],
+    filters:["date","branch","chartStatus"],
+    cols: rptCols(["Patient Name","MRN","Episode ID","Patient ID","Branch","Intake Init. Date","EHR Sync","AT Status","AT Reason","Chart Status","Transaction Start Time","Transaction End Time"]) },
   { key:"eligibility", label:"Eligibility", sections:["eligibility"],
     filters:["date","gateway","branch","payorSource"],
     cols: rptCols(["Patient Name","MRN","Agency","Branch","Mem ID","Payor Src","Payor","SOC","Elig Init Date","Mode","GW","Elig Chk Dt","Follow up Dt","AT Status","Cov. Status","Transaction Type","Stage","Episode ID","Service Line","EHR Sync","Payer Hierarchy"],
@@ -31,6 +34,8 @@ const RPT_SERVICES = [
                   ["Batch E5 ID","Batch ID","Total Claims in Batch","Payment Model","Batch Status","Parsing Status","Reason","Stage"]) },
   { key:"remits", label:"Remits", sections:["remits"], filters:["date","serviceLine"],
     cols: rptCols(["Patient Name","Trans Init Date","Service Line","Patient Control Number","Payment ID","Denial Codes","Clearing House Location","Clearing House Payor","Clearing House Insurance Code","EOB Uploaded","AT Status","EHR Sync"]) },
+  { key:"collections", label:"Collections", sections:["collections"], filters:["date","branch","collStatus","collReason","collOwner"],
+    cols: rptCols(["Claim #","Patient ID","Payer","Branch","Status","Reason","Payer Code","Billed","Balance","Age (Days)","Deadline","Next Step","Follow up Dt","Owner"]) },
   { key:"docext", label:"Doc Extraction", sections:["docext"], filters:["date","branch","eventType"],
     cols: rptCols(["Patient Name","Patient MRN","Agency Name","Branch Code","Episode ID","Event Type","Referral Attachment","Visit Notes","Download Status","AT Status"]) },
   { key:"f2f", label:"F2F Audit", sections:["audit_f2f"], filters:["date","branch","auditor"],
@@ -57,6 +62,11 @@ const RPT_FILTERS = {
   eventType:       { label:"Event Type", options:["All","SOC","ROC","Recert","Discharge"] },
   auditor:         { label:"Auditor", options:["All","Fiona Gallagher","Bob Smith","Ethan Hunt","Diana Ross"] },
   auditResult:     { label:"Audit Result", options:["All","Met","Unmet","Resolved"] },
+  chartStatus:     { label:"Chart Status", options:["All","With Chart Status","No Chart Status"] },
+  collStatus:      { label:"Status", options:["All","Completed","Paid","Denied","ADR","Underpaid","Pending","Rejected"] },
+  collReason:      { label:"Reason", options:["All","Authorization","Medical necessity","Missing information","Duplicate claim","Timely filing","Coverage / eligibility","No payer response","Payer shows paid","Records request","Patient share","Second payer due","Paid in full","Invalid MBI / demographics","Provider NPI mismatch"], wide:true },
+  collOwner:       { label:"Assigned To", options:["All","Asha Menon","Daniel Brooks","Maria Lopez","Kevin Osei","Priya Shah","Jordan Ellis","Unassigned"] },
+  preValidation:   { label:"Pre-Validation", options:["All","Yes","No"] },
 };
 
 const RPT_BLUE = "rgb(22,119,255)", RPT_STEP = "rgb(53,78,180)", RPT_LINE = "rgb(237,237,237)", RPT_INPUT = "rgb(217,217,217)";
@@ -88,10 +98,10 @@ function RptCheck({ on, label, onClick, bold }) {
     </label>
   );
 }
-function RptField({ label, children, wide }) {
+function RptField({ label, children, wide, noHelp }) {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:4,minWidth:0,gridColumn:wide?"1 / -1":undefined}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,font:`400 14px/22px ${RptFont}`,color:"rgba(0,0,0,0.88)"}}>{label}<RptHelp /></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,font:`400 14px/22px ${RptFont}`,color:"rgba(0,0,0,0.88)"}}>{label}{!noHelp && <RptHelp />}</div>
       {children}
     </div>
   );
@@ -186,7 +196,7 @@ function RptDateRange({ from, to, setFrom, setTo }) {
 function ReportsDrawer({ section }) {
   const [open, setOpen] = React.useState(false);
   const [done, setDone] = React.useState(false);
-  const pickDefault = () => (RPT_SERVICES.find(s => s.sections.includes(section)) || RPT_SERVICES[2]).key;
+  const pickDefault = () => (RPT_SERVICES.find(s => s.sections.includes(section) && ["eligibility","authorization","claims","remits","collections"].includes(s.key)) || RPT_SERVICES[2]).key;
   const [svc, setSvc] = React.useState(pickDefault);
   const today = new Date(), monthAgo = new Date(Date.now() - 30*864e5);
   const [from, setFrom] = React.useState(rptIso(monthAgo));
@@ -242,7 +252,7 @@ function ReportsDrawer({ section }) {
               <div style={{display:"flex",flexDirection:"column",gap:16,paddingBottom:24,borderBottom:`1px solid ${RPT_LINE}`}}>
                 <RptStep n={1} text="Select Service for the Report" />
                 <div style={{display:"grid",gridTemplateColumns:"repeat(5, max-content)",justifyContent:"space-between",gap:"12px 18px"}}>
-                  {RPT_SERVICES.map(s => <RptRadio key={s.key} on={svc===s.key} label={s.label} onClick={()=>setSvc(s.key)} />)}
+                  {["eligibility","authorization","claims","remits","collections"].map(k => RPT_SERVICES.find(x => x.key===k)).map(s => <RptRadio key={s.key} on={svc===s.key} label={s.label} onClick={()=>setSvc(s.key)} />)}
                 </div>
               </div>
 
@@ -252,12 +262,12 @@ function ReportsDrawer({ section }) {
                   {service.filters.map(k => {
                     const f = RPT_FILTERS[k];
                     if (f.type === "date") return (
-                      <RptField key={k} label={f.label}>
+                      <RptField key={k} label={f.label} noHelp={service.key==="intake"}>
                         <RptDateRange from={from} to={to} setFrom={setFrom} setTo={setTo} />
                       </RptField>
                     );
                     return (
-                      <RptField key={k} label={f.label} wide={f.wide}>
+                      <RptField key={k} label={f.label} wide={f.wide} noHelp={service.key==="intake"}>
                         <div style={{maxWidth:f.wide?"100%":undefined}}><RptSelect value={fval(k)} options={f.options} onChange={v=>setFilters(o=>({...o,[k]:v}))} /></div>
                       </RptField>
                     );

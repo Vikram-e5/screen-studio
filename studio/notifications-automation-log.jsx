@@ -36,6 +36,7 @@ function notLogStage(r, i) {
   if (r.at==="thumb") return NOT_LOG_STAGES[3];
   if (r.at==="hourglass") return NOT_LOG_STAGES[i % 4];
   if (r.at==="warning") return NOT_LOG_STAGES[NOT_LOG_REASON_STAGE[r.atReason] ?? 1];
+  if (r.at==="intervention") return NOT_LOG_STAGES[0];
   return "—";
 }
 
@@ -43,6 +44,7 @@ const NOT_LOG_CARDS = [
   { id:"all",       label:"All Transactions", color:"rgb(21,95,130)",   match:()=>true,                icon:null },
   { id:"thumb",     label:"Completed",        color:"rgb(14,165,233)",  match:(r)=>r.at==="thumb",     get icon(){ return (window.__resources&&window.__resources.atCompleted)||"icons/at-completed.png"; } },
   { id:"warning",   label:"Needs Attention",  color:"rgb(245,158,11)",  match:(r)=>r.at==="warning",   get icon(){ return (window.__resources&&window.__resources.atNeedsAttention)||"icons/at-needs-attention.png"; } },
+  { id:"intervention", label:"Needs Intervention", color:"rgb(217,119,6)", match:(r)=>r.at==="intervention", icon:null, glyph:true },
   { id:"hourglass", label:"In Progress",      color:"rgb(148,163,184)", match:(r)=>r.at==="hourglass", get icon(){ return (window.__resources&&window.__resources.atInProgress)||"icons/at-in-progress.png"; } },
 ];
 const NOT_LOG_FIELDS = [
@@ -59,6 +61,7 @@ function NOTLogATIcon({ kind }) {
   if (kind==="thumb")     return <img title="Completed"       alt="Completed"       src={res.atCompleted||"icons/at-completed.png"} style={{width:18,height:18,objectFit:"contain"}} />;
   if (kind==="warning")   return <img title="Needs Attention" alt="Needs Attention" src={res.atNeedsAttention||"icons/at-needs-attention.png"} style={{width:18,height:18,objectFit:"contain"}} />;
   if (kind==="hourglass") return <img title="In Progress"     alt="In Progress"     src={res.atInProgress||"icons/at-in-progress.png"} style={{width:18,height:18,objectFit:"contain"}} />;
+  if (kind==="intervention") { const G = window.NOTInterventionGlyph || window.RCDInterventionGlyph; return <span title="Needs Intervention" style={{display:"inline-flex"}}>{G ? <G size={18} title="Needs Intervention" /> : null}</span>; }
   return <span style={{color:"#cbd5e1"}}>—</span>;
 }
 
@@ -89,7 +92,8 @@ function NOTAutomationSlider({ row, logRows, onClose }) {
   const mine = logRows.filter(r => r.mrn === row.mrn && r.name === row.name);
   const [ep, setEp]   = useNOTL("");
   const [ref, setRef] = useNOTL(row.ref);
-  const shown = mine.filter(r => (!ep || r.episodeId === ep) && (!ref || r.ref === ref));
+  const shown = mine.filter(r => (!ep || r.episodeId === ep) && (!ref || r.ref === ref))
+    .flatMap(r => r.skipFax ? [3,2,0].map((k,j)=>({ ...r, stage: NOT_LOG_STAGES[k], at:"thumb", atReason:null, st: r.st.replace("09:39 AM", ["03:58 PM","02:41 PM","09:39 AM"][j]), et: r.et.replace("04:12 PM", ["04:12 PM","02:55 PM","09:52 AM"][j]) })) : [r]);
   const blue = "#1677FF";
   const fields = [["MRN", row.mrn], ["Service Line", row.serviceLine], ["Branch", row.branchId], ["Episode ID", row.episodeId]];
   const hd = {font:"500 11px/14px Roboto",color:"#64748b",padding:"8px 10px",background:"#f8fafc",border:"1px solid #e2e8f0",whiteSpace:"nowrap",textAlign:"left"};
@@ -147,7 +151,7 @@ function NOTAutomationSlider({ row, logRows, onClose }) {
                 <tbody>{shown.length===0
                   ? <tr><td colSpan={11} style={{...td,color:"#94a3b8",textAlign:"center",padding:"28px 10px"}}>No notification workflows match the selection.</td></tr>
                   : shown.map((r,i)=>(
-                    <tr key={r.ref} style={{background:i%2===0?"#fff":"#fafafa"}}>
+                    <tr key={r.ref+"|"+r.stage} style={{background:i%2===0?"#fff":"#fafafa"}}>
                       <td style={{...td,color:blue,fontWeight:500}}>{r.ref}</td>
                       <td style={td}>{r.episodeId}</td>
                       <td style={td}>{r.event}</td>
@@ -192,6 +196,7 @@ function NotificationsAutomationLogView({ onRefClick }) {
     st: r.dueDate + " 09:39 AM",
     et: r.at==="hourglass" ? "—" : r.dueDate + " 04:12 PM",
     at: r.at,
+    skipFax: r.skipFax,
   }));
 
   const [cardFilter, setCardFilter] = useNOTL(null);
@@ -252,6 +257,7 @@ function NotificationsAutomationLogView({ onRefClick }) {
                   <div style={{height:3,borderRadius:2,background:c.color,opacity:active?1:0.85}}></div>
                   <div style={{display:"flex",alignItems:"center",gap:5,font:"400 13px/17px Roboto",color:active?"#0f172a":(dim&&isAll)?"#b0b0b0":"#605D5D",whiteSpace:"nowrap"}}>
                     {c.icon && <img src={c.icon} alt="" title={c.label} style={{width:18,height:18,objectFit:"contain",flexShrink:0}} />}
+                    {c.glyph && <NOTLogATIcon kind="intervention" />}
                     {c.label}
                   </div>
                   <div style={{font:"500 16px/20px Roboto",color:active?"#0f172a":(dim&&isAll)?"#b0b0b0":"#605D5D"}}>{notlPad(val)}</div>
@@ -296,4 +302,58 @@ function NotificationsAutomationLogView({ onRefClick }) {
   );
 }
 
-if (typeof window !== "undefined") Object.assign(window, { NotificationsAutomationLogView, NOTAutomationSlider });
+// Patient Details → Notification Info → Automation Log: stage history of the one record
+// the drawer was opened from, latest stage on top.
+function NOTPatientAutoLog({ row, onSubTab, notifOnly }) {
+  const r = row || (typeof window!=="undefined" && window.__notifForDrawer);
+  const all = (typeof window!=="undefined" && window.NOT_ROWS) || [];
+  const blue = "#1677FF";
+  const hd = {font:"500 11px/14px Roboto",color:"#64748b",padding:"8px 10px",background:"#f8fafc",border:"1px solid #e2e8f0",whiteSpace:"nowrap",textAlign:"left"};
+  const td = {padding:"10px 10px",border:"1px solid #e2e8f0",font:"400 12px/16px Roboto",color:"#334155",whiteSpace:"nowrap"};
+  const dash = <span style={{color:"#cbd5e1"}}>—</span>;
+  const tabs = notifOnly ? [["notif","Notifications"]] : [["elig","Eligibility"],["auth","Authorization"],["pcr","PCR"],["notif","Notifications"]];
+  let stages = [];
+  if (r) {
+    const i = all.findIndex(x=>x.id===r.id);
+    const ref = "NOT" + String(i+1).padStart(10,"0");
+    const cur = r.at==="thumb" ? 3 : r.at==="intervention" ? 0 : r.at==="warning" ? (NOT_LOG_REASON_STAGE[r.atReason] ?? 1) : (i % 4);
+    const t = (m)=>{ const h = 9 + Math.floor((39+m)/60), mm = (39+m)%60; return r.dueDate + " " + String(h>12?h-12:h).padStart(2,"0") + ":" + String(mm).padStart(2,"0") + (h>=12?" PM":" AM"); };
+    for (let k=cur; k>=0; k--) {
+      if (r.skipFax && k===1) continue;
+      const last = k===cur;
+      stages.push({ ref, stage: NOT_LOG_STAGES[k], st: t(k*13), et: last && r.at==="hourglass" ? "—" : t(k*13+11), at: last ? r.at : "thumb", reason: last ? r.atReason : null });
+    }
+  }
+  return (
+    <div style={{padding:"0 28px 32px"}}>
+      <div style={{display:"flex",alignItems:"flex-end",borderBottom:"1px solid #e2e8f0",marginBottom:14}}>
+        {tabs.map(([k,l])=>{ const on = k==="notif"; return <button key={k} type="button" onClick={()=>!on && onSubTab && onSubTab(k)} style={{background:"transparent",border:"none",cursor:"pointer",padding:"10px 2px",font:(on?500:400)+" 14px/18px Roboto",color:on?blue:"#64748b",borderBottom:"2px solid "+(on?blue:"transparent"),marginRight:28,marginBottom:-1}}>{l}</button>; })}
+      </div>
+      <div style={{font:"400 12px/16px Roboto",color:"#64748b",marginBottom:12}}>Transaction Status of Notification Workflows</div>
+      {!r ? <div style={{...td,border:"1px dashed #e2e8f0",textAlign:"center",color:"#94a3b8",padding:"28px 10px"}}>No notification record selected.</div> : (
+        <div style={{overflowX:"auto"}}>
+          <table style={{borderCollapse:"collapse",width:"100%",minWidth:1200}}>
+            <thead><tr>{["Ref ID","Episode ID","Event","Task Type","Report Name","Physician/Facility Name","Comm. Method","Stage","Start Time","End Time","Status"].map(h=><th key={h} style={hd}>{h}</th>)}</tr></thead>
+            <tbody>{stages.map((x,j)=>(
+              <tr key={x.stage} style={{background:j%2===0?"#fff":"#fafafa"}}>
+                <td style={{...td,color:blue,fontWeight:500}}>{x.ref}</td>
+                <td style={td}>{r.episodeId}</td>
+                <td style={td}>{r.event || dash}</td>
+                <td style={{...td,maxWidth:240,overflow:"hidden",textOverflow:"ellipsis"}} title={r.taskType}>{r.taskType}</td>
+                <td style={td}>{r.reportName || dash}</td>
+                <td style={td}>{r.physFacilityName || dash}</td>
+                <td style={td}>{r.commMethod || dash}</td>
+                <td style={{...td,maxWidth:320,overflow:"hidden",textOverflow:"ellipsis"}} title={x.reason ? x.stage + " — " + x.reason : x.stage}>{x.stage}</td>
+                <td style={td}>{x.st}</td>
+                <td style={td}>{x.et==="—" ? dash : x.et}</td>
+                <td style={{...td,textAlign:"center"}}><NOTLogATIcon kind={x.at} /></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+if (typeof window !== "undefined") Object.assign(window, { NotificationsAutomationLogView, NOTAutomationSlider, NOTPatientAutoLog });

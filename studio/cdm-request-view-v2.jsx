@@ -264,10 +264,10 @@ function CDMTableRow({ row, reviewed, onReviewed, onDocsClick, accent="#2563eb" 
         <div style={cell("center")}><CDMATIcon at={row.at} /></div>
         <div style={{...cell("center"),cursor:row.docs?"pointer":"default"}} onClick={row.docs?()=>onDocsClick&&onDocsClick(row):undefined}><CDMDocIcon size={18} faded={!row.docs} /></div>
         <div style={cell("center")}>
-          <span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed&&onReviewed(row.id)}
+          <window.BRCell scope="cdm" id={row.id} reviewed={!!reviewed}><span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed&&onReviewed(row.id)}
             style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:`1px solid ${reviewed?accent:"#d8d8d8"}`,borderRadius:3,background:reviewed?accent:"#fff",cursor:"pointer",transition:"all .12s"}}>
             {reviewed&&<span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}
-          </span>
+          </span></window.BRCell>
         </div>
       </div>
 
@@ -410,7 +410,7 @@ function CDMRequestView({ review }) {
   const [sortDir, setSortDir] = useCDM("asc");
   const [reviewedSet, setReviewedSet] = useCDM({});
   const [docsRow, setDocsRow] = useCDM(null);
-  const toggleReviewed = id => setReviewedSet(s=>({...s,[id]:!s[id]}));
+  const toggleReviewed = id => setReviewedSet(s=>s[id]?s:({...s,[id]:true}));
   const handleSort = k => { if(sortKey===k) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortKey(k); setSortDir("asc"); } };
 
   const needsReview = (r) => r.at === "warning" && !reviewedSet[r.id];
@@ -425,6 +425,7 @@ function CDMRequestView({ review }) {
   if(atFilter==="inprogress") rows=rows.filter(r=>r.at==="hourglass");
   if(search.trim()){ const q=search.toLowerCase(); rows=rows.filter(r=>r.name.toLowerCase().includes(q)||r.mrn.toLowerCase().includes(q)||r.episodeId.toLowerCase().includes(q)); }
   if(review) rows=rows.filter(r=>needsReview(r));
+  window.useBRScope("cdm", rows, reviewedSet, setReviewedSet);
 
   const counts = cdmCountsFor(CDM_ROWS);
 

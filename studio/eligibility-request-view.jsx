@@ -1264,7 +1264,7 @@ function EligEntryDrawer({ row, patient, onClose, onSave, initialEntry, onNoteAd
   return (
     <div style={{position:"fixed",inset:0,zIndex:1000}}>
       <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(15,23,42,0.45)"}}></div>
-      <div style={{position:"fixed",right:0,top:0,height:"100vh",width:docsOpen?"min(1908px,98vw)":"min(1520px,98vw)",boxShadow:"-16px 0 40px rgba(15,23,42,0.18)",display:"flex",flexDirection:"row",transition:"width .18s ease"}}>
+      <div data-neos-slider="1" style={{position:"fixed",right:0,top:0,height:"100vh",width:docsOpen?"min(1908px,98vw)":"min(1520px,98vw)",boxShadow:"-16px 0 40px rgba(15,23,42,0.18)",display:"flex",flexDirection:"row",transition:"width .18s ease"}}>
       <div style={{flex:1,minWidth:0,background:"#fff",display:"flex",flexDirection:"column",overflow:"hidden"}}>
 
         {/* ── Header ── */}

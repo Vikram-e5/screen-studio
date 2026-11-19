@@ -32,6 +32,7 @@ const SRC = {
   prebill: () => G("pbRows") || [],
   ipt:     () => window.IPT_ROWS || [],
   ipe:     () => window.IPE_ROWS || [],
+  coll:    () => window.COL_ROWS || [],
 };
 const SECTION = {
   claim:   ["rcd", 0, "Claim Center", "Claim Status View"],
@@ -44,6 +45,7 @@ const SECTION = {
   prebill: ["audit_prebill", 0, "Pre-Bill Audit Center", "Pre-Bill Audit View"],
   ipt:     ["intake", 1, "Intake Center", "Patient intake"],
   ipe:     ["intake", 1, "Intake Center", "Pre-Eligibility"],
+  coll:    ["collections", 0, "Collections Center", "Collections Worklist"],
 };
 const HAS_DETAIL = { claim:1, batch:1, cdm:1, docext:1, denial:1, cash:1 };
 const keyOf = (r) => r.id || (r.mrn + "|" + r.name + "|" + (r.auditDate||r.trigger||""));
@@ -579,12 +581,14 @@ const QCOLS = {
   prebill: [["name","Patient"],["mrn","MRN"],["trigger","Audit Trigger"],["auditDate","Audit Date"],["pctS","Compliance","right"],["metS","Requirements"]],
   ipt:     [["name","Patient"],["mrn","MRN"],["refHub","Referral Hub"],["plan","Plan"],["chartStage","Chart Stage"],["alerts","Alerts","right"]],
   ipe:     [["name","Patient"],["plan","Plan"],["gw","Gateway"],["covS","Coverage"],["atReason","Reason"]],
+  coll:    [["name","Patient"],["claimNumber","Claim #"],["payor","Payor"],["category","Category"],["balS","Balance","right"],["status","Status"]],
 };
 const qRow = (kind, r) => {
   const x = { ...r };
   if (kind==="denial") x.codes = (r.denialCodes||[]).join(", ");
   if (kind==="cash") { x.amt = usd(r.amount); x.vari = usd(r.variance); }
   if (kind==="prebill") { x.pctS = r.pct + "%"; x.metS = r.met ? "Met" : "Not Met"; }
+  if (kind==="coll") x.balS = usd(r.balance).replace(/\.00$/,"");
   if (kind==="ipe") x.covS = { accepted:"Active", declined:"Inactive", ineligible:"Exception" }[r.cov] || r.cov;
   ["status","currentStatus","remitStatus","req","metS","covS","download","chartStage"].forEach(k => { if (typeof x[k] === "string" && x[k]) x[k] = <Pill tone={toneOf(x[k])}>{x[k]}</Pill>; });
   return x;
@@ -622,12 +626,75 @@ function Queue({ kind, label, rows, dash, onBack, onOpen }) {
 // its line items and documents as accordions.
 const PATIENT_KINDS = { claim:"Claim Info", cdm:"CDM Info", docext:"Extraction Info", denial:"Denial Info" };
 const LINE_TAB = { claim:(r) => "Claim - " + r.claimNumber, cdm:(r) => "Episode - " + r.episodeId, docext:(r) => "E5 ID - " + r.ref, denial:(r) => "Account - " + r.acct };
+const CI_ADDR = ["123 MAIN STREET, CITY, ST 12345","88 HARBOR ROAD, CITY, ST 23410","402 ELM AVENUE, CITY, ST 34571","17 SUMMIT WAY, CITY, ST 45602"];
+const ci$ = (x) => "$" + (+x || 0).toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
+function V2ClaimAccordions({ recs, focusId }) {
+  const [op, setOp] = useS(() => (recs.length===1 ? { [recs[0].id]: true } : { [focusId]: true }));
+  const lbl = (t) => <div style={{ font:"400 11px/16px " + F, color:"#6A717D" }}>{t}</div>, val = (t, big) => <div style={{ font:(big ? "500 15px/20px " : "400 13px/18px ") + F, color:"#0f172a", marginTop:2 }}>{t}</div>;
+  const card = (title, kids) => <div style={{ border:"1px solid #d8e2ea", borderRadius:6, overflow:"hidden", background:"#fff" }}><div style={{ background:"#6D96B4", color:"#fff", padding:"10px 16px", font:"500 13px/18px " + F }}>{title}</div><div style={{ padding:"14px 16px 16px" }}>{kids}</div></div>;
+  const pair = (cells) => <div style={{ display:"flex", flexWrap:"wrap", gap:"0 28px", marginBottom:14 }}>{cells.map(([k, x]) => <div key={k}>{lbl(k)}{val(x)}</div>)}</div>;
+  return (
+    <div style={{ padding:"22px clamp(16px, 2.4vw, 36px) 40px" }}>
+      {recs.map((r, ci) => {
+        const o = !!op[r.id], s = r.status || "Payor Pending", amt = num(r.chargeAmt), rej = /Rejected/.test(s), chRej = s === "CH Rejected", appr = s === "Payor Accepted";
+        const steps = chRej ? [["CH Pending", 0], ["CH Rejected", 1]] : [["CH Pending", 0], ["CH Approved", 1], [s === "Payor Rejected" ? "Payor Rejected" : "Payor Pending", 2], ["Payor Approved", 3]];
+        const curI = chRej ? 1 : appr ? 3 : s === "PP Rejected" || s === "Exception" ? 1 : 2, bad = rej || s === "Exception";
+        const paid = r.collPaid != null ? r.collPaid : (appr ? amt : 0), u1 = Math.round(amt * 0.35 * 100) / 100, u2 = Math.round((amt - u1) * 100) / 100;
+        const lines = [[r.socDate || r.submissionDate, "G0151", "Services of a qualified physical therapist in the home, per visit", u1, 1, u1], [r.socDate || r.submissionDate, "G0154", "Skilled nursing services provided by a licensed nurse in the home, per visit", Math.round(u2 / 3 * 100) / 100, 3, u2]];
+        return (
+          <div key={r.id} style={{ border:"1px solid #d9e0e7", borderRadius:8, marginBottom:16, overflow:"hidden", background:"#fff" }}>
+            <div onClick={() => setOp(m => ({ ...m, [r.id]: !m[r.id] }))} style={{ display:"flex", alignItems:"center", gap:28, padding:"14px 20px", cursor:"pointer", flexWrap:"wrap" }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" style={{ color:"#6A717D", transform:o ? "none" : "rotate(-90deg)", transition:"transform .15s" }}><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
+              <div>{lbl("Claim Number :")}{val(r.claimNumber, 1)}</div>
+              <div>{lbl("Claim Subm Date :")}{val(r.submissionDate, 1)}</div>
+              <div>{lbl("Claim Amount :")}{val(ci$(amt), 1)}</div>
+              <div>{lbl("Claim Status :")}<div style={{ marginTop:4 }}><Pill tone={toneOf(s)}>{s}</Pill></div></div>
+              <div>{lbl("Remit Status :")}<div style={{ marginTop:4 }}><span style={{ display:"inline-block", padding:"1px 14px", borderRadius:6, background:"#EEF1F5", color:"#3A424A", font:"400 11px/16px " + F }}>{paid > 0 ? "Received" : "Yet to receive"}</span></div></div>
+              <span style={{ flex:1 }}></span>
+              <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); }} style={{ display:"inline-flex", alignItems:"center", gap:8, font:"500 13px/18px " + F, color:"#1677FF", textDecoration:"none" }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1677FF" strokeWidth="1.6" strokeLinejoin="round"><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4M9 14h6M9 17h4" /></svg>Download Claim</a>
+            </div>
+            {o && <div style={{ borderTop:"1px solid #e5e7eb" }}>
+              <div style={{ padding:"0 32px", borderBottom:"1px solid #e5e7eb" }}><span style={{ display:"inline-block", padding:"14px 0 12px", borderBottom:"2px solid #1677FF", font:"500 15px/20px " + F, color:"#1677FF" }}>Claims Info</span></div>
+              <div style={{ padding:"20px 32px 28px" }}>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:16, alignItems:"stretch" }}>
+                  <div style={{ border:"1px solid #d8e2ea", borderRadius:6, padding:"16px 18px" }}>
+                    <div style={{ font:"400 12px/16px " + F, color:"#3A424A" }}>Claim Status</div>
+                    <div style={{ font:"500 20px/28px " + F, color:bad ? "#CF1322" : appr ? "#16A34A" : "#389E0D", margin:"4px 0 14px" }}>{s}</div>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(" + steps.length + ", 1fr)" }}>{steps.map(([n, k], j) => { const done = k < curI, now = k === curI, isBad = now && bad, col = isBad ? "#CF1322" : (done || now) ? (now && !appr ? "#5B49B8" : "#389E0D") : "#cfd5dc"; return (
+                      <div key={n} style={{ position:"relative", paddingTop:16, minWidth:0 }}>
+                        {j < steps.length - 1 && <span style={{ position:"absolute", top:5, left:8, right:-8, height:2, background:k < curI ? "#389E0D" : "#e1e5ea" }}></span>}
+                        <span style={{ position:"absolute", top:0, left:0, width:12, height:12, borderRadius:"50%", background:col }}></span>
+                        <div style={{ font:"400 10px/14px " + F, color:now ? "#5B49B8" : "#3A424A", whiteSpace:"nowrap" }}>{n}</div>
+                        <div style={{ font:"400 10px/14px " + F, color:"#8A94A6" }}>{k <= curI ? addDays(r.submissionDate, k) : "TBD"}</div>
+                      </div>); })}</div>
+                  </div>
+                  {card("Provider Info", <>{pair([["Provider Name", "DOCTOR'S CLINIC"], ["NPI", "9876543210"], ["Tax ID", "123456789"]])}<div>{lbl("Address")}{val(CI_ADDR[(r.branch || "").charCodeAt(0) % 4])}</div></>)}
+                  {card("Insurance Details", <>{pair([["Subscriber Name", r.name], ["Member ID", r.memId], ["DOB", "02/10/1956"]])}<div>{lbl("Address")}{val("456 OAK STREET, CITY, ST 67890")}</div></>)}
+                  {card("Billing Information", <>{pair([["Billing Provider", "SENDER HEALTHCARE"], ["ID", "123456789"]])}{pair([["Contact", "John Murphy"], ["Contact", "9876543210"]])}</>)}
+                </div>
+                <div style={{ border:"1px solid #d8e2ea", borderRadius:6, marginTop:16, overflow:"hidden" }}>
+                  <div style={{ background:"#C9DAE5", padding:"12px 20px", font:"500 14px/20px " + F, color:"#1f2937" }}>Service Line Details</div>
+                  <div style={{ padding:"20px 20px 24px", overflowX:"auto" }}><div style={{ border:"1px solid #eceff3", borderRadius:4, overflow:"hidden", minWidth:640 }}>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 4fr 1.2fr 1fr 1.3fr", borderBottom:"1px solid #eceff3", font:"500 12px/16px " + F, color:"#1f2937" }}>{["Date of Service", "Procedure", "Procedure Description", "Charges", "Units", "Total Charges"].map((hh, k) => <div key={hh} style={{ padding:"14px 16px", textAlign:k >= 3 ? "center" : "left" }}>{hh}</div>)}</div>
+                    {lines.map((ln, k) => <div key={k} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 4fr 1.2fr 1fr 1.3fr", alignItems:"center", borderTop:k ? "1px solid #eceff3" : "none", font:"400 13px/18px " + F, color:"#1f2937" }}>
+                      <div style={{ padding:"14px 16px", background:"#f5f6f8", textAlign:"center" }}>{ln[0]}</div><div style={{ padding:"14px 16px" }}>{ln[1]}</div><div style={{ padding:"14px 16px" }}>{ln[2]}</div><div style={{ padding:"14px 16px", textAlign:"center" }}>{ci$(ln[3])}</div><div style={{ padding:"14px 16px", textAlign:"center" }}>{ln[4]}</div><div style={{ padding:"14px 16px", textAlign:"center", background:"#fbf7f3" }}>{ci$(ln[5])}</div>
+                    </div>)}
+                  </div></div>
+                </div>
+              </div>
+            </div>}
+          </div>);
+      })}
+    </div>
+  );
+}
 function V2RecordInfo({ patient, kind }) {
   const all = SRC[kind]();
   const fz = window.__v2DrawerFocus;
   const focus = fz && fz.kind === kind ? fz.row : null;
   const nm = (patient && patient.name) || (focus && focus.name);
   const recs = R.useMemo(() => {
+    if (kind === "claim" && focus && focus.siblings) return focus.siblings;
     let rs = all.filter(r => r.name === nm);
     if (!rs.length && focus) rs = [focus];
     if (kind === "docext" && rs[0]) {
@@ -641,6 +708,7 @@ function V2RecordInfo({ patient, kind }) {
   const [i, setI] = useS(() => Math.max(0, recs.findIndex(r => focus && r.id === focus.id)));
   const [done, setDone] = useS({});
   if (!recs.length) return <div style={{ padding:"28px clamp(16px, 2.4vw, 36px)", font:`400 14px/20px ${F}`, color:"#6A717D" }}>No {PATIENT_KINDS[kind].replace(" Info", "").toLowerCase()} records for this patient.</div>;
+  if (kind === "claim") return <V2ClaimAccordions recs={recs} focusId={focus && focus.id} />;
   const r = recs[Math.min(i, recs.length - 1)];
   const d = DETAIL[kind](r);
   const AA = typeof AuthAccordion !== "undefined" ? AuthAccordion : null;
@@ -793,6 +861,27 @@ const pctOf = (a, b) => b ? Math.round(a / b * 100) : 0;
 const avgDays = (rows, a, b) => { const ds = rows.map(r => { const x = pd(a(r)), y = pd(b(r)); return x && y ? (y - x) / 864e5 : null; }).filter(v => v != null && v >= 0); return ds.length ? (ds.reduce((s,v)=>s+v,0) / ds.length).toFixed(1) + " Days" : "—"; };
 
 const DASH = {
+  coll: () => {
+    const open = r => r.status !== "Resolved";
+    return {
+      title:"Collections Summary", kind:"coll", insights:true, noMetrics:true, noAutoRate:true, noTrend:true, noDonut:true,
+      noAutomation:true, alertStyle:true, riskItems:true, rows:SRC.coll(), date:r => r.date, dateLabel:"Worklist Created Date", minsPer:12,
+      filters:[{key:"agency",label:"Agency"},{key:"branch",label:"Branch"},{key:"payor",label:"Payor"},{key:"category",label:"Category"},{key:"owner",label:"Owner"}],
+      kpis:[["All Accounts",null],["Denied",r=>r.category==="Denied"],["ADR",r=>r.category==="ADR"],["Underpaid",r=>r.category==="Underpaid"],["Pending Payment",r=>r.category==="Pending Payment"],["Escalated",r=>r.status==="Escalated"]],
+      avg: rows => avgDays(rows, r => r.date, r => r.resolvedDate),
+      metric5: rows => ["Outstanding Balance", usdK(rows.filter(open).reduce((s,r)=>s+r.balance,0))],
+      metricsX: rows => [["Amount Recovered", usdK(rows.reduce((s,r)=>s+r.recovered,0))]],
+      donut: { title:"Collection Category Distribution", f:r => r.category },
+      breakdown: { title:"Open Accounts By Payor", f:r => open(r) ? r.payor : null },
+      business: { title:"Work Queues", items: rows => { const o = rows.filter(open), h = r => parseInt(String(r.id).replace(/\D/g,""),10) || 0, today = new Date(2025,3,30);
+        return [["Due today", o.filter(r => r.followUp && pd(r.followUp) <= today)], ["Escalated", o.filter(r => r.status==="Escalated")], ["Denials", o.filter(r => r.category==="Denied")], ["ADR requests", o.filter(r => r.category==="ADR")], ["Underpaid", o.filter(r => r.category==="Underpaid")], ["Aged 90+", o.filter(r => r.daysOpen >= 90)], ["With branch", o.filter(r => h(r) % 7 === 0)], ["Needs code mapping", o.filter(r => h(r) % 8 === 1)], ["All open", o]].map(([label, rs]) => ({ label, kind:"coll", rows:rs })); } },
+      attention: rows => [
+        { g:"terminated", title:"Terminated", sub:"Business Exception", items: by(rows.filter(r=>r.at==="warning" && /expired|Missing/.test(r.reason)), r => r.reason).map(x=>({...x,kind:"coll"})) },
+        { g:"failed", title:"Failed", sub:"Technical Exception", items: by(rows.filter(r=>r.at==="warning" && !/expired|Missing/.test(r.reason)), r => r.reason).map(x=>({...x,kind:"coll"})) },
+      ],
+      intervention: rows => [{ g:"int", title:"Pending Interventions", sub:"Open - Awaiting Action", items: by(rows.filter(r=>r.at==="intervention"), r => r.reason).map(x=>({...x,kind:"coll"})) }],
+    };
+  },
   claim: () => {
     const cb = SRC.batch();
     return {
@@ -904,24 +993,60 @@ const DASH = {
     attention: rows => ["terminated","failed"].map(g => ({ g, title: g==="failed" ? "Failed" : "Terminated", sub: g==="failed" ? "Technical Exception" : "Business Exception", items: by(rows.filter(r=>r.at==="warning" && (r.atGroup||"terminated")===g), r => r.atReason).map(x=>({...x,kind:"ipe"})) })),
     intervention: () => [],
   }) : ({
-    title:"Intake Summary", kind:"ipt", rows:SRC.ipt(), date:r => dOnly(r.arrivedDate) || null, dateLabel:"Arrived Date", minsPer:35,
-    filters:[{key:"branch",label:"Branch"},{key:"agency",label:"Agency"},{key:"refHub",label:"Referral Hub"},{key:"plan",label:"Primary Plan"}],
-    kpis:[["All Patients",null],["Chart Completed",r=>r.chartStage==="Chart Completed"],["Chart In Progress",r=>r.chartStage==="Chart In Progress"],["Chart Failed",r=>r.chartStage==="Chart Failed"],["EHR Sync Pending",r=>!r.ehrSync],["With Alerts",r=>r.alerts>0]],
+    title:"Patient Intake Summary", kind:"ipt", rows:SRC.ipt(), date:r => dOnly(r.arrivedDate) || null, dateLabel:"Patient Intake Init. Date", minsPer:35,
+    filters:[{key:"agency",label:"Agency"},{key:"branch",label:"Branch"},{key:"episodeId",label:"Episode ID"},{key:"chartLabel",label:"Chart Status"}],
+    kpis:[["All Patients",null],["Completed",r=>r.at==="thumb","Records with AT status Completed"],["Needs Attention",r=>r.at==="warning","Records with AT status Needs Attention"],["Chart % less than 100",r=>r.chartPct!=null&&r.chartPct!==""&&Number(r.chartPct)<100,"Records whose chart % is less than 100"]],
     avg: () => "42 Min",
-    metric5: rows => ["Charts Created", p2(rows.filter(r=>r.chartStage==="Chart Completed").length)],
-    donut: { title:"Chart Stage Distribution", f:r => r.chartStage || "Not Started" },
+    noBottomCharts: true,
+    kpiNav: { "Chart % less than 100":"pending", "Completed":"at:thumb", "Needs Attention":"at:warning" },
+    errorBar: { title:"Incomplete Chart Status Error Distribution", tip:"Error summary for records in Needs Attention (AT) status with Chart Status below 100%.", cats:["Unable to access clinical input window","Incomplete chart update","Unknown error found","Not Specified"], f:(r,i) => r.atReason==="Unable to access clinical input window" ? r.atReason : r.atReason==="Incomplete Chart update, Please complete" ? "Incomplete chart update" : ["Incomplete chart update","Unknown error found","Not Specified"][i % 3], match:r => r.at==="warning" },
+    noChartInfo: true, keepEmptyGroups: true, noIntervention: true,
+    donut: { title:"Chart Status Distribution", cats:["Records with 0%","Records with 1-50%","Records with 51-99%","Records with 100%"], f:r => { const p = Number(r.chartPct)||0; return p<=0 ? "Records with 0%" : p<=50 ? "Records with 1-50%" : p<100 ? "Records with 51-99%" : "Records with 100%"; } },
     breakdown: { title:"Patients By Referral Hub", f:r => r.refHub },
-    business: { title:"Intake Alerts", items: rows => by(rows.filter(r=>(r.alertItems||[]).length), r => r.alertItems[0].text).map(x => ({ label:x.reason, kind:"ipt", rows:x.rows })) },
+    business: null,
     attention: rows => [
-      { g:"terminated", title:"Terminated", sub:"Business Exception", items: by(rows.filter(r=>r.at==="warning" && r.chartStage!=="Chart Failed"), r => (r.alertItems && r.alertItems[0] && r.alertItems[0].text) || "Payor source details incomplete").map(x=>({...x,kind:"ipt"})) },
-      { g:"failed", title:"Failed", sub:"Technical Exception", items: by(rows.filter(r=>r.at==="warning" && r.chartStage==="Chart Failed"), () => "Chart creation failed in EHR").map(x=>({...x,kind:"ipt"})) },
+      { g:"terminated", title:"Terminated", sub:"Business Exception", items: by(rows.filter(r=>r.at==="warning" && r.atGroup!=="failed"), r => r.atReason || "Reason not recorded").map(x=>({...x,kind:"ipt"})) },
+      { g:"failed", title:"Failed", sub:"Technical Exception", items: by(rows.filter(r=>r.at==="warning" && r.atGroup==="failed"), r => r.atReason || "Reason not recorded").map(x=>({...x,kind:"ipt"})) },
     ],
     intervention: () => [],
   }),
 };
-const MODES = { remits:[["denial","Denial Management"],["cash","Cash Posting"]], audit:[["prebill","Pre-Bill Audit"],["f2f","F2F Encounter Audit"]], intakePt:[["ipt","Patient Intake"],["ipe","Pre-Eligibility"]] };
-const DASH_TITLE = { claim:"Claim", cdm:"CDM", remits:"Remits", docext:"Doc Extraction", audit:"Audit", intakePt:"Intake" };
+const MODES = { remits:[["denial","Denial Management"],["cash","Cash Posting"]], audit:[["prebill","Pre-Bill Audit"],["f2f","F2F Encounter Audit"]] };
+DASH.preElig = () => ({ ...DASH.intakePt("ipe"), title:"Pre-Eligibility Summary" });
+const DASH_TITLE = { coll:"Collections", claim:"Claim", cdm:"CDM", remits:"Remits", docext:"Doc Extraction", audit:"Audit", intakePt:"Patient Intake", preElig:"Pre-Eligibility" };
 function ageDays(s, all) { const ref = Math.max(...all.map(x => (pd(x)||0) - 0)); const d = pd(s); return d ? Math.round((ref - d) / 864e5) : 0; }
+
+function ErrReasonTable({ data, onRow }) {
+  const [sort, setSort] = useS({ k:"value", dir:-1 });
+  const list = [...data].sort((a, b) => { const av = a[sort.k], bv = b[sort.k]; return (typeof av === "string" ? av.localeCompare(bv) : av - bv) * sort.dir; });
+  const cols = [["label","Error Reasons","left"],["value","Record Count","center"],["pct","Record Count %","center"]];
+  const grid = "minmax(0,1fr) 140px 220px";
+  const hdr = (k) => { const on = sort.k === k; return (
+    <span style={{ display:"inline-flex", flexDirection:"column", gap:1, marginRight:6 }}>
+      <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 0l4 5H0z" fill={on && sort.dir === 1 ? "#1677FF" : "#BFBFBF"} /></svg>
+      <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 5L0 0h8z" fill={on && sort.dir === -1 ? "#1677FF" : "#BFBFBF"} /></svg>
+    </span>); };
+  return (
+    <div style={{ height:"100%", display:"flex", flexDirection:"column", minHeight:0 }}>
+      <div style={{ display:"grid", gridTemplateColumns:grid, background:"#F3F8FB", borderTop:"1px solid #EEF0F3", borderBottom:"1px solid #EEF0F3", flexShrink:0 }}>
+        {cols.map(([k, l, al], i) => <div key={k} onClick={() => setSort(s => ({ k, dir: s.k === k ? -s.dir : (k === "label" ? 1 : -1) }))} style={{ padding:"10px 16px", font:`500 13px/18px ${F}`, color:"#3A424A", cursor:"pointer", display:"flex", alignItems:"center", justifyContent: al === "center" ? "center" : "flex-start", borderLeft: i ? "1px solid #E3E8EE" : "none", userSelect:"none" }}>{hdr(k)}{l}</div>)}
+      </div>
+      <div className="ws-scrollbody" style={{ flex:1, minHeight:0, overflowY:"auto" }}>
+        {list.length === 0 && <div style={{ padding:"16px", font:`400 13px/18px ${F}`, color:"#8A94A6" }}>—</div>}
+        {list.map(x => (
+          <div key={x.label} onClick={() => onRow(x)} title={x.label} style={{ display:"grid", gridTemplateColumns:grid, alignItems:"center", borderBottom:"1px solid #EEF0F3", cursor:"pointer" }} onMouseEnter={e => e.currentTarget.style.background = "#F7FAFF"} onMouseLeave={e => e.currentTarget.style.background = ""}>
+            <div style={{ padding:"11px 16px", font:`400 13px/18px ${F}`, color:"#1f2937", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{x.label}</div>
+            <div style={{ padding:"11px 16px", font:`400 13px/18px ${F}`, color:"#1f2937", textAlign:"center" }}>{x.value}</div>
+            <div style={{ padding:"11px 16px", display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ flex:1, height:6, borderRadius:3, background:"#EEF0F3", overflow:"hidden" }}><div style={{ width: Math.min(100, x.pct) + "%", height:"100%", background:"#2A93C9", borderRadius:3 }} /></div>
+              <span style={{ font:`400 12px/16px ${F}`, color:"#3A424A", minWidth:48, textAlign:"right" }}>{x.pct}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function V2DashShell({ kind }) {
   const modes = MODES[kind];
@@ -938,6 +1063,7 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
   const [ff, setFF] = useS([]);
   const [grain, setGrain] = useS("day");
   const [aiTab, setAiTab] = useS("attention");
+  const [dtab, setDtab] = useS("sum");
   const rows = R.useMemo(() => all.filter(r => {
     if (ff.length && !ff.every(x => x.values.includes(r[x.field]))) return false;
     const d = pd(cfg.date(r)); if (!range || !d) return true;
@@ -952,8 +1078,9 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
   const ds = rows.map(r => pd(cfg.date(r))).filter(Boolean);
   const span = ds.length ? Math.max(1, Math.round((Math.max(...ds) - Math.min(...ds)) / 864e5) + 1) : 1;
   const hours = Math.round(at.done * cfg.minsPer / 60 * 10) / 10;
-  const metrics = [["Throughput Per Day", (n / span).toFixed(1)], ["Avg Completion Time", cfg.avg(rows)], ["Automation Success Rate", success + "%"], ["Hours Saved", hours], cfg.metric5(rows)];
-  const kpis = cfg.kpis.map(([label, f]) => f ? { label, pct: pctOf(rows.filter(f).length, n) + "%", count: p2(rows.filter(f).length), onClick: () => openQ(label, cfg.kind, rows.filter(f)) } : { label, value: p2(n), onClick: () => goCenter(cfg.kind) });
+  const metrics = [["Throughput Per Day", (n / span).toFixed(1)], ["Avg Completion Time", cfg.avg(rows)], ["Automation Success Rate", success + "%"], ["Hours Saved", hours], ...(cfg.metric5 ? [cfg.metric5(rows)] : []), ...(cfg.metricsX ? cfg.metricsX(rows) : [])];
+  const kSpan = Math.max(5, Math.floor(30 / cfg.kpis.length)), mSpan = Math.max(1, Math.floor(30 / metrics.length));
+  const kpis = cfg.kpis.map(([label, f, tip]) => f ? { label, tip, pct: pctOf(rows.filter(f).length, n) + "%", count: p2(rows.filter(f).length), onClick: cfg.kpiNav && cfg.kpiNav[label] ? () => { window.__iptPendingFilter = cfg.kpiNav[label]; goCenter(cfg.kind); } : () => openQ(label, cfg.kind, rows.filter(f)) } : { label, value: p2(n), onClick: () => goCenter(cfg.kind) });
 
   // trend
   const trend = (() => {
@@ -964,9 +1091,10 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
     return { data: data.length ? data : [{ label:"—", value:0 }], max };
   })();
   // status donut
-  const donut = by(rows, cfg.donut.f).map((x, i) => [x.reason, x.rows.length, PAL[i % PAL.length], x.rows]);
+  const donut = cfg.donut.cats ? cfg.donut.cats.map((c, i) => { const rs = rows.filter(r => cfg.donut.f(r) === c); return [c, rs.length, PAL[i % PAL.length], rs]; }) : by(rows, cfg.donut.f).map((x, i) => [x.reason, x.rows.length, PAL[i % PAL.length], x.rows]);
+  const navIds = (label, rs) => { if (cfg.kind === "ipt") { window.__iptPendingIds = { label, ids: rs.map(r => r.id) }; goCenter("ipt"); } else openQ(label, cfg.kind, rs); };
   // automation donut
-  const autoSeg = [["Completed", at.done, "#61AA6B"], ["In Progress", at.progress, "#4C9FD1"], ["Needs Attention", at.attention, "#F8C87C"], ["Needs Intervention", at.intervention, "#F87D7C"]];
+  const autoSeg = [["Completed", at.done, "#61AA6B", "done"], ["In Progress", at.progress, "#4C9FD1", "progress"], ["Needs Attention", at.attention, "#F8C87C", "attention"], ["Needs Intervention", at.intervention, "#F87D7C", "intervention"]];
   // aging — open (not completed) records by age vs the latest date in range
   const ref = ds.length ? Math.max(...ds) : 0;
   const AG = [["0 - 07 days",0,7],["08 - 14 days",8,14],["15 - 30 days",15,30],["30+ days",31,1e9]];
@@ -979,8 +1107,10 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
   const bdMax = Math.max(4, Math.ceil(Math.max(1, ...bd.map(x => x.value)) / 4) * 4);
 
   // action rail
-  const biz = cfg.business.items(rows).filter(x => x.rows.length);
-  const attn = cfg.attention(rows).filter(g => g.items.length);
+  const errBar = cfg.errorBar ? (() => { const er = rows.filter(r => cfg.errorBar.match(r) && (r.errorReasons||[]).length); const m = new Map(); er.forEach(r => new Set(r.errorReasons.map(e => e.desc)).forEach(dsc => { if (!m.has(dsc)) m.set(dsc, []); m.get(dsc).push(r); })); return [...m.entries()].map(([label, rs]) => ({ label, value: rs.length, pct: er.length ? Math.round(rs.length / er.length * 10000) / 100 : 0, rows: rs })); })() : null;
+  const errMax = errBar ? Math.max(4, Math.ceil(Math.max(1, ...errBar.map(x => x.value)) / 4) * 4) : 4;
+  const biz = cfg.business ? cfg.business.items(rows).filter(x => x.rows.length) : [];
+  const attn = cfg.attention(rows).filter(g => cfg.keepEmptyGroups || g.items.length);
   const intv = cfg.intervention(rows).filter(g => g.items.length);
   const cnt = (gs) => gs.reduce((s, g) => s + g.items.reduce((t, x) => t + x.rows.length, 0), 0);
   const attnN = cnt(attn), intvN = cnt(intv);
@@ -993,45 +1123,58 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
       <div style={{ flex:"1 1 0", minWidth:0 }}>
         {Bar && <Bar hideSearch={true} datePicker={{ label: cfg.dateLabel, value: range, available: dates, onChange: setRange }} filterFields={cfg.filters} filterRows={all} fieldFilters={ff} onFieldFilters={setFF} />}
         <div style={{ padding:"20px 32px 32px" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, font:`500 18px/22px ${F}`, color:"#0f172a" }}>
+          {cfg.insights ? (
+            <div style={{ display:"flex", alignItems:"flex-end", gap:20, borderBottom:"1px solid #E8E9EA", overflowX:"auto" }}>
+              {[["sum", cfg.title],["aging","A/R Aging Metrics"],["cash","Cash and Performance"],["work","Collector Activity"]].map(([k, l]) => (
+                <button key={k} type="button" onClick={() => setDtab(k)} style={{ background:"transparent", border:"none", borderBottom:`2px solid ${dtab === k ? "#1677FF" : "transparent"}`, marginBottom:-1, padding:"0 2px 10px", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, font:`${dtab === k ? 500 : 400} 18px/22px ${F}`, color: dtab === k ? "#0f172a" : "#6A717D" }}>{l}</button>
+              ))}
+            </div>
+          ) : (<div style={{ display:"flex", alignItems:"center", gap:12, font:`500 18px/22px ${F}`, color:"#0f172a" }}>
             {cfg.title}
             {modes && <span style={{ font:`400 13px/16px ${F}` }}><PickerBtn options={modes} value={mode} onChange={onMode} /></span>}
-          </div>
+          </div>)}
+          {cfg.insights && dtab !== "sum" && window.CollectionsInsights && <window.CollectionsInsights rows={rows} part={dtab} />}
+          {(!cfg.insights || dtab === "sum") && <>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(30, minmax(0, 1fr))", gap:9, marginTop:16 }}>
-            {kpis.map(s => <div key={s.label} style={{ display:"flex", minWidth:0, gridColumn:"span 5" }}><PCRStatCard {...s} fill /></div>)}
-            <div style={{ gridColumn:"1 / -1", font:`500 18px/22px ${F}`, color:"#0f172a", marginTop:11, marginBottom:3 }}>Cost And Time Metrics</div>
-            {metrics.map(([l, v]) => <div key={l} style={{ display:"flex", minWidth:0, gridColumn:"span 6" }}><StatCard label={l} value={v} fill /></div>)}
+            {kpis.map(s => <div key={s.label} style={{ display:"flex", minWidth:0, gridColumn:"span " + kSpan }}><PCRStatCard {...s} fill /></div>)}
+            {!cfg.noMetrics && <div style={{ gridColumn:"1 / -1", font:`500 18px/22px ${F}`, color:"#0f172a", marginTop:11, marginBottom:3 }}>Cost And Time Metrics</div>}
+            {!cfg.noMetrics && metrics.map(([l, v], i) => <div key={l} style={{ display:"flex", minWidth:0, gridColumn:"span " + (i === metrics.length - 1 ? 30 - mSpan * (metrics.length - 1) : mSpan) }}><StatCard label={l} value={v} fill /></div>)}
           </div>
-          <div className="ws-scrollbody" style={{ display:"flex", flexDirection:"column", gap:18, marginTop:24, overflowY:"auto", maxHeight:"calc(100vh - 500px)", minHeight:320, paddingRight:4 }}>
-            <div style={{ font:`500 16px/20px ${F}`, color:"#3A424A" }}>{DASH_TITLE[kind]} Transaction Analytics</div>
+          <div className="ws-scrollbody" style={{ display:"flex", flexDirection:"column", gap:18, marginTop:24, overflowY:cfg.insights?"visible":"auto", maxHeight:cfg.insights?"none":"calc(100vh - 500px)", minHeight:320, paddingRight:4 }}>
+            {!cfg.noTrend && <div style={{ font:`500 16px/20px ${F}`, color:"#3A424A" }}>{DASH_TITLE[kind]} Transaction Analytics</div>}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gridAutoRows:"294px", gap:18 }}>
-              <DashCard title="Transaction Trend" info right={<PickerBtn options={[["day","By Day"],["week","By Week"]]} value={grain} onChange={setGrain} />} style={{ height:294, gridColumn:"1 / -1" }} bodyStyle={chartBody}>
+              {!cfg.noTrend && <DashCard title="Transaction Trend" info right={<PickerBtn options={[["day","By Day"],["week","By Week"]]} value={grain} onChange={setGrain} />} style={{ height:294, gridColumn:"1 / -1" }} bodyStyle={chartBody}>
                 <SimpleLineChart data={trend.data} max={trend.max} step={trend.max / 4} yLabel="No. Of Transactions" color="#7C6BD6" />
-              </DashCard>
-              <DashCard title={cfg.donut.title} info style={{ height:294 }}>
+              </DashCard>}
+              {errBar && <DashCard title={cfg.errorBar.title} info={cfg.errorBar.tip} style={{ height:294, gridColumn:"1 / -1" }} bodyStyle={{ padding:0 }}>
+                <ErrReasonTable data={errBar} onRow={x => navIds(x.label, x.rows)} />
+              </DashCard>}
+              {!cfg.noDonut && <DashCard title={cfg.donut.title} info={!cfg.noChartInfo} style={{ height:294, gridColumn: cfg.noAutoRate ? "1 / -1" : undefined }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:36 }}>
                   <Donut size={180} thickness={30} segments={donut.map(x => ({ value: x[1] || 0.001, color: x[2] }))} centerTop={n} centerBottom="RECORDS" centerTopSize={18} centerTopWeight={600} centerTopY="47%" centerBottomSize={10} centerBottomWeight={500} centerBottomY="61%" />
                   <div style={{ flex:"0 1 240px", minWidth:0 }}>
-                    {donut.slice(0, 5).map((x, i) => <div key={x[0]} onClick={() => openQ(x[0], cfg.kind, x[3])} style={{ cursor:"pointer" }}><LegendRow color={x[2]} label={x[0]} value={p2(x[1])} divider={i < Math.min(donut.length, 5) - 1} /></div>)}
+                    {donut.slice(0, 5).map((x, i) => <div key={x[0]} onClick={() => navIds(cfg.donut.title + ": " + x[0], x[3])} style={{ cursor:"pointer" }}><LegendRow color={x[2]} label={x[0]} value={cfg.donut.pct ? pctOf(x[1], n) + "%" : p2(x[1])} divider={i < Math.min(donut.length, 5) - 1} /></div>)}
                   </div>
                 </div>
-              </DashCard>
-              <DashCard title="Automation Success Rate" info style={{ height:294 }}>
+              </DashCard>}
+              {!cfg.noAutoRate && <DashCard title="Automation Success Rate" info={!cfg.noChartInfo} style={{ height:294 }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:36 }}>
                   <Donut size={180} thickness={30} segments={autoSeg.map(x => ({ value: x[1] || 0.001, color: x[2] }))} centerTop={success + "%"} centerBottom="SUCCESS" centerTopSize={18} centerTopWeight={600} centerTopY="47%" centerBottomSize={10} centerBottomWeight={500} centerBottomY="61%" />
                   <div style={{ flex:"0 1 240px", minWidth:0 }}>
-                    {autoSeg.map((x, i) => <LegendRow key={x[0]} color={x[2]} label={x[0]} value={p2(x[1])} divider={i < 3} />)}
+                    {autoSeg.map((x, i) => <div key={x[0]} onClick={() => navIds("Automation Status: " + x[0], rows.filter(r => atN(r.at) === x[3]))} style={{ cursor:"pointer" }}><LegendRow color={x[2]} label={x[0]} value={p2(x[1])} divider={i < 3} /></div>)}
                   </div>
                 </div>
-              </DashCard>
-              <DashCard title="Open Item Aging" info style={{ height:294 }} bodyStyle={chartBody}>
+              </DashCard>}
+              {!cfg.noBottomCharts && <DashCard title="Open Item Aging" info style={{ height:294 }} bodyStyle={chartBody}>
                 <SimpleBarChart data={aging} max={agMax} step={agMax / 4} yLabel="Open Records" color="#F87D7C" barW={46} />
-              </DashCard>
-              <DashCard title={cfg.breakdown.title} info style={{ height:294 }} bodyStyle={chartBody}>
+              </DashCard>}
+              {!cfg.noBottomCharts && <DashCard title={cfg.breakdown.title} info style={{ height:294 }} bodyStyle={chartBody}>
                 <SimpleBarChart data={bd.length ? bd : [{ label:"—", value:0 }]} max={bdMax} step={bdMax / 4} yLabel="No. Of Records" color="#4C9FD1" barW={36} />
-              </DashCard>
+              </DashCard>}
             </div>
+            {cfg.insights && window.CollectionsInsights && <window.CollectionsInsights rows={rows} part="risk" />}
           </div>
+          </>}
         </div>
       </div>
 
@@ -1040,23 +1183,42 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
         <div style={{ position:"relative", padding:"16px 20px 28px 32px", display:"flex", flexDirection:"column", minHeight:"calc(100vh - 190px)" }}>
           <div style={{ background:"#fff", border:"1px solid #F3E0E0", borderRadius:9, boxShadow:"0 1px 3px rgba(86,86,86,.06)", display:"flex", alignItems:"center", padding:"16px 18px", marginBottom:16 }}>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}><WarnGlyph /><span style={{ font:`500 19px/23px ${F}`, color:"#3A424A" }}>{DASH_TITLE[kind]} Action Items</span></div>
-            <span style={{ marginLeft:"auto", font:`400 15px/20px ${F}`, color:"#6A717D" }}><span style={{ color:"#CF1322" }}>{bizN + attnN + intvN} Items</span> Needs Review</span>
+            <span style={{ marginLeft:"auto", font:`400 15px/20px ${F}`, color:"#6A717D" }}><span style={{ color:"#CF1322" }}>{cfg.noAutomation ? rows.filter(r=>r.status!=="Resolved").length + " Open Accounts" : (bizN + attnN + intvN) + " Items"}</span> {cfg.noAutomation ? "In Worklist" : "Needs Review"}</span>
           </div>
 
+          <>
+          {cfg.business && <>
           <div style={{ display:"flex", alignItems:"center", marginBottom:12 }}>
             <span style={{ font:`500 18px/22px ${F}`, color:"#3A424A" }}>{cfg.business.title}</span>
-            <span style={{ marginLeft:10, background:"#FFE7E6", color:"#CF1322", borderRadius:999, padding:"1px 9px", font:`500 13px ${F}` }}>{p2(bizN)}</span>
+            <span style={{ marginLeft:10, background:"#FFE7E6", color:"#CF1322", borderRadius:999, padding:"1px 9px", font:`500 13px ${F}` }}>{p2(cfg.noAutomation ? rows.filter(r=>r.status!=="Resolved").length : bizN)}</span>
+            {cfg.alertStyle && <span style={{ marginLeft:"auto" }}><SortByBtn /></span>}
           </div>
-          {biz.length ? biz.map(x => <BigActionRow key={x.label} noIcon label={x.label} count={p2(x.rows.length)} onClick={() => openQ(x.label, x.kind, x.rows)} />)
+          {cfg.alertStyle ? (<>
+            {biz.filter(x => x.label === "Due today").map(x => <BigActionRow key={x.label} label={x.label} count={p2(x.rows.length)} onClick={() => openQ(x.label, x.kind, x.rows)} icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3A424A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><rect x="7.5" y="13.5" width="3" height="3" rx=".5" fill="#3A424A" stroke="none" /></svg>} />)}
+            <div className="ws-scrollbody" style={{ border:"1px solid #F1E4E4", borderRadius:9, background:"#fff", overflow:"hidden auto", boxShadow:"0 1px 3px rgba(86,86,86,.06)" }}>
+              {biz.filter(x => x.label !== "Due today" && x.label !== "All open").map((x, i) => <AlertRow key={x.label} label={x.label} count={p2(x.rows.length)} alt={i % 2 === 1} onClick={() => openQ(x.label, x.kind, x.rows)} />)}
+            </div></>
+          ) : biz.length ? biz.map(x => <BigActionRow key={x.label} noIcon label={x.label} count={p2(x.rows.length)} onClick={() => openQ(x.label, x.kind, x.rows)} />)
             : <div style={{ padding:"14px 16px", border:"1px solid #F1E4E4", borderRadius:9, font:`400 14px/20px ${F}`, color:"#8A94A6", marginBottom:12 }}>Nothing to work in this period</div>}
+          </>}
 
-          <div style={{ display:"flex", alignItems:"center", marginTop:20, marginBottom:12 }}>
+          {cfg.riskItems && window.collRiskItems && (() => { const ri = window.collRiskItems(rows); return (<>
+            <div style={{ display:"flex", alignItems:"center", marginTop:24, marginBottom:12 }}>
+              <span style={{ font:`500 18px/22px ${F}`, color:"#3A424A" }}>At-Risk Claims - Action Items</span>
+              <span style={{ marginLeft:10, background:"#FFE7E6", color:"#CF1322", borderRadius:999, padding:"1px 9px", font:`500 13px ${F}` }}>{p2(ri[0][2].length)}</span>
+              <span style={{ marginLeft:"auto" }}><SortByBtn /></span>
+            </div>
+            <div className="ws-scrollbody" style={{ border:"1px solid #F1E4E4", borderRadius:9, background:"#fff", overflow:"hidden auto", boxShadow:"0 1px 3px rgba(86,86,86,.06)" }}>
+              {ri.filter(x => x[0] !== "all").map(([k, l, rs], i) => <AlertRow key={k} label={l} count={p2(rs.length)} alt={i % 2 === 1} onClick={() => openQ(l, "coll", rs)} />)}
+            </div></>); })()}
+          {!cfg.noAutomation && <>
+          <div style={{ display:"flex", alignItems:"center", marginTop: cfg.business ? 20 : 0, marginBottom:12 }}>
             <span style={{ font:`500 18px/22px ${F}`, color:"#3A424A" }}>Automation Action Items</span>
             <span style={{ marginLeft:"auto" }}><SortByBtn /></span>
           </div>
           <div className="ws-scrollbody" style={{ border:"1px solid #F1E4E4", borderRadius:9, background:"#fff", overflow:"hidden auto", boxShadow:"0 1px 3px rgba(86,86,86,.06)", flex:"1 1 auto", minHeight:0 }}>
             <div style={{ display:"flex", alignItems:"center", borderBottom:"1px solid #F1E4E4", padding:"0 18px" }}>
-              {[["attention","Needs Attention",attnN],["intervention","Needs Intervention",intvN]].map(([k, label, c]) => {
+              {[["attention","Needs Attention",attnN],["intervention","Needs Intervention",intvN]].filter(x => !(cfg.noIntervention && x[0] === "intervention")).map(([k, label, c]) => {
                 const sel = aiTab === k;
                 return (
                   <button key={k} type="button" onClick={() => setAiTab(k)} style={{ background:"transparent", border:"none", cursor:"pointer", padding:"14px 4px 12px", marginRight:28, display:"inline-flex", alignItems:"center", gap:8, font:`${sel?500:400} 15px/20px ${F}`, color: sel ? "#3A424A" : "#8A94A6", borderBottom:`2px solid ${sel ? "#CF1322" : "transparent"}`, marginBottom:-1 }}>
@@ -1068,15 +1230,18 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
             {(aiTab === "attention" ? attn : intv).length
               ? (aiTab === "attention" ? attn : intv).map((g, gi) => {
                   const gRows = [].concat(...g.items.map(x => x.rows));
-                  const gKind = g.items[0].kind;
+                  const gKind = g.items.length ? g.items[0].kind : cfg.kind;
                   return (
-                    <AutomationGroup key={g.g} title={g.title} sub={g.sub} count={p2(gRows.length)} defaultOpen={gi === 0} onNav={() => openQ(g.title + " — " + g.sub, gKind, gRows)}>
-                      {g.items.map(x => <AutomationItem key={x.kind + x.reason} label={x.reason} count={p2(x.rows.length)} onClick={() => openQ(x.reason, x.kind, x.rows)} />)}
+                    <AutomationGroup key={g.g} title={g.title} sub={g.sub} count={p2(gRows.length)} defaultOpen={gi === 0} onNav={() => { if (gKind === "ipt") { window.__iptPendingFilter = "at:warning"; const rs = g.items.map(x => x.reason); window.__iptPendingReasons = rs.length ? rs : null; goCenter("ipt"); } else openQ(g.title + " — " + g.sub, gKind, gRows); }}>
+                      {!g.items.length && <div style={{ padding:"10px 18px", font:`400 13px/18px ${F}`, color:"#8A94A6" }}>—</div>}
+                      {g.items.map(x => <AutomationItem key={x.kind + x.reason} label={x.reason} count={p2(x.rows.length)} onClick={() => { if (x.kind === "ipt") { window.__iptPendingFilter = "at:warning"; window.__iptPendingReasons = [x.reason]; goCenter("ipt"); } else openQ(x.reason, x.kind, x.rows); }} />)}
                     </AutomationGroup>
                   );
                 })
               : <div style={{ padding:"18px", font:`400 14px/20px ${F}`, color:"#8A94A6" }}>{aiTab === "attention" ? "No open Needs Attention records" : "No open interventions"}</div>}
           </div>
+          </>}
+          </>
         </div>
       </div>
     </div>
@@ -1084,8 +1249,8 @@ function V2Dash({ kind, cfg, mode, modes, onMode }) {
 }
 
 // ── wrappers around the v1 shell ────────────────────────────────────
-const V2_TABS = new Set(["intakePt","docext","audit","cdm","claim","remits"]);
-const V2_SUB = { claim:"Summary of Claim Status", cdm:"Summary of CDM Request Status", remits:"Denial Management and Cash Posting Summary", docext:"Summary of Document Extraction Status", audit:"Pre-Bill and Face-to-Face Audit Summary", intakePt:"Patient Intake and Pre-Eligibility Summary" };
+const V2_TABS = new Set(["coll","preElig","intakePt","docext","audit","cdm","claim","remits"]);
+const V2_SUB = { coll:"Summary of Collections Worklist and Recovery", preElig:"Summary of Pre-Eligibility Requests", claim:"Summary of Claim Status", cdm:"Summary of CDM Request Status", remits:"Denial Management and Cash Posting Summary", docext:"Summary of Document Extraction Status", audit:"Pre-Bill and Face-to-Face Audit Summary", intakePt:"Patient Intake Summary" };
 
 const _TopNav = window.TopNav;
 window.TopNav = function TopNavV2(p) {
@@ -1104,13 +1269,12 @@ window.DashboardBand = function DashboardBandV2({ active, onTab, subtitle }) {
   const [eligOpen, setEligOpen] = useS(false);
   const eligRef = R.useRef(null);
   useE(() => { if (!eligOpen) return; const h = (e) => { if (eligRef.current && !eligRef.current.contains(e.target)) setEligOpen(false); }; document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h); }, [eligOpen]);
-  const SUBV = (typeof ELIG_SUBVIEWS !== "undefined" && ELIG_SUBVIEWS) || [["elig","Eligibility"]];
+  const SUBV = [...((typeof ELIG_SUBVIEWS !== "undefined" && ELIG_SUBVIEWS) || [["elig","Eligibility"]]), ["preElig","Pre-Eligibility"]];
   const eligSub = SUBV.find(x => x[0] === active);
   const go = (k) => { if ((V2_TABS.has(k) || V2_TABS.has(active)) && window.__v2SetDashTab) window.__v2SetDashTab(k); else onTab(k); };
   const tabs = [
-    { key:"elig", label:"Eligibility", menu:true }, { key:"auth", label:"Authorization" }, { key:"referral", label:"E-Referral" },
-    { key:"intakePt", label:"Intake" }, { key:"docext", label:"Doc Extraction" }, { key:"pcr", label:"PCR" }, { key:"audit", label:"Audit" },
-    { key:"cdm", label:"CDM" }, { key:"claim", label:"Claims" }, { key:"remits", label:"Remits" }, { key:"assess", label:"Assessment" }, { key:"notif", label:"Notifications" },
+    { key:"elig", label:"Eligibility" }, { key:"auth", label:"Authorization" },
+    { key:"claim", label:"Claims" }, { key:"remits", label:"Remits" }, { key:"coll", label:"Collections" },
   ];
   const tabBtn = (act) => ({ background:"transparent", border:"none", cursor:"pointer", color: act ? "#fff" : "rgba(255,255,255,.55)", padding:"8px 2px 12px", display:"inline-flex", alignItems:"center", gap:6, font:`${act?500:400} 16px/20px ${F}`, borderBottom:`2px solid ${act ? "#fff" : "transparent"}`, whiteSpace:"nowrap" });
   return (

@@ -416,10 +416,10 @@ function RCDATIcon({ kind }) {
 // Needs Intervention — a wrench inside a ring, drawn so it reads at 18px alongside
 // the three raster AT icons. `done` = every intervention worked off: green ring
 // with a tick badge, so the grid separates active from completed at a glance.
-function RCDInterventionGlyph({ size=18, done=false }) {
+function RCDInterventionGlyph({ size=18, done=false, title }) {
   const c = done ? "#16a34a" : "#d97706";
   const bg = done ? "#f0fdf4" : "#fff7ed";
-  const label = done ? "Completed Interventions" : "Pending Intervention";
+  const label = title || (done ? "Completed Interventions" : "Pending Intervention");
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" role="img" aria-label={label}><title>{label}</title>
       <circle cx="10" cy="10" r="9" fill={bg} stroke={c} strokeWidth="1.4" />
@@ -570,8 +570,8 @@ function RCDTitleCluster() {
   return (
     <div>
       <div style={{font:"500 15px/20px Roboto",color:"#0f172a"}}>PCR View</div>
-      <div style={{font:"400 12px/18px Roboto",color:"#94a3b8",marginTop:6}}>Decision Status Summary of Claim Center</div>
-      <div style={{marginTop:10,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block"}}>Expand a row to view its previous review submissions</div>
+      <div style={{font:"400 12px/18px Roboto",color:"#94a3b8",marginTop:6}}>Decision Status Summary of Pre-Claim Center</div>
+      <div style={{marginTop:10,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block"}}>Click Patient Name to view related transactions for specific PCR request</div>
     </div>
   );
 }

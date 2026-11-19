@@ -205,10 +205,10 @@ function RMRow({ row, reviewed, onReviewed }) {
       <div style={cell("at","center")}>{ATIcon ? <ATIcon kind={row.at} /> : row.at}</div>
       <div style={cell("ehrSync","center")}><RMTick ok={row.ehrSync} /></div>
       <div style={cell("reviewed","center")}>
-        <span role="checkbox" aria-checked={reviewed} onClick={()=>onReviewed(row.id)}
+        <window.BRCell scope="remits" id={row.id} reviewed={!!reviewed}><span role="checkbox" aria-checked={reviewed} onClick={()=>onReviewed(row.id)}
           style={{width:16,height:16,borderRadius:3,border:`1.5px solid ${reviewed?"#2563eb":"#cbd5e1"}`,background:reviewed?"#2563eb":"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
           {reviewed && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 12 9 18 20 6"/></svg>}
-        </span>
+        </span></window.BRCell>
       </div>
     </div>
   );
@@ -243,10 +243,10 @@ function RMWRow({ row, reviewed, onReviewed }) {
     if (k==="at") return ATIcon ? <ATIcon kind={v} /> : v;
     if (k==="ehrSync") return <RMTick ok={v} />;
     if (k==="reviewed") return (
-      <span role="checkbox" aria-checked={reviewed} onClick={()=>onReviewed(row.id)}
+      <window.BRCell scope="remits" id={row.id} reviewed={!!reviewed}><span role="checkbox" aria-checked={reviewed} onClick={()=>onReviewed(row.id)}
         style={{width:16,height:16,borderRadius:3,border:`1.5px solid ${reviewed?"#2563eb":"#cbd5e1"}`,background:reviewed?"#2563eb":"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
         {reviewed && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 12 9 18 20 6"/></svg>}
-      </span>);
+      </span></window.BRCell>);
     return v==="—" ? rmDash : v;
   };
   return (
@@ -278,6 +278,7 @@ function RemitsDenialView({ review }) {
   if (review) pool = pool.filter(r=>r.at==="warning" && !reviewed[r.id]);
   const card = RM_AT_CARDS.find(c=>c.id===atFilter);
   let rows = card ? pool.filter(card.match) : pool;
+  window.useBRScope("remits", rows, reviewed, setReviewed);
   if (sortKey) rows = [...rows].sort((a,b)=>{ const av=String(a[sortKey]), bv=String(b[sortKey]); return sortDir==="asc"?av.localeCompare(bv):bv.localeCompare(av); });
 
   const Bar = window.ARVFilterBarChips;
@@ -300,7 +301,7 @@ function RemitsDenialView({ review }) {
             {hchb ? <RMHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} /> : <RMWHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />}
             {rows.length===0
               ? <div style={{padding:"48px 24px",textAlign:"center",font:"400 13px/18px Roboto",color:"#94a3b8"}}>No records match the current filters.</div>
-              : rows.map(r=>hchb ? <RMRow key={r.id} row={r} reviewed={!!reviewed[r.id]} onReviewed={id=>setReviewed(s=>({...s,[id]:!s[id]}))} /> : <RMWRow key={r.id} row={r} reviewed={!!reviewed[r.id]} onReviewed={id=>setReviewed(s=>({...s,[id]:!s[id]}))} />)}
+              : rows.map(r=>hchb ? <RMRow key={r.id} row={r} reviewed={!!reviewed[r.id]} onReviewed={id=>setReviewed(s=>s[id]?s:({...s,[id]:true}))} /> : <RMWRow key={r.id} row={r} reviewed={!!reviewed[r.id]} onReviewed={id=>setReviewed(s=>s[id]?s:({...s,[id]:true}))} />)}
           </div>
         </RMScrollPane>
       </div>
