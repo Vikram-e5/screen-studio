@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head>
-<script type="application/json" id="ss-release-notes">[{"v":1,"at":1795196759046,"note":"","build":"original"}]</script>
+<script type="application/json" id="ss-release-notes">[{"v":1,"at":1795196759046,"note":"","build":"original"},{"v":2,"at":1795196910520,"note":"","build":"original"}]</script>
 <script>(function(){
 var el=document.getElementById('ss-release-notes');if(!el)return;var n;try{n=JSON.parse(el.textContent)}catch(e){return}if(!n||!n.length)return;
 function fmt(t){try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return''}}
@@ -9213,7 +9213,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 function Prototype() {
   const persona = usePersona();
   // Default landing = Dashboard
-  const [section, setSection] = useP(window.__persona.role==="lead" ? "dashboard" : "collections");   // dashboard | intake | eligibility | authorization | cdm
+  const [section, setSection] = useP("collections");   // dashboard | intake | eligibility | authorization | cdm
   const [intakeSub, setIntakeSub] = useP(0);
   const [eligSub, setEligSub] = useP(0);
   const [cdmSub, setCdmSub] = useP(0);
