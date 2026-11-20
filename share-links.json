@@ -1,10 +1,27 @@
 {
-  "updated": "2026-11-20T17:40:29.698Z",
+  "updated": "2026-11-20T17:46:09.170Z",
   "deleted": {
     "https://vikram-e5.github.io/screen-studio/13oct/neos-0dbcv.html": 1791964815352,
     "https://vikram-e5.github.io/screen-studio/13oct/neos-o6818.html": 1791964821219
   },
   "links": [
+    {
+      "url": "https://vikram-e5.github.io/screen-studio/20nov/collections-try.html",
+      "path": "20nov/collections-try.html",
+      "repo": "Vikram-e5/screen-studio",
+      "branch": "main",
+      "at": 1795196769134,
+      "status": "Publishing",
+      "label": "",
+      "notes": [
+        {
+          "v": 1,
+          "at": 1795196759046,
+          "note": "",
+          "build": "original"
+        }
+      ]
+    },
     {
       "url": "https://vikram-e5.github.io/screen-studio/20nov/neos-services1.html",
       "path": "20nov/neos-services1.html",
