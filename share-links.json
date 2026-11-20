@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-19T21:17:22.394Z",
+  "updated": "2026-11-20T11:13:04.194Z",
   "deleted": {
     "https://vikram-e5.github.io/screen-studio/13oct/neos-0dbcv.html": 1791964815352,
     "https://vikram-e5.github.io/screen-studio/13oct/neos-o6818.html": 1791964821219
@@ -10,8 +10,8 @@
       "path": "26oct/intake-referral.html",
       "repo": "Vikram-e5/screen-studio",
       "branch": "main",
-      "at": 1795122996730,
-      "status": "Live",
+      "at": 1795173184183,
+      "status": "Publishing",
       "label": "",
       "notes": [
         {
@@ -77,6 +77,12 @@
         {
           "v": 11,
           "at": 1795122988826,
+          "note": "",
+          "build": "original"
+        },
+        {
+          "v": 12,
+          "at": 1795173175464,
           "note": "",
           "build": "original"
         }
