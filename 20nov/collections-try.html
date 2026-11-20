@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head>
-<script type="application/json" id="ss-release-notes">[{"v":1,"at":1795196759046,"note":"","build":"original"},{"v":2,"at":1795196910520,"note":"","build":"original"}]</script>
+<script type="application/json" id="ss-release-notes">[{"v":1,"at":1795196759046,"note":"","build":"original"},{"v":2,"at":1795196910520,"note":"","build":"original"},{"v":3,"at":1795197181653,"note":"","build":"original"}]</script>
 <script>(function(){
 var el=document.getElementById('ss-release-notes');if(!el)return;var n;try{n=JSON.parse(el.textContent)}catch(e){return}if(!n||!n.length)return;
 function fmt(t){try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return''}}
@@ -19,7 +19,7 @@ window.__ssReleaseNotes=n;window.__ssOpenReleaseNotes=open;
 </script>
 
 <meta charset="utf-8">
-<title>WellSky — Eligibility &amp; Auth Prototype</title>
+<title>Collections Try</title>
 
 
 
@@ -9495,20 +9495,29 @@ window.__ssStart && window.__ssStart();
 // paint, so the app appears in ~2s instead of blocking on ~1MB of JSX.
 (function(){
   var deferred = ["rcd-request-view.jsx","rcd-automation-log.jsx","claim-status-view.jsx","claim-batch-view.jsx","collections-view.jsx","notifications-request-view.jsx","notifications-automation-log.jsx","cdm-request-view.jsx","assessment-request-view.jsx","assessment-drawer.jsx","asv-automation-log.jsx","erv-automation-log.jsx","arv-automation-log.jsx","eligibility-detail.jsx","screen-builder-drawer.jsx","intake-ereferral-view.jsx","intake-preeligibility-view.jsx","intake-patient-view.jsx","intake-automation-log.jsx"];
-  function run(i){
-    if(i>=deferred.length){ if(window.__renderApp) window.__renderApp(); return; }
-    var f = deferred[i];
-    fetch(f, { cache: "reload" }).then(function(r){ return r.text(); }).then(function(src){
-      var out = Babel.transform(src, { presets:["react"], filename:f }).code;
-      var s = document.createElement("script");
-      s.textContent = out;
-      document.body.appendChild(s);
-      if (window.__renderApp) window.__renderApp();
-    }).catch(function(e){ console.error("deferred load failed: "+f, e); })
-      .then(function(){ setTimeout(function(){ run(i+1); }, 0); });
+  var srcs = new Array(deferred.length);
+  function exec(i){ var pl=document.getElementById('__preloadMsg'); if(pl) pl.textContent='Preparing screens ' + Math.min(i, deferred.length) + ' / ' + deferred.length + '…';
+    if (i >= deferred.length) { if (window.__renderApp) window.__renderApp(); return; }
+    var f = deferred[i], src = srcs[i];
+    if (src) {
+      try {
+        var s = document.createElement("script");
+        s.textContent = Babel.transform(src, { presets:["react"], filename:f }).code;
+        document.body.appendChild(s);
+      } catch(e){ console.error("deferred transpile failed: "+f, e); }
+    }
+    setTimeout(function(){ exec(i+1); }, 0);
   }
-  var start = function(){ setTimeout(function(){ run(0); }, 60); };
-  if (window.requestIdleCallback) requestIdleCallback(start, { timeout: 400 }); else setTimeout(start, 120);
+  var started = false;
+  var start = function(){
+    if (started) return; started = true;
+    Promise.all(deferred.map(function(f, i){
+      return (window.__ssMods&&Object.prototype.hasOwnProperty.call(window.__ssMods,f)?Promise.resolve(window.__ssMods[f]):fetch(f).then(function(r){ return r.text(); }))
+        .then(function(t){ srcs[i] = t; })
+        .catch(function(e){ console.error("deferred fetch failed: "+f, e); });
+    })).then(function(){ exec(0); });
+  };
+  window.__ssStart = start;
 })();
 </script>
 <script>
