@@ -1,92 +1,17 @@
 {
-  "updated": "2026-11-21T04:24:47.531Z",
+  "updated": "2026-11-23T05:28:22.922Z",
   "deleted": {
     "https://vikram-e5.github.io/screen-studio/13oct/neos-0dbcv.html": 1791964815352,
     "https://vikram-e5.github.io/screen-studio/13oct/neos-o6818.html": 1791964821219
   },
   "links": [
     {
-      "url": "https://vikram-e5.github.io/screen-studio/20nov/collections.html",
-      "path": "20nov/collections.html",
-      "repo": "Vikram-e5/screen-studio",
-      "branch": "main",
-      "at": 1795235041245,
-      "status": "Live",
-      "label": "",
-      "notes": [
-        {
-          "v": 1,
-          "at": 1795197272114,
-          "note": "",
-          "build": "original"
-        },
-        {
-          "v": 2,
-          "at": 1795197703818,
-          "note": "",
-          "build": "original"
-        },
-        {
-          "v": 3,
-          "at": 1795235034202,
-          "note": "",
-          "build": "original"
-        }
-      ]
-    },
-    {
-      "url": "https://vikram-e5.github.io/screen-studio/20nov/collections-try.html",
-      "path": "20nov/collections-try.html",
-      "repo": "Vikram-e5/screen-studio",
-      "branch": "main",
-      "at": 1795197187387,
-      "status": "Live",
-      "label": "",
-      "notes": [
-        {
-          "v": 1,
-          "at": 1795196759046,
-          "note": "",
-          "build": "original"
-        },
-        {
-          "v": 2,
-          "at": 1795196910520,
-          "note": "",
-          "build": "original"
-        },
-        {
-          "v": 3,
-          "at": 1795197181653,
-          "note": "",
-          "build": "original"
-        }
-      ]
-    },
-    {
-      "url": "https://vikram-e5.github.io/screen-studio/20nov/neos-services1.html",
-      "path": "20nov/neos-services1.html",
-      "repo": "Vikram-e5/screen-studio",
-      "branch": "main",
-      "at": 1795196382460,
-      "status": "Live",
-      "label": "",
-      "notes": [
-        {
-          "v": 1,
-          "at": 1795196374446,
-          "note": "",
-          "build": "original"
-        }
-      ]
-    },
-    {
       "url": "https://vikram-e5.github.io/screen-studio/26oct/intake-referral.html",
       "path": "26oct/intake-referral.html",
       "repo": "Vikram-e5/screen-studio",
       "branch": "main",
-      "at": 1795188955561,
-      "status": "Live",
+      "at": 1795411702882,
+      "status": "Publishing",
       "label": "",
       "notes": [
         {
@@ -170,6 +95,87 @@
         {
           "v": 14,
           "at": 1795188948025,
+          "note": "",
+          "build": "original"
+        },
+        {
+          "v": 15,
+          "at": 1795411694380,
+          "note": "",
+          "build": "original"
+        }
+      ]
+    },
+    {
+      "url": "https://vikram-e5.github.io/screen-studio/20nov/collections.html",
+      "path": "20nov/collections.html",
+      "repo": "Vikram-e5/screen-studio",
+      "branch": "main",
+      "at": 1795235041245,
+      "status": "Live",
+      "label": "",
+      "notes": [
+        {
+          "v": 1,
+          "at": 1795197272114,
+          "note": "",
+          "build": "original"
+        },
+        {
+          "v": 2,
+          "at": 1795197703818,
+          "note": "",
+          "build": "original"
+        },
+        {
+          "v": 3,
+          "at": 1795235034202,
+          "note": "",
+          "build": "original"
+        }
+      ]
+    },
+    {
+      "url": "https://vikram-e5.github.io/screen-studio/20nov/collections-try.html",
+      "path": "20nov/collections-try.html",
+      "repo": "Vikram-e5/screen-studio",
+      "branch": "main",
+      "at": 1795197187387,
+      "status": "Live",
+      "label": "",
+      "notes": [
+        {
+          "v": 1,
+          "at": 1795196759046,
+          "note": "",
+          "build": "original"
+        },
+        {
+          "v": 2,
+          "at": 1795196910520,
+          "note": "",
+          "build": "original"
+        },
+        {
+          "v": 3,
+          "at": 1795197181653,
+          "note": "",
+          "build": "original"
+        }
+      ]
+    },
+    {
+      "url": "https://vikram-e5.github.io/screen-studio/20nov/neos-services1.html",
+      "path": "20nov/neos-services1.html",
+      "repo": "Vikram-e5/screen-studio",
+      "branch": "main",
+      "at": 1795196382460,
+      "status": "Live",
+      "label": "",
+      "notes": [
+        {
+          "v": 1,
+          "at": 1795196374446,
           "note": "",
           "build": "original"
         }
