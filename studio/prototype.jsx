@@ -86,7 +86,7 @@ function TopNav({ section, onSection, onLogo }) {
         <img src={(window.__resources&&window.__resources.navUserGuide)||"icons/nav-user-guide.svg"} alt="User Guide" title="User Guide" onClick={()=>window.open("NEOS%20User%20Guide.dc.html","_blank")} style={{height:28,width:28,cursor:"pointer",display:"block"}} />
         {window.ScreenBuilderDrawer && <window.ScreenBuilderDrawer open={builder} onClose={()=>setBuilder(false)} />}
         <div style={{position:"relative"}}>
-          <div onClick={()=>setUserMenuOpen(v=>!v)} style={{width:28,height:28,borderRadius:"50%",background:"#C6A78F",display:"flex",alignItems:"center",justifyContent:"center",font:"500 12px Roboto",cursor:"pointer"}}>RM</div>
+          <div onClick={()=>setUserMenuOpen(v=>!v)} style={{width:28,height:28,borderRadius:"50%",background:"#C6A78F",display:"flex",alignItems:"center",justifyContent:"center",font:"500 12px Roboto",cursor:"pointer"}}>JM</div>
           {userMenuOpen && (
             <React.Fragment>
               <div onClick={()=>setUserMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:59}} />
@@ -400,16 +400,20 @@ function DocExtractionSection({ sub, onSub }) {
 function CDMSection({ sub, onSub }) {
   const subTabs = [
     { label: "CDM Request View", icon: "☰" },
+    { label: "Schedule Changes", icon: "📅" },
     { label: "Automation Log",   icon: ""  },
   ];
   const [review, setReview] = useP(false);
   const CDMReqView = typeof window !== "undefined" && window.CDMRequestView;
+  const ScheduleChangesView = typeof window !== "undefined" && window.ScheduleChangesView;
   const CDMAutoLog = typeof window !== "undefined" && window.CDMAutomationLogView;
   return (
     <div>
-      <SectionBand title="CDM Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={true} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===0 ? "cdm" : undefined} />
+      <SectionBand title="CDM Center" subTabs={subTabs} activeSub={sub} onSub={onSub} showReview={sub===0||sub===1} review={review} onReview={()=>setReview(v=>!v)} bulkScope={sub===0 ? "cdm" : undefined} />
       {sub===0
         ? (CDMReqView ? <CDMReqView review={review} /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading CDM view…</div>)
+        : sub===1
+        ? (ScheduleChangesView ? <ScheduleChangesView review={review} /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading Schedule Changes…</div>)
         : (CDMAutoLog ? <CDMAutoLog /> : <div style={{padding:40,textAlign:"center",color:"#94a3b8"}}>Loading log…</div>)}
     </div>
   );
