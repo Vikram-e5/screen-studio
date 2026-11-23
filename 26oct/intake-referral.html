@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head>
-<script type="application/json" id="ss-release-notes">[{"v":1,"at":1794310661793,"note":"","build":"original"},{"v":2,"at":1794320313222,"note":"","build":"original"},{"v":3,"at":1794322622362,"note":"","build":"original"},{"v":4,"at":1794396070126,"note":"","build":"original"},{"v":5,"at":1794830444121,"note":"","build":"original"},{"v":6,"at":1794841838467,"note":"","build":"original"},{"v":7,"at":1794927065541,"note":"","build":"original"},{"v":8,"at":1794933323335,"note":"","build":"original"},{"v":9,"at":1794948418613,"note":"","build":"original"},{"v":10,"at":1795099667657,"note":"","build":"original"},{"v":11,"at":1795122988826,"note":"","build":"original"},{"v":12,"at":1795173175464,"note":"","build":"original"},{"v":13,"at":1795188794099,"note":"","build":"original"},{"v":14,"at":1795188948025,"note":"","build":"original"},{"v":15,"at":1795411694380,"note":"","build":"original"},{"v":16,"at":1795411969842,"note":"","build":"original"}]</script>
+<script type="application/json" id="ss-release-notes">[{"v":1,"at":1794310661793,"note":"","build":"original"},{"v":2,"at":1794320313222,"note":"","build":"original"},{"v":3,"at":1794322622362,"note":"","build":"original"},{"v":4,"at":1794396070126,"note":"","build":"original"},{"v":5,"at":1794830444121,"note":"","build":"original"},{"v":6,"at":1794841838467,"note":"","build":"original"},{"v":7,"at":1794927065541,"note":"","build":"original"},{"v":8,"at":1794933323335,"note":"","build":"original"},{"v":9,"at":1794948418613,"note":"","build":"original"},{"v":10,"at":1795099667657,"note":"","build":"original"},{"v":11,"at":1795122988826,"note":"","build":"original"},{"v":12,"at":1795173175464,"note":"","build":"original"},{"v":13,"at":1795188794099,"note":"","build":"original"},{"v":14,"at":1795188948025,"note":"","build":"original"},{"v":15,"at":1795411694380,"note":"","build":"original"},{"v":16,"at":1795411969842,"note":"","build":"original"},{"v":17,"at":1795425327022,"note":"","build":"original"}]</script>
 <script>(function(){
 var el=document.getElementById('ss-release-notes');if(!el)return;var n;try{n=JSON.parse(el.textContent)}catch(e){return}if(!n||!n.length)return;
 function fmt(t){try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return''}}
@@ -5070,7 +5070,7 @@ function ReferralDashboard({ onNav }) {
   const rulesMax = Math.max(4, Math.ceil(Math.max(...rulesData.map(d => d.total), 1) / 2) * 2);
   const seg = (l, rs, c) => [l, rs.length, c, rs];
   const dsOf = (r) => { const s = String(window.ierDocSend ? window.ierDocSend(r) : (r.docSendStatus || "")); return !s ? "na" : /^(sent|yes)$/i.test(s) ? "sent" : "not"; };
-  const portalSeg = [seg("Synced", rows.filter(r => r.ehrSync === true), "#61AA6B"), seg("Not Synced", rows.filter(r => r.ehrSync === false), "#F87D7C"), seg("Pending", rows.filter(r => r.ehrSync == null), "#B7C2D0")];
+  const portalSeg = [seg("Synced", rows.filter(r => r.ehrSync === true), "#61AA6B"), seg("Not Synced", rows.filter(r => r.ehrSync === false), "#F87D7C"), seg("Not Available", rows.filter(r => r.ehrSync == null), "#B7C2D0")];
   const syncSeg = [seg("Sent", rows.filter(r => dsOf(r) === "sent"), "#61AA6B"), seg("Not Sent", rows.filter(r => dsOf(r) === "not"), "#F87D7C"), seg("Not Available", rows.filter(r => dsOf(r) === "na"), "#B7C2D0")];
   // Decision matrix: Rules Engine outcome (rows) × final Referral Response (columns).
   const mxCols = respSeries.filter(s => rows.some(r => r.resp === s.key));
@@ -5133,7 +5133,7 @@ function ReferralDashboard({ onNav }) {
   const DECL_COLORS = ["#F87D7C", "#F8C87C", "#A18B6D", "#618EAA", "#7C6BD6", "#156082"];
   const declSeg = (() => { const m = {}; dec.forEach(r => { const k = r.respReason || "Reason not provided"; (m[k] = m[k] || []).push(r); }); return Object.keys(m).sort((a, b) => m[b].length - m[a].length).map((k, i) => seg(k, m[k], DECL_COLORS[i % DECL_COLORS.length])); })();
   // User Decision resolution: Rules Engine "User Decision" → final Referral Response.
-  const udOut = [["Changed to Accept", udRs.filter(r => r.resp === "accepted"), "#61AA6B"], ["Changed to Decline", udRs.filter(r => r.resp === "declined"), "#F87D7C"], ["Remains User Decision", udRs.filter(r => r.resp === "userDecision"), "#618EAA"]];
+  const udOut = [["Changed to Accepted", udRs.filter(r => r.resp === "accepted"), "#61AA6B"], ["Changed to Declined", udRs.filter(r => r.resp === "declined"), "#F87D7C"], ["Remains User Decision", udRs.filter(r => r.resp === "userDecision"), "#618EAA"]];
   const udOther = udRs.filter(r => !["accepted", "declined", "userDecision"].includes(r.resp));
   if (udOther.length) udOut.push(["Moved to Exceptions", udOther, "#F8C87C"]);
   const udN = udRs.length, udPct = (c) => udN ? Math.round(c / udN * 100) + "%" : "0%";
@@ -5141,8 +5141,8 @@ function ReferralDashboard({ onNav }) {
   const UDResolution = () => (
     <div style={{ display: "flex", alignItems: "stretch", gap: 28, flex: 1, minHeight: 0, padding: "6px 4px 0" }}>
       <div onClick={() => udN && go("Rules Engine: User Decision", udRs)} style={{ flex: "0 0 180px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 14, paddingRight: 24, borderRight: "1px solid #EEF1F7", cursor: udN ? "pointer" : "default" }}>
-        <div><div style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>Routed to User Decision</div><div style={{ font: "600 30px/36px Roboto", color: "#3A424A", marginTop: 2 }}>{p2(udN)}</div><div style={{ font: "400 12px/16px Roboto", color: "#8A94A6" }}>by Rules Engine</div></div>
-        <div><div style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>Resolved</div><div style={{ font: "600 20px/26px Roboto", color: "#3A424A", marginTop: 2 }}>{p2(udResolved)} <span style={{ font: "500 13px/18px Roboto", color: "#8A94A6" }}>{udPct(udResolved)}</span></div></div>
+        <div><div style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>Routed to User Decision</div><div style={{ font: "600 30px/36px Roboto", color: "#3A424A", marginTop: 2 }}>{p2(udN)}</div></div>
+        <div><div style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>Final Responses</div><div style={{ font: "600 20px/26px Roboto", color: "#3A424A", marginTop: 2 }}>{p2(udResolved)} <span style={{ font: "500 13px/18px Roboto", color: "#8A94A6" }}>{udPct(udResolved)}</span></div></div>
       </div>
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
         <div style={{ display: "flex", height: 14, borderRadius: 3, overflow: "hidden", background: "#EEF1F7" }}>
@@ -5156,6 +5156,84 @@ function ReferralDashboard({ onNav }) {
             <span style={{ font: "500 13px/18px Roboto", color: "#8A94A6", textAlign: "right" }}>{udPct(rs.length)}</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+  // Linked view: Decision Type (level 1) → User Decision Outcomes (level 2). Two presentation options.
+  const mixPct = (c) => mixTotal ? Math.round(c / mixTotal * 100) + "%" : "0%";
+  const udIdx = mixSeg.findIndex(x => x[0] === "User Decision");
+  const udColor = mixSeg[udIdx][2];
+  const udStart = mixSeg.slice(0, udIdx).reduce((a, x) => a + x[1], 0) / (mixTotal || 1) * 100;
+  const udEnd = udStart + udN / (mixTotal || 1) * 100;
+  const OptBadge = ({ id, label }) => <span style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "500 12px/16px Roboto", color: "#3A424A" }}><span style={{ padding: "2px 8px", borderRadius: 10, background: "#1C2D42", color: "#fff", font: "600 11px/14px Roboto" }}>{id}</span>{label}</span>;
+  const StackBar = ({ items, base, prefix }) => (
+    <div style={{ display: "flex", height: 24, borderRadius: 3, overflow: "hidden", background: "#EEF1F7" }}>
+      {items.map(([l, v, c, rs]) => v ? <span key={l} title={l + ": " + v} onClick={() => go(prefix + l, rs)} style={{ width: (v / (base || 1)) * 100 + "%", background: c, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", font: "600 12px/16px Roboto", color: "#fff", borderRight: "1px solid #fff", boxSizing: "border-box" }}>{p2(v)}</span> : null)}
+    </div>
+  );
+  const LegendLine = ({ items, base, prefix, pctLabel }) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 28px" }}>
+      {items.map(([l, v, c, rs]) => (
+        <span key={l} onClick={() => v && go(prefix + l, rs)} style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "400 13px/18px Roboto", color: "#3A424A", cursor: v ? "pointer" : "default" }}>
+          <span style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}
+          <span style={{ font: "600 13px/18px Roboto" }}>{p2(v)}</span>
+          <span style={{ color: "#6A717D" }}>{base ? Math.round(v / base * 100) : 0}%{pctLabel}</span>
+        </span>
+      ))}
+    </div>
+  );
+  const udItems = udOut.map(([l, rs, c]) => [l, rs.length, c, rs]);
+  const tierLabel = (t, n2) => <div style={{ display: "flex", alignItems: "baseline", gap: 8, font: "500 13px/18px Roboto", color: "#3A424A" }}>{t}<span style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>{n2}</span></div>;
+  const LinkedHybrid = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {tierLabel("Referral Responses By Decision Type", p2(mixTotal) + " responses")}
+      <StackBar items={mixSeg} base={mixTotal} prefix="Decision Type: " />
+      <LegendLine items={mixSeg} base={mixTotal} prefix="Decision Type: " />
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none" style={{ width: "100%", height: 44, display: "block" }}>
+        <polygon points={udStart + ",0 " + udEnd + ",0 100,40 0,40"} fill={udColor} fillOpacity="0.14" />
+        <line x1={udStart} y1="0" x2="0" y2="40" stroke={udColor} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        <line x1={udEnd} y1="0" x2="100" y2="40" stroke={udColor} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      </svg>
+      {tierLabel("User Decision Outcomes", p2(udN) + " routed to User Decision · " + p2(udResolved) + " final responses (" + udPct(udResolved) + ")")}
+      <StackBar items={udItems} base={udN} prefix="User Decision → " />
+      <LegendLine items={udItems} base={udN} prefix="User Decision → " pctLabel=" of User Decision" />
+    </div>
+  );
+  // Exceptions: before outcome (exclusive of other types) + User Decision → Exceptions.
+  const knownRules = ["Accept", "Decline", "User Decision"];
+  const preExc = rows.filter(r => r.resp === "exceptions" && r.resp !== "ineligible" && !knownRules.includes(r.rulesResp));
+  const udExc = udRs.filter(r => r.resp === "exceptions");
+  const excColor = "#F8C87C";
+  const donutSeg = preExc.length ? mixSeg.concat([seg("Exceptions", preExc, excColor)]) : mixSeg;
+  const lvTotal = donutSeg.reduce((a, x) => a + x[1], 0);
+  const levelSeg = mixSeg.concat([seg("Exceptions", preExc, excColor)]);
+  const LinkedTiers = () => (
+    <div style={{ display: "grid", gridTemplateColumns: "150px repeat(" + levelSeg.length + ", minmax(0,1fr))", columnGap: 12, rowGap: 14 }}>
+      <div style={{ gridRow: "1 / 3", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Donut segments={donutSeg.map(([l, v, c, rs]) => ({ label: l, value: v, color: c, rs, title: l + ": " + v }))} onSeg={s => go("Decision Type: " + s.label, s.rs)} size={140} thickness={22} centerTop="RESPONSES" centerBottom={p2(lvTotal)} />
+      </div>
+      {levelSeg.map(([l, v, c, rs], i) => {
+        const isUd = i === udIdx, isExc = l === "Exceptions";
+        return (
+          <div key={l} onClick={() => v && go("Decision Type: " + l, rs)} style={{ border: isUd ? "1.5px solid " + c : "1px solid #E8E9EA", background: isUd ? "#F3F7FA" : "#fff", borderRadius: 8, padding: "12px 14px", cursor: v ? "pointer" : "default", display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "400 13px/18px Roboto", color: "#3A424A" }}><span style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}</span>
+            <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}><span style={{ font: "600 24px/30px Roboto", color: "#3A424A" }}>{p2(v)}</span><span style={{ font: "500 13px/18px Roboto", color: "#6A717D" }}>{lvTotal ? Math.round(v / lvTotal * 100) : 0}%</span></span>
+            {isExc && <span style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>{p2(preExc.length)} before Validation outcome</span>}
+          </div>
+        );
+      })}
+      <div style={{ gridColumn: "2 / -1", position: "relative", background: "#F3F7FA", border: "1px solid #D6E2EA", borderRadius: 8, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <span style={{ position: "absolute", top: -8, left: "calc(" + udIdx + " * (100% + 12px) / " + levelSeg.length + " + (100% - " + (12 * (levelSeg.length - 1)) + "px) / " + (2 * levelSeg.length) + " - 7px)", width: 14, height: 14, background: "#F3F7FA", borderLeft: "1px solid #D6E2EA", borderTop: "1px solid #D6E2EA", transform: "rotate(45deg)" }} />
+        {tierLabel("User Decision Outcomes", p2(udResolved) + " of " + p2(udN) + " reached a final response (" + udPct(udResolved) + ")")}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(" + udItems.length + ", minmax(0,1fr))", gap: 12 }}>
+          {udItems.map(([l, v, c, rs]) => (
+            <div key={l} onClick={() => v && go("User Decision → " + l, rs)} style={{ background: "#fff", borderRadius: 6, padding: "10px 12px", cursor: v ? "pointer" : "default", display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "400 13px/18px Roboto", color: "#3A424A" }}><span style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}</span>
+              <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}><span style={{ font: "600 20px/26px Roboto", color: "#3A424A" }}>{p2(v)}</span><span style={{ font: "500 13px/18px Roboto", color: "#6A717D" }}>{udPct(v)}</span></span>
+              <span style={{ height: 6, borderRadius: 3, background: "#EEF1F7", overflow: "hidden" }}><span style={{ display: "block", height: "100%", width: (v / (udN || 1)) * 100 + "%", background: c }} /></span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -5182,17 +5260,16 @@ function ReferralDashboard({ onNav }) {
           </div>
           <div className="ws-scrollbody" style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 24, overflowY: "auto", maxHeight: "calc(100vh - 400px)", paddingRight: 4 }}>
             <div style={{ font: "500 16px/20px Roboto", color: "#3A424A" }}>E-referral Analytics</div>
+            <DashCard title="Referral Volume Trend" info right={<PickerBtn options={[["day","By Day"],["week","By Week"]]} value={trendGrain} onChange={setTrendGrain} />} style={{ height: 294, flex: "none" }} bodyStyle={{ paddingTop: 10 }}>
+              <SimpleLineChart data={trend.data} max={trend.max} step={trend.max / 4} yLabel="No. Of Referrals" color="#7C6BD6" onPoint={d => go("Referral Date: " + d.label, d.rs)} />
+            </DashCard>
+            <DashCard title="Validation Outcomes → User Decision Outcomes" info="Level 1: Outcomes determined by Rules Engine validations. Level 2: User Decision to final decision rendered by Referral Hub." style={{ height: "auto", flex: "none" }} bodyStyle={{ paddingTop: 2 }}>
+              <LinkedTiers />
+            </DashCard>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridAutoRows: "294px", gap: 18 }}>
-              <DashCard title="Referral Volume Trend" info right={<PickerBtn options={[["day","By Day"],["week","By Week"]]} value={trendGrain} onChange={setTrendGrain} />} style={{ height: 294, gridColumn: "1 / -1" }} bodyStyle={{ paddingTop: 10 }}>
-                <SimpleLineChart data={trend.data} max={trend.max} step={trend.max / 4} yLabel="No. Of Referrals" color="#7C6BD6" onPoint={d => go("Referral Date: " + d.label, d.rs)} />
-              </DashCard>
-              <DashCard title="User Decision Resolution" info="Referrals the Rules Engine routed to User Decision, and how each was resolved in the final Referral Response — count and share of User Decision records." style={{ height: 294, gridColumn: "1 / -1", overflow: "hidden" }} bodyStyle={{ paddingTop: 2 }}>
-                <UDResolution />
-              </DashCard>
-              <DonutCard title="Referral Responses By Decision Type" tip="All referral responses: automated by the Rules Engine (Auto Accept / Auto Decline), Ineligible, or routed to User Decision." seg={mixSeg} center="RESPONSES" prefix="Decision Type" showPct totalOverride={mixTotal} />
               <DonutCard title="E-Referrals By Decline Reason" tip="Declined referrals grouped by Referral Response Reason." seg={declSeg} center="DECLINED" prefix="Decline Reason" showPct totalOverride={dec.length} />
-              <DonutCard title="Referral Hub Data Sync" tip="Status of Document sent to Referral Hub. Records with no send status show as Not Available." seg={syncSeg} center="REFERRALS" prefix="Referral Hub Data Sync" />
-              <DonutCard title="Portal Sync Status" tip="Referrals synced back to the referral portal. Records with no sync status show as Pending." seg={portalSeg} center="REFERRALS" prefix="Portal Sync" />
+              <DonutCard title="Referral Hub Data Sync" tip="Summary of status of Patient data and document sent to Referral Hub" seg={syncSeg} center="REFERRALS" prefix="Referral Hub Data Sync" />
+              <DonutCard title="Portal Sync Status" tip="Referrals synced back to the referral portal. Records with no sync status show as Not Available." seg={portalSeg} center="REFERRALS" prefix="Portal Sync" />
               <DonutCard title="Automation Status" tip="AT status of each referral as shown in the E-referral View." seg={atSeg} center="REFERRALS" prefix="AT Status" />
               <DashCard title="Referrals By Type Of Care" info style={{ height: 294 }} bodyStyle={{ paddingTop: 10 }}>
                 <HBarChart data={careData} xLabel="No. Of Referrals" labelW={150} onBar={d => go("Type Of Care: " + d.label, d.rs)} />
