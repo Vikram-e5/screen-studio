@@ -31,7 +31,7 @@ function ierCounts(rows) {
     },
   };
 }
-const IER_NA_TERM = ["Coverage terminated at payor","Referral withdrawn by sending org"];
+const IER_NA_TERM = ["Referral placed with another organisation","Referral withdrawn by sending org"];
 const IER_NA_FAIL = ["Availity error message occurred preventing submission","Session timed out during referral intake"];
 const IER_NA_ALL = IER_NA_TERM.map(l=>[l,"terminated"]).concat(IER_NA_FAIL.map(l=>[l,"failed"]));
 (function(){ let i=0; IER_ROWS.forEach(r=>{ if(r.at==="warning"){ if(!r.atReason){ const pair=IER_NA_ALL[i%IER_NA_ALL.length]; r.atReason=pair[0]; r.atGroup=pair[1]; } i++; } }); })();
@@ -234,15 +234,17 @@ const IER_GRID = IER_COLS.map(c=>c.grid).join(" ");
 const IER_ACC_FIELDS = [["gender","Gender"],["ssd","SOC"],["comments","Referral Comment"],["pdd","Discharge Date"],["careType","Type of Care"],["refSource","Referral Source"],["rulesResp","Rules Engine Response"],["respReason","Referral Response Reason"],["agencyRespReason","Agency Referral Response Reason"],["docSendStatus","Document Send Status"],["hubAck","Referral Hub Ack Status"],["receiverCode","Receiver Branch Code"]];
 const IER_FLAG_FIELDS = { payerMatched:1, zipMatched:1, srcMatched:1 };
 (function(){
-  const care=["Skilled Nursing","Physical Therapy","Skilled Nursing, PT","Occupational Therapy","Skilled Nursing, OT"];
+  const care=["Home Health","Hospice","Home Health","Home Health","Hospice"];
   const src=["Hospital Discharge Planner","Physician Office","SNF Case Manager","Hospital Case Manager","Physician Office"];
   IER_ROWS.forEach((r,i)=>{
     const ok = r.resp==="accepted";
-    r.careType = r.careType || care[i%care.length];
+    r.careType = care[i%care.length];
     r.refSource = r.refSource || src[i%src.length];
     r.payerMatched = r.payerMatched || (r.resp==="ineligible" ? "No" : "Yes");
     r.zipMatched = r.zipMatched || (i%4===3 ? "No" : "Yes");
     r.srcMatched = r.srcMatched || (i%5===4 ? "No" : "Yes");
+    const VR = { "Marvin Mckinney":{payerMatched:"Yes",zipMatched:"Yes",srcMatched:"—",hubResp:"",hubRespReason:""}, "Cameron Williamson":{payerMatched:"Yes",zipMatched:"Yes",srcMatched:"—"}, "Robert Fox":{payerMatched:"No",zipMatched:"—",srcMatched:"—",respReason:"",hubRespReason:""} }[r.name];
+    if (VR) Object.assign(r, VR);
     r.rulesResp = r.rulesResp || (ok ? "Accept" : r.resp==="ineligible" ? "Decline" : "Manual Review");
     r.agencyResp = r.agencyResp || (ok ? "Accepted" : r.resp==="ineligible" ? "Declined" : "Pending");
     r.agencyRespReason = r.agencyRespReason || (ok ? "Within service area; staffing available" : r.resp==="ineligible" ? "No active coverage on file" : "Awaiting intake coordinator review");
@@ -303,9 +305,9 @@ function IERRow({ row, onDocsClick, onRespClick, onAlertsClick, reviewed, onRevi
         <div style={cell()} title={row.plan}>{row.plan}</div>
         <div style={{...cell(),color:"#1e40af"}}>{row.refId}</div>
         <div style={cell()}>{row.refDate}</div>
-        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.payerMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.payerMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.payerMatched}</span></div>
-        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.zipMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.zipMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.zipMatched}</span></div>
-        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.srcMatched==="Yes"?"#EFFCEF":"#FFEDEC",color:row.srcMatched==="Yes"?"#16a34a":"#dc2626"}}>{row.srcMatched}</span></div>
+        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.payerMatched==="Yes"?"#EFFCEF":row.payerMatched==="—"?"transparent":"#FFEDEC",color:row.payerMatched==="Yes"?"#16a34a":row.payerMatched==="—"?"#64748b":"#dc2626"}}>{row.payerMatched}</span></div>
+        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.zipMatched==="Yes"?"#EFFCEF":row.zipMatched==="—"?"transparent":"#FFEDEC",color:row.zipMatched==="Yes"?"#16a34a":row.zipMatched==="—"?"#64748b":"#dc2626"}}>{row.zipMatched}</span></div>
+        <div style={cell("center")}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",background:row.srcMatched==="Yes"?"#EFFCEF":row.srcMatched==="—"?"transparent":"#FFEDEC",color:row.srcMatched==="Yes"?"#16a34a":row.srcMatched==="—"?"#64748b":"#dc2626"}}>{row.srcMatched}</span></div>
         <div style={cell("center")}>{(()=>{ const c={Accept:["#EFFCEF","#16a34a"],Decline:["#FFEDEC","#dc2626"]}[row.rulesResp]||["#FFF7E6","#D46B08"]; return <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",height:20,padding:"0 8px",borderRadius:10,font:"500 11px/20px Roboto",whiteSpace:"nowrap",background:c[0],color:c[1]}}>{row.rulesResp||"—"}</span>; })()}</div>
         <div style={{...cell("center"),...ierStk("resp","#fff",11)}}><IERRespPill resp={row.resp} onClick={()=>onRespClick(row)} /></div>
         <div style={{...cell("center"),...ierStk("ehrSync","#fff",11)}}><IEREHRSyncIcon synced={row.ehrSync} /></div>
@@ -416,7 +418,7 @@ function IntakeEReferralView({ review }) {
   const [fieldFilters, setFieldFilters] = useIER([]);
   const [initDate, setInitDate] = useIER(()=>window.defaultDateRange([...new Set(IER_ROWS.map(r=>r.refDate))],30));
   const [search, setSearch] = useIER("");
-  // Arriving from the E-Referral dashboard: show exactly the records behind the clicked count.
+  // Arriving from the E-referral dashboard: show exactly the records behind the clicked count.
   const [focus, setFocus] = useIER(()=>{ const f = window.__ierFocus; window.__ierFocus = null; return f && f.ids ? f : null; });
   const [docsRow, setDocsRow] = useIER(null);
   const [respRow, setRespRow] = useIER(null);

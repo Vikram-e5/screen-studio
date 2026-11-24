@@ -2583,7 +2583,7 @@ function EligibilityRequestView({ batchFilter, onClearBatch, onViewBatch, onPati
         <div style={{flex:"1 1 380px",minWidth:0}}>
           <ERVTitleCluster activeStatus={statusFilter} onClearStatus={()=>setStatusFilter(null)} modeFilter={modeFilter} onModeFilter={setModeFilter} viewTab={viewTab} onViewTab={setViewTab} sectionTabs={<ERVSectionTabs value={ervSection} onChange={setErvSection} />} hchb={hchb} />
         </div>
-        <div style={{flex:"0 1 auto",minWidth:0,display:"flex",justifyContent:"flex-end"}}>
+        <div style={{flex:"0 1 auto",minWidth:0,display:"flex",justifyContent:"flex-end",marginLeft:"auto",maxWidth:"100%"}}>
           <ERVStatusStrip hchb={hchb} counts={ervCounts} activeStatus={statusFilter} onPick={(v)=>{ setStatusFilter(v); if(v) setAtFilter(null); }} />
         </div>
       </div>

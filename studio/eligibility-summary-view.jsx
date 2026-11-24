@@ -198,7 +198,7 @@ function EligibilitySummaryView({ onPatient, sharedInitDate, setSharedInitDate, 
           <div style={{font:"400 12px/18px Roboto",color:"#94a3b8",marginTop:6}}>Primary through Fifth coverage status per patient</div>
           <div style={{marginTop:10,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block"}}>A consolidated view of patient eligibility verification across the payer hierarchy</div>
         </div>
-        <div style={{flex:"0 1 auto",minWidth:0,display:"flex",justifyContent:"flex-end"}}>
+        <div style={{flex:"0 1 auto",minWidth:0,display:"flex",justifyContent:"flex-end",marginLeft:"auto",maxWidth:"100%"}}>
           <ESVSummaryStrip rows={all} active={statusFilter} onPick={setStatusFilter} />
         </div>
       </div>

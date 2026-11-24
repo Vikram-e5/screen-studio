@@ -7,14 +7,15 @@ const { useState: useNOT, useEffect: useNOTE, useRef: useNOTR } = React;
 // ── Mock data ─────────────────────────────────────────────────
 const NOT_ROWS = [
   { id:"n1", name:"Marvin Mckinney", mrn:"01500017797001", episodeId:"12345", serviceLine:"Home Health", branchId:"015", event:"EOE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/20/26", reportName:"REVIEW EPISODE SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 1", faxNumber:"(916)703-7979", commMethod:"F-Fax", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
-  { id:"n2", name:"Brooklyn Simmons", mrn:"01500017797002", episodeId:"12576", serviceLine:"Home Health", branchId:"016", event:"DISCHARGE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/21/26", reportName:"REVIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 2", faxNumber:"(916)703-7980", commMethod:"F-Circle", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"Communication method is not applicable", status:"In Progress" },
+  { id:"n1b", name:"Marvin Mckinney", mrn:"01500017797012", episodeId:"12567", serviceLine:"Home Health", branchId:"020", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"MEDICATION INTERACTION", dueDate:"10/26/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"Physician", physFacilityName:"Physician name 3", faxNumber:"(916)703-7985", commMethod:"F-Fax", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
+  { id:"n2", name:"Brooklyn Simmons", mrn:"01500017797002", episodeId:"12576", serviceLine:"Home Health", branchId:"016", event:"DISCHARGE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/21/26", reportName:"REVIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 2", faxNumber:"(916)703-7980", commMethod:"F-Circle", delivery:"failed", ehr:{ coord:null, stage:null }, at:"thumb", atTip:"Communication method is not available.", status:"Completed" },
   { id:"n3", name:"Darrell Steward", mrn:"01500017797003", episodeId:"12789", serviceLine:"Home Health", branchId:"017", event:"TRANSFER TO INPATIENT FACILITY", notifOption:"Notification", taskType:"FAX EPISODE SUMMARY REPORT TO HOSPITAL", dueDate:"10/22/26", reportName:"VIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Facility", physFacilityName:"Facitlity name 1", faxNumber:"(916)703-7981", commMethod:"", delivery:"delivered", ehr:{ coord:"failed", stage:"pending" }, at:"warning", atGroup:"failed", atReason:"Unable to enter coordination notes", status:"In Progress" },
   { id:"n4", name:"Jane Cooper", mrn:"01500017797004", episodeId:"12458", serviceLine:"Hospice", branchId:"018", event:"HOSPICE DISCHARGE", notifOption:"Notification", taskType:"NOTIFY PRIMARY PHYSICIAN OF CLIENT REVOCATION", dueDate:"10/23/26", reportName:"DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 3", faxNumber:"(916)703-7982", commMethod:"", delivery:"failed", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
   { id:"n5", name:"Cameron Williamson", mrn:"01500017797005", episodeId:"12345", serviceLine:"Hospice", branchId:"019", event:"HOSPICE ADD ON", notifOption:"Notification", taskType:"SEND HOSPICE ORDER AND POC UPDATE TO FACILITY", dueDate:"10/24/26", reportName:"NEW ORDER REPORT", physFacility:"Facility", physFacilityName:"Facitlity name 2", faxNumber:"(916)703-7983", commMethod:"", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
-  { id:"n6", name:"Floyd Miles", mrn:"", episodeId:"12567", serviceLine:"Home Health", branchId:"020", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"MEDICATION INTERACTION", dueDate:"10/26/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"Physician", physFacilityName:"Physician name 3", faxNumber:"(916)703-7985", commMethod:"F-Fax", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"Fax number unavailable", status:"In Progress" },
-  { id:"n7", name:"Esther Howard", mrn:"", episodeId:"12736", serviceLine:"Hospice", branchId:"021", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"FAX FOLLOW-UP NOTE FOR MD-NURSING", dueDate:"10/27/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"Physician", physFacilityName:"Physician name 4", faxNumber:"(916)703-7986", commMethod:"F-Fax", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
-  { id:"n8", name:"Ronald Richards", mrn:"", episodeId:"12678", serviceLine:"Home Health", branchId:"022", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"MEDICATION INTERACTION", dueDate:"10/28/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"", physFacilityName:"", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"No records found in Workflow console", status:"In Progress" },
-  { id:"n9", name:"Kathryn Hughes", mrn:"", episodeId:"12438", serviceLine:"Hospice", branchId:"023", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"FAX FOLLOW-UP NOTE FOR MD-NURSING", dueDate:"10/29/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"", physFacilityName:"", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"failed", atReason:"Unable to extract physician details", status:"In Progress" },
+  { id:"n6", name:"Floyd Miles", mrn:"01500017797006", episodeId:"12567", serviceLine:"Home Health", branchId:"020", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"MEDICATION INTERACTION", dueDate:"10/26/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"Physician", physFacilityName:"Physician name 3", faxNumber:"(916)703-7985", commMethod:"F-Fax", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"Fax number unavailable", status:"In Progress" },
+  { id:"n7", name:"Esther Howard", mrn:"01500017797007", episodeId:"12736", serviceLine:"Hospice", branchId:"021", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"FAX FOLLOW-UP NOTE FOR MD-NURSING", dueDate:"10/27/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"Physician", physFacilityName:"Physician name 4", faxNumber:"(916)703-7986", commMethod:"F-Fax", delivery:"delivered", ehr:{ coord:"success", stage:"success" }, at:"thumb", status:"Completed" },
+  { id:"n8", name:"Ronald Richards", mrn:"01500017797008", episodeId:"12678", serviceLine:"Home Health", branchId:"022", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"MEDICATION INTERACTION", dueDate:"10/28/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"", physFacilityName:"", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"No records found in Workflow console", status:"In Progress" },
+  { id:"n9", name:"Kathryn Hughes", mrn:"01500017797009", episodeId:"12438", serviceLine:"Hospice", branchId:"023", event:"", notifOption:"Review Coordination Notes (RCN)", taskType:"FAX FOLLOW-UP NOTE FOR MD-NURSING", dueDate:"10/29/26", reportName:"REVIEW COORDINATION NOTE", physFacility:"", physFacilityName:"", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"failed", atReason:"Unable to extract physician details", status:"In Progress" },
   { id:"n10", name:"Albert Flores", mrn:"01500017797023", episodeId:"12656", serviceLine:"Home Health", branchId:"023", event:"DISCHARGE", notifOption:"Notification", taskType:"PROCESS EPISODE SUMMARY REPORT TO PHYSICIAN", dueDate:"10/28/26", reportName:"REVIEW DISCHARGE TRANSFER SUMMARY REPORT", physFacility:"Physician", physFacilityName:"Physician name 5", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"terminated", atReason:"Office address inactive", status:"In Progress" },
   { id:"n11", name:"Bessie Cooper", mrn:"01500017797025", episodeId:"12438", serviceLine:"Hospice", branchId:"025", event:"HOSPICE PHYSICIAN ORDER", notifOption:"Notification", taskType:"SEND HOSPICE ORDER AND POC UPDATE TO FACILITY", dueDate:"10/29/26", reportName:"NEW ORDER REPORT", physFacility:"Facility", physFacilityName:"facility name 4", faxNumber:"", commMethod:"", delivery:"failed", ehr:{ coord:null, stage:null }, at:"warning", atGroup:"failed", atReason:"Unable to access record from grid in Maintain Facility", status:"In Progress" },
   // Not Sent — Website recipient, so the fax stage is skipped. PHI is junk data.
@@ -22,6 +23,8 @@ const NOT_ROWS = [
   // Needs Intervention — the order report is unsigned, so the fax could not go out. PHI is junk data.
   { id:"n12", name:"QWERTY, ZELDA D", mrn:"93200000000412", episodeId:"12902", serviceLine:"Hospice", branchId:"025", event:"HOSPICE PHYSICIAN ORDER", notifOption:"Notification", taskType:"SEND HOSPICE ORDER AND POC UPDATE TO FACILITY", dueDate:"10/29/26", reportName:"NEW ORDER REPORT", physFacility:"Facility", physFacilityName:"Facility name 5", faxNumber:"(916)703-7994", commMethod:"", delivery:"exception", ehr:{ coord:null, stage:null }, at:"intervention", atReason:"Order report is unsigned", interventions:[{ key:"SEND FAX", value:"", reason:"Order report is unsigned", stage:"Sending of Fax" }], status:"In Progress" },
 ];
+NOT_ROWS.find(r=>r.id==="n6").faxNumber = "";
+NOT_ROWS.find(r=>r.id==="n4").atTip = "Physician name listed in the patient record matches the Medical Director";
 NOT_ROWS.forEach(r=>{
   // Exception ⇔ AT Needs Attention (the automation couldn't send it).
   // Not Sent ⇔ AT Completed with no notification needed.
@@ -43,7 +46,7 @@ const notIcon = (k, fb) => (typeof window !== "undefined" && window.__resources 
 const NOT_AT_ITEMS = [
   { id:"completed",  label:"Completed",       kind:"thumb",     get icon(){ return notIcon("atCompleted","icons/at-completed.png"); } },
   { id:"warning",    label:"Needs Attention", kind:"warning",   get icon(){ return notIcon("atNeedsAttention","icons/at-needs-attention.png"); }, num:"#d97706", caret:true },
-  { id:"intervention", label:"Needs Intervention", kind:"intervention", num:"#d97706" },
+  { id:"intervention", label:"Needs Intervention", kind:"intervention", num:"#d97706", caret:true },
   { id:"inprogress", label:"In Progress",     kind:"hourglass", get icon(){ return notIcon("atInProgress","icons/at-in-progress.png"); } },
 ];
 
@@ -56,8 +59,8 @@ function NOTInterventionGlyph({ size=18, title="Needs Intervention" }) {
   );
 }
 if (typeof window !== "undefined") window.NOTInterventionGlyph = NOTInterventionGlyph;
-function NOTATIcon({ kind, reason, group }) {
-  if (kind === "thumb")     return <img title="Completed"       alt="Completed"       src={notIcon("atCompleted","icons/at-completed.png")} style={{width:18,height:18,objectFit:"contain"}} />;
+function NOTATIcon({ kind, reason, group, tip }) {
+  if (kind === "thumb")     return <img title={tip || "Completed"}       alt="Completed"       src={notIcon("atCompleted","icons/at-completed.png")} style={{width:18,height:18,objectFit:"contain"}} />;
   if (kind === "warning")   return <img title={reason ? (group==="failed"?"Failed":"Terminated") + " - " + reason : "Needs Attention"} alt="Needs Attention" src={notIcon("atNeedsAttention","icons/at-needs-attention.png")} style={{width:18,height:18,objectFit:"contain"}} />;
   if (kind === "hourglass") return <img title="In Progress"     alt="In Progress"     src={notIcon("atInProgress","icons/at-in-progress.png")} style={{width:18,height:18,objectFit:"contain"}} />;
   if (kind === "intervention") { const G = typeof window!=="undefined" && window.RCDInterventionGlyph; const tip = reason ? "Needs Intervention- " + reason : "Needs Intervention"; return <span title={tip} style={{display:"inline-flex"}}><NOTInterventionGlyph size={18} title={tip} /></span>; }
@@ -122,7 +125,7 @@ function NOTFilterBar({ chips, datePicker, fieldFilters, onFieldFilters, onClear
       )}
       <div style={{position:"relative",flexShrink:0}}>
         <img src={notIcon("searchIcon","icons/search.svg")} alt="search" style={{width:14,height:14,objectFit:"contain",position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}} />
-        <input type="text" value={searchValue} onChange={e=>onSearch(e.target.value)} placeholder="Search Patient Records" style={{width:240,background:"#fff",border:"1px solid #93c5e8",borderRadius:6,padding:"6px 12px 6px 32px",font:"400 12px/16px Roboto",color:"#0f172a",outline:"none"}} />
+        <input type="text" value={searchValue} onChange={e=>onSearch(e.target.value)} placeholder="Search Patient, MRN, Episode ID" style={{width:240,background:"#fff",border:"1px solid #93c5e8",borderRadius:6,padding:"6px 12px 6px 32px",font:"400 12px/16px Roboto",color:"#0f172a",outline:"none"}} />
       </div>
     </div>
   );
@@ -167,7 +170,7 @@ const NOT_BIZ_STATUS = [
   { id:"failed",    label:"Not Sent",      color:"#404040" },
   { id:"exception", label:"Exception",     color:"#dc2626" },
 ];
-function NOTStatusStrip({ activeStatus, onPick, counts }) {
+function NOTStatusStrip({ activeStatus, onPick, counts, highlight }) {
   return (
     <div style={{display:"flex",alignItems:"stretch",border:"1px solid #e2e8f0",borderRadius:8,background:"#fff"}}>
       <div style={{padding:"14px 16px",background:"#f8fafc",borderRight:"1px solid #e2e8f0",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"center",font:"500 13px/18px Roboto",color:"#333333",flexShrink:0,letterSpacing:"0.01em",borderRadius:"8px 0 0 8px"}}>
@@ -176,7 +179,7 @@ function NOTStatusStrip({ activeStatus, onPick, counts }) {
       <div style={{display:"flex",alignItems:"flex-start"}}>
         {NOT_BIZ_STATUS.map(st=>{
           const active = activeStatus===st.id;
-          const dim = activeStatus && !active;
+          const dim = activeStatus ? !active : !!(highlight && st.id!=="all" && !highlight.has(st.id));
           return (
             <div key={st.id} role="button" onClick={()=>onPick(active||st.id==="all"?null:st.id)}
               style={{flex:"0 0 auto",width:st.id==="delivered"?140:118,boxSizing:"border-box",padding:"10px 16px 12px",cursor:"pointer",opacity:(dim&&st.id!=="all")?0.35:1,transition:"opacity .12s, background .12s",background:active?"#f8fafc":"transparent"}}
@@ -197,7 +200,7 @@ function NOTStatusStrip({ activeStatus, onPick, counts }) {
 }
 
 // Inline AT status row (Auth Request View style)
-function NOTATRow({ atCounts, atFilter, onFilter, subMenuRows, atReasonFilter, onReasonFilter }) {
+function NOTATRow({ atCounts, atFilter, onFilter, subMenuRows, atReasonFilter, onReasonFilter, highlight }) {
   const [openMenu, setOpenMenu] = useNOT(false);
   const rootRef = useNOTR(null);
   useNOTE(()=>{ if(!openMenu) return; const h=(e)=>{ if(rootRef.current && !rootRef.current.contains(e.target)) setOpenMenu(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); },[openMenu]);
@@ -205,12 +208,17 @@ function NOTATRow({ atCounts, atFilter, onFilter, subMenuRows, atReasonFilter, o
   const breakdown = {};
   (subMenuRows||[]).filter(r=>r.at==="warning").forEach(r=>{ breakdown[r.event] = (breakdown[r.event]||0)+1; });
   const breakdownList = Object.keys(breakdown).map(k=>({ label:k, count:breakdown[k] }));
+  // Needs Intervention caret → Pending Interventions group (PCR pattern), reasons tallied from live rows.
+  const intTally = {};
+  (subMenuRows||[]).filter(r=>r.at==="intervention").forEach(r=>{ const rs = (r.interventions||[]).map(it=>it.reason).concat(r.interventions?[]:[r.atReason]); Array.from(new Set(rs.filter(Boolean))).forEach(x=>{ intTally[x]=(intTally[x]||0)+1; }); });
+  const intReasons = Object.keys(intTally).map(k=>[k,intTally[k]]).sort((a,b)=>b[1]-a[1]);
+  const intGroups = intReasons.length ? [{ id:"intActive", label:"Pending Interventions", note:"Open - awaiting action", reasons:intReasons }] : [];
   return (
     <div ref={rootRef} style={{display:"flex",alignItems:"center",font:"400 13px/16px Roboto",color:"#333333"}}>
       <span style={{color:"#94a3b8",marginRight:12}}>Automation (AT) Status :</span>
       {NOT_AT_ITEMS.map((it,i)=>{
         const active = atFilter===it.id;
-        const dim = atFilter && !active;
+        const dim = atFilter ? !active : !!(highlight && !highlight.has(it.id));
         return (
           <React.Fragment key={it.id}>
             {i>0 && <span style={{width:1,height:18,background:"#e2e8f0",margin:"0 12px"}}></span>}
@@ -221,10 +229,13 @@ function NOTATRow({ atCounts, atFilter, onFilter, subMenuRows, atReasonFilter, o
               <span style={{fontWeight:600,color:it.num||"#0f172a"}}>{notPad(atCounts[it.id]||0)}</span>
               {it.caret && (
                 <span style={{position:"relative",display:"inline-flex"}}>
-                  <span title="Sub-status breakdown" onClick={e=>{ e.stopPropagation(); setOpenMenu(o=>!o); }} style={{width:14,height:14,display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#2563eb"}}>
+                  <span title="Sub-status breakdown" onClick={e=>{ e.stopPropagation(); setOpenMenu(o=>o===it.id?false:it.id); }} style={{width:14,height:14,display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#2563eb"}}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 8 L19 8 L12 17 Z" fill="currentColor"></path></svg>
                   </span>
-                  {openMenu && NAMenuCmp && <NAMenuCmp na={computeNotNA(subMenuRows)} naCount={atCounts.warning||0} selectedReasons={atReasonFilter} onApply={sel=>{ onReasonFilter && onReasonFilter(sel); onFilter("warning"); }} onClose={()=>setOpenMenu(false)} />}
+                  {openMenu==="intervention" && it.id==="intervention" && NAMenuCmp && (intGroups.length
+                    ? <NAMenuCmp groupDefs={intGroups} selectedReasons={atFilter==="intervention"?atReasonFilter:null} onApply={sel=>{ onReasonFilter && onReasonFilter(sel); onFilter("intervention"); setOpenMenu(false); }} onClose={()=>setOpenMenu(false)} />
+                    : <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:"100%",right:0,zIndex:60,marginTop:6,background:"#fff",border:"1px solid #e2e8f0",borderRadius:6,boxShadow:"0 8px 24px rgba(15,23,42,.12)",padding:"14px 16px",font:"400 13px/18px Roboto",color:"#64748b",whiteSpace:"nowrap"}}>No Needs Intervention records for the current selection.</div>)}
+                  {openMenu==="warning" && it.id==="warning" && NAMenuCmp && <NAMenuCmp na={computeNotNA(subMenuRows)} naCount={atCounts.warning||0} selectedReasons={atReasonFilter} onApply={sel=>{ onReasonFilter && onReasonFilter(sel); onFilter("warning"); }} onClose={()=>setOpenMenu(false)} />}
                 </span>
               )}
             </button>
@@ -339,14 +350,21 @@ function NOTSortArrows({ active, dir }) {
   );
 }
 
-function NOTTableHeader({ sortKey, sortDir, onSort }) {
+const NOTBox = ({ on, locked, onToggle, accent="#2563eb" }) => (
+  <span role="checkbox" aria-checked={!!on} tabIndex={0} onClick={(e)=>{ e.stopPropagation(); if(!locked && onToggle) onToggle(); }}
+    style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,flexShrink:0,border:`1px solid ${on?(locked?"#cbd5e1":accent):"#d8d8d8"}`,borderRadius:3,background:on?(locked?"#cbd5e1":accent):"#fff",cursor:locked?"default":"pointer"}}>
+    {on && <span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}
+  </span>
+);
+function NOTTableHeader({ sortKey, sortDir, onSort, bulkMode, allSelected, onToggleAll }) {
   return (
     <div style={{display:"grid",gridTemplateColumns:NOT_GRID,alignItems:"center",background:"#f8fafc",borderBottom:"1px solid #e2e8f0",height:40,padding:"0 12px",gap:6,position:"sticky",top:0,zIndex:6,boxShadow:"0 1px 0 #e2e8f0"}}>
       {NOT_COLS.map(c=>(
         <div key={c.key} onClick={c.sortable?()=>onSort(c.key):undefined}
           style={{font:"500 11px/14px Roboto",color:"#64748b",display:"flex",alignItems:"center",justifyContent:c.align==="center"?"center":"flex-start",cursor:c.sortable?"pointer":"default",userSelect:"none",overflow:"hidden",whiteSpace:"nowrap",...(c.key==="mrn"?{paddingLeft:14}:null),...notFreezeStyle(c.key,"#f8fafc")}}>
+          {bulkMode && c.key==="name" && <span style={{display:"inline-flex",marginRight:16}} onClick={e=>e.stopPropagation()}><NOTBox on={allSelected} onToggle={onToggleAll} /></span>}
           {c.sortable && <NOTSortArrows active={sortKey===c.key} dir={sortDir} />}
-          {c.label}
+          {bulkMode && c.key==="reviewed" ? "" : c.label}
         </div>
       ))}
     </div>
@@ -435,9 +453,11 @@ function NOTEhrSync({ ehr }) {
 
 // ── Patient detail slider — all notifications for one MRN ─────
 // MRN is only present on "Notification" records; RCN records carry no MRN, so those patients group by name.
-const notHasMrn = (r)=>r.notifOption==="Notification";
-const notGroupKey = (r)=>notHasMrn(r) ? "m:"+r.mrn : "n:"+r.name;
-const notCountByKey = (()=>{ const m={}; NOT_ROWS.forEach(r=>{ const k=notGroupKey(r); m[k]=(m[k]||0)+1; }); return m; })();
+const notHasMrn = (r)=>!!r.mrn;
+const notGroupKey = (r)=>"n:"+r.name;
+const notCountByKey = (()=>{ const m={}; NOT_ROWS.find(r=>r.id==="n6").faxNumber = "";
+NOT_ROWS.find(r=>r.id==="n4").atTip = "Physician name listed in the patient record matches the Medical Director";
+NOT_ROWS.forEach(r=>{ const k=notGroupKey(r); m[k]=(m[k]||0)+1; }); return m; })();
 const NOT_COV = { active:{ c:"#16a34a", bg:"#f0fdf4", l:"Active" }, inactive:{ c:"#dc2626", bg:"#fef2f2", l:"Inactive" }, pending:{ c:"#3f7ba8", bg:"#eaf2f8", l:"Pending" } };
 const NOT_AUTH_ST = { approved:{ c:"#16a34a", bg:"#f0fdf4", l:"Approved" }, denied:{ c:"#dc2626", bg:"#fef2f2", l:"Denied" }, exception:{ c:"#f97316", bg:"#fff7ed", l:"Exception" }, partial:{ c:"#0f766e", bg:"#f0fdfa", l:"Partially Approved" }, pending:{ c:"#3f7ba8", bg:"#eaf2f8", l:"Pending" }, pending_submission:{ c:"#3f7ba8", bg:"#eaf2f8", l:"Pending Submission" } };
 function NOTMiniPill({ s }) {
@@ -646,33 +666,38 @@ function NOTInterventionSection({ r }) {
 
 // Notification Info tab content for the shared patient detail slider.
 function NOTPatientNotifications({ row }) {
-  const [openId, setOpenId] = useNOT(row ? row.id : null);
+  const [openMap, setOpenMap] = useNOT(()=>{ if(!row) return {}; const all = NOT_ROWS.filter(r=>notGroupKey(r)===notGroupKey(row)); const both = all.some(r=>r.notifOption==="Notification") && all.some(r=>r.notifOption!=="Notification"); const m={}; all.forEach(r=>{ m[r.id] = both ? r.notifOption==="Notification" : r.id===row.id; }); return m; });
   if (!row) return null;
   const hasMrn = notHasMrn(row);
   const gk = notGroupKey(row);
   const list = NOT_ROWS.filter(r=>notGroupKey(r)===gk).sort((a,b)=>notToTime(b.dueDate)-notToTime(a.dueDate));
   const cnt = (k)=>list.filter(r=>r.delivery===k).length;
   const niRec = row.at==="intervention" && row.interventions ? row : null;
+  const groups = [
+    { id:"notif", label:"Notifications", rows:list.filter(r=>r.notifOption==="Notification") },
+    { id:"rcn", label:"Review Coordination Notes (RCN)", rows:list.filter(r=>r.notifOption!=="Notification") },
+  ].filter(g=>g.rows.length);
   return (
     <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:10}}>
       {niRec && <NOTInterventionSection r={niRec} />}
       <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap",marginBottom:4}}>
         <span style={{font:"500 15px/20px Roboto",color:"#0f172a"}}>Notifications Details</span>
       </div>
-      {list.map(r=>(<NOTNotifCard key={r.id} r={r} current={r.id===row.id} open={openId===r.id} onToggle={()=>setOpenId(id=>id===r.id?null:r.id)} />))}
+      {groups.flatMap(g=>g.rows).map(r=>(<NOTNotifCard key={r.id} r={r} current={r.id===row.id} open={!!openMap[r.id]} onToggle={()=>setOpenMap(m=>({...m,[r.id]:!m[r.id]}))} />))}
     </div>
   );
 }
 if (typeof window !== "undefined") window.NOTPatientNotifications = NOTPatientNotifications;
 
-function NOTTableRow({ row, reviewed, onReviewed, onNotes, onPatient, accent="#2563eb" }) {
+function NOTTableRow({ row, reviewed, onReviewed, onNotes, onPatient, accent="#2563eb", bulkMode, selected, onSelect }) {
   const cell = (align) => ({font:"500 12px/16px Roboto",color:"#333333",display:"flex",alignItems:"center",justifyContent:align==="center"?"center":"flex-start",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0});
   return (
     <div style={{display:"grid",gridTemplateColumns:NOT_GRID,alignItems:"center",height:48,padding:"0 11px",border:"1px solid #e2e8f0",borderRadius:6,marginBottom:8,boxShadow:"0 1px 2px rgba(15,23,42,0.03)",background:"#fff",gap:6}}>
-      <div style={{...cell(),...notFreezeStyle("name","#fff")}}>
+      <div style={{...cell(),...notFreezeStyle("name","#fff"),gap:bulkMode?16:0}}>
+        {bulkMode && <NOTBox on={!!selected||reviewed} locked={reviewed} onToggle={()=>onSelect(row.id)} />}
         <span title={"Open patient details — "+row.name} onClick={()=>onPatient&&onPatient(row)} style={{font:"500 13px/16px Roboto",color:"#2563eb",overflow:"hidden",textOverflow:"ellipsis",cursor:"pointer"}}>{row.name}</span>
       </div>
-      <div style={{...cell(),paddingLeft:14}}>{row.notifOption==="Notification" ? row.mrn : ""}</div>
+      <div style={{...cell(),paddingLeft:14}}>{row.mrn || NOT_DASH}</div>
       <div style={cell()}>{row.episodeId}</div>
       <div style={cell()}>{row.serviceLine}</div>
       <div style={cell()}>{row.branchId}</div>
@@ -687,12 +712,12 @@ function NOTTableRow({ row, reviewed, onReviewed, onNotes, onPatient, accent="#2
       <div style={{...cell("center"),...notFreezeStyle("commMethod","#fff")}}>{row.commMethod || NOT_DASH}</div>
       <div style={{...cell("center"),...notFreezeStyle("delivery","#fff")}}><NOTDeliveryPill kind={row.delivery} /></div>
       <div style={{...cell("center"),...notFreezeStyle("ehrSync","#fff")}}><NOTEhrSync ehr={row.ehr} /></div>
-      <div style={{...cell("center"),...notFreezeStyle("at","#fff")}}><NOTATIcon kind={row.at} reason={row.atReason} group={row.atGroup} /></div>
+      <div style={{...cell("center"),...notFreezeStyle("at","#fff")}}><span role="button" title="Open Notification Info" onClick={(e)=>{ e.stopPropagation(); onPatient&&onPatient(row); }} style={{display:"inline-flex",cursor:"pointer"}}><NOTATIcon kind={row.at} reason={row.atReason} group={row.atGroup} tip={row.atTip} /></span></div>
       <div style={{...cell("center"),...notFreezeStyle("reviewed","#fff")}} onClick={(e)=>e.stopPropagation()}>
-        <window.BRCell scope="notif" id={row.id} reviewed={!!reviewed}><span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed(row.id)}
+        {bulkMode ? null : reviewed ? <NOTBox on locked /> : <span role="checkbox" aria-checked={!!reviewed} tabIndex={0} onClick={()=>onReviewed(row.id)}
           style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,border:`1px solid ${reviewed?accent:"#d8d8d8"}`,borderRadius:3,background:reviewed?accent:"#fff",cursor:"pointer"}}>
           {reviewed && <span style={{color:"#fff",fontSize:11,lineHeight:1,fontWeight:700}}>✓</span>}
-        </span></window.BRCell>
+        </span>}
       </div>
     </div>
   );
@@ -728,7 +753,9 @@ function NOTPagination({ total, page, perPage, onPage, onPerPage }) {
 }
 
 // ── Notifications Request View (main) ─────────────────────────
-function NotificationsRequestView({ review, onExitReview, focus }) {
+function NotificationsRequestView({ review, onExitReview, focus, bulkMode, onBulkApi, onExitBulk }) {
+  const [selectedIds, setSelectedIds]   = useNOT({});
+  const [bulkConfirm, setBulkConfirm]   = useNOT(false);
   const [atFilter, setAtFilter]         = useNOT(null);
   const [statusFilter, setStatusFilter] = useNOT(null);
   const [atReasonFilter, setAtReason]   = useNOT(null);
@@ -748,13 +775,13 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
   const toggleReviewed = (id) => setRevPersist(m=> m[id] ? m : ({...m,[id]:true}));
   // Dashboard drill-down: land on the same records the dashboard card / action item counted.
   useNOTE(()=>{ if(!focus) return;
-    setFieldFilters([]); setSearchQ("");
+    setFieldFilters(focus.fieldFilters && focus.fieldFilters.length ? focus.fieldFilters.map(f=>({field:f.field, values:[...f.values]})) : []); setSearchQ("");
     const ids = focus.ids && focus.ids.length ? focus.ids : null;
     setIdFilter(ids ? { ids, label: focus.label || "Dashboard action item" } : null);
-    setStatusFilter(ids ? null : (focus.status || null));
-    setAtFilter(ids ? null : (focus.at || null));
+    setStatusFilter(focus.status || null);
+    setAtFilter(focus.at || null);
     setAtReason(ids ? null : (focus.reasons && focus.reasons.length ? focus.reasons : null));
-    if (focus.dateRange) setDateRange(focus.dateRange);
+    if ("dateRange" in focus) setDateRange(focus.dateRange || null);
   }, [focus && focus.ts]);
   const onSort = (k) => { if(sortKey===k) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortKey(k); setSortDir("asc"); } };
 
@@ -764,20 +791,25 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
 
   // Compose: field filters ∧ search ∧ date ∧ AT status.
   let base = NOT_ROWS.filter(r => fieldFilters.every(f => f.values.includes(r[f.field])));
-  if (searchQ.trim()) { const q = searchQ.toLowerCase(); base = base.filter(r=>[r.name,r.assessmentType,r.status].join(" ").toLowerCase().includes(q)); }
+  if (searchQ.trim()) { const q = searchQ.toLowerCase(); base = base.filter(r=>[r.name,r.mrn,r.episodeId].join(" ").toLowerCase().includes(q)); }
   if (dateRange) base = base.filter(r=>window.dateInRange(r.dueDate, dateRange));
-  const needsReview = (r) => r.at==="warning" || r.at==="intervention" || r.status==="Overdue";
+  const needsReview = (r) => r.delivery==="exception" || r.at==="warning" || r.at==="intervention";
   if (review) base = base.filter(r => needsReview(r) && !reviewedSet[r.id]);
 
-  const atCounts = { all: base.length };
-  NOT_AT_ITEMS.forEach(s=>{ atCounts[s.id] = base.filter(r=>r.at===s.kind).length; });
-
+  if (idFilter) base = base.filter(r=>idFilter.ids.includes(r.id));
+  // Each tile row counts against the other row's selection, so a selected tile's count always equals the rows shown.
+  const atMatch = (r) => (!atFilter || r.at===NOT_AT_MAP[atFilter]) && (!(atReasonFilter && atReasonFilter.length) || (r.at===(NOT_AT_MAP[atFilter]||"warning") && (atReasonFilter.includes(r.atReason) || (r.interventions||[]).some(it=>atReasonFilter.includes(it.reason)))));
+  const stMatch = (r) => !statusFilter || r.delivery===statusFilter;
+  const atBase = base.filter(stMatch), bizBase = base.filter(atMatch);
+  const atCounts = { all: atBase.length };
+  NOT_AT_ITEMS.forEach(s=>{ atCounts[s.id] = atBase.filter(r=>r.at===s.kind).length; });
   const bizCounts = { all: 0 };
-  ["delivered","pending","failed","exception"].forEach(k=>{ bizCounts[k] = base.filter(r=>r.delivery===k).length; bizCounts.all += bizCounts[k]; });
-  let rows = atFilter ? base.filter(r=>r.at===NOT_AT_MAP[atFilter]) : base;
-  if (statusFilter) rows = rows.filter(r=>r.delivery===statusFilter);
-  if (atReasonFilter && atReasonFilter.length) rows = rows.filter(r=>r.at==="warning" && atReasonFilter.includes(r.atReason));
-  if (idFilter) rows = rows.filter(r=>idFilter.ids.includes(r.id));
+  ["delivered","pending","failed","exception"].forEach(k=>{ bizCounts[k] = bizBase.filter(r=>r.delivery===k).length; bizCounts.all += bizCounts[k]; });
+  let rows = base.filter(r=>atMatch(r) && stMatch(r));
+  // Tile highlight: review mode → only the review statuses; any other active filter → statuses present in the result.
+  const anyFilter = !!(idFilter || statusFilter || atFilter || (atReasonFilter && atReasonFilter.length) || fieldFilters.length || searchQ.trim());
+  const bizHi = review ? new Set(["exception"]) : anyFilter ? new Set(Object.keys(bizCounts).filter(k=>k!=="all" && bizCounts[k]>0)) : null;
+  const atHi  = review ? new Set(["warning","intervention"]) : anyFilter ? new Set(NOT_AT_ITEMS.filter(s=>atCounts[s.id]>0).map(s=>s.id)) : null;
   if (sortKey) {
     rows = [...rows].sort((a,b)=>{
       const av = (a[sortKey]==null?"":a[sortKey]).toString().toLowerCase();
@@ -789,7 +821,12 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
   }
   const total = rows.length;
   const pageRows = rows;
-  window.useBRScope("notif", pageRows, reviewedSet, setRevPersist);
+  const selCount = Object.keys(selectedIds).filter(k=>selectedIds[k]).length;
+  useNOTE(()=>{ if(onBulkApi) onBulkApi(bulkMode ? { count: selCount, markReviewed: ()=>setBulkConfirm(true) } : null); },[bulkMode, selCount]);
+  useNOTE(()=>{ setSelectedIds({}); },[bulkMode]);
+  const eligible = pageRows.filter(r=>!reviewedSet[r.id]);
+  const allSelected = eligible.length>0 && eligible.every(r=>selectedIds[r.id]);
+  const toggleAll = () => setSelectedIds(m=>{ const n={...m}; eligible.forEach(r=>{ n[r.id]=!allSelected; }); return n; });
 
   const chips = [];
   if (idFilter) chips.push({ id:"ids", label:`${idFilter.label} (${notPad(idFilter.ids.length)})`, onRemove:()=>setIdFilter(null) });
@@ -800,7 +837,7 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
     [
       { id:"rv-at",  label:"Automation Status: Needs Attention" },
       { id:"rv-ni",  label:"Automation Status: Needs Intervention" },
-      { id:"rv-od",  label:"Status: Overdue" },
+      { id:"rv-ex",  label:"Fax Status: Exception" },
       { id:"rv-nr",  label:"Reviewed : Not Reviewed" },
     ].forEach(c=>chips.push({ ...c, onRemove:()=>onExitReview&&onExitReview() }));
   }
@@ -821,27 +858,28 @@ function NotificationsRequestView({ review, onExitReview, focus }) {
           <NOTTitleCluster />
         </div>
         <div style={{flex:"0 1 auto",minWidth:0}}>
-          <NOTStatusStrip activeStatus={statusFilter} counts={bizCounts} onPick={v=>{ setStatusFilter(v); if(v){ setAtFilter(null); setAtReason(null); } }} />
+          <NOTStatusStrip activeStatus={statusFilter} counts={bizCounts} highlight={bizHi} onPick={v=>{ setStatusFilter(v); if(v){ setAtFilter(null); setAtReason(null); } }} />
         </div>
       </div>
       <div style={{padding:"10px 24px 0",display:"flex",justifyContent:"flex-end"}}>
-        <NOTATRow atCounts={atCounts} atFilter={atFilter} onFilter={v=>{ setAtFilter(v); if(v) setStatusFilter(null); if(!v) setAtReason(null); }} subMenuRows={base}
+        <NOTATRow atCounts={atCounts} atFilter={atFilter} highlight={atHi} onFilter={v=>{ setAtFilter(v); if(v) setStatusFilter(null); if(!v) setAtReason(null); }} subMenuRows={base}
           atReasonFilter={atReasonFilter} onReasonFilter={sel=>setAtReason(sel && sel.length ? sel : null)} />
       </div>
       <div style={{padding:"12px 24px 0"}}>
         <Body>
           <div className="chip-scroll" style={{overflowX:"auto",overflowY:"hidden"}}>
             <div style={{minWidth:NOT_MIN_W}}>
-              <NOTTableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
+              <NOTTableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} bulkMode={bulkMode} allSelected={allSelected} onToggleAll={toggleAll} />
               {pageRows.length===0 ? (
                 <div style={{padding:"48px 24px",textAlign:"center",font:"400 13px/18px Roboto",color:"#94a3b8",border:"1px solid #e2e8f0",borderRadius:6,background:"#fff"}}>No notifications match the current filters.</div>
               ) : pageRows.map(r=>(
-                <NOTTableRow key={r.id} row={r} reviewed={!!reviewedSet[r.id]} onReviewed={toggleReviewed} onNotes={setNoteRow} onPatient={(r)=>{ if (window.__openNotifDrawer) window.__openNotifDrawer(r); else setPatientRow(r); }} />
+                <NOTTableRow key={r.id} row={r} bulkMode={bulkMode} selected={!!selectedIds[r.id]} onSelect={id=>setSelectedIds(m=>({...m,[id]:!m[id]}))} reviewed={!!reviewedSet[r.id]} onReviewed={toggleReviewed} onNotes={setNoteRow} onPatient={(r)=>{ if (window.__openNotifDrawer) window.__openNotifDrawer(r); else setPatientRow(r); }} />
               ))}
             </div>
           </div>
         </Body>
       </div>
+      {bulkConfirm && window.PCRMarkReviewedModal && <window.PCRMarkReviewedModal noun="" count={selCount} onClose={()=>{ setBulkConfirm(false); onExitBulk && onExitBulk(); }} onConfirm={()=>{ const ids=Object.keys(selectedIds).filter(k=>selectedIds[k]); setRevPersist(m=>{ const n={...m}; ids.forEach(id=>{ n[id]=true; }); return n; }); setSelectedIds({}); }} />}
       {noteRow && <NOTNotesDrawer row={noteRow} onClose={()=>setNoteRow(null)} />}
       {patientRow && !window.__openNotifDrawer && <NOTPatientDrawer key={patientRow.id} row={patientRow} onClose={()=>setPatientRow(null)} />}
       <NOTPagination total={total} page={page} perPage={perPage} onPage={(p)=>setPage(Math.min(Math.max(1,p), Math.max(1,Math.ceil(total/perPage))))} onPerPage={setPerPage} />

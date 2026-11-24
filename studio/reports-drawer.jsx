@@ -5,9 +5,12 @@ const rptCols = (...lists) => { const seen = new Set(), out = []; lists.flat().f
 
 const RPT_SERVICES = [
   { key:"ereferral", label:"E-referral", sections:["intake"],
-    filters:["date","branch","agency","referralHub"],
-    cols: rptCols(["Patient Name","Patient DOB","Gender","Agency","Policy Number","Referral Hub","Portal Sync","Patient Zipcode","Primary Plan","Referral ID","Referral Date","SOC","Referral Comment","Discharge Date","Type of Care","Branch","Sending Facility","Sending Organization","Referral Source","Payer Matched","Zipcode Matched","Referral Source Matched","Rules Engine Response","Referral Response","Referral Response Reason","Agency Referral Response","Agency Referral Response Reason","Document Send Status","Referral Hub Ack Status","Receiver Branch Code","AT Status"],
-                  ) },
+    filters:["date","agency","branch","ierPayer","ierZip","ierRefSource","ierResp"], noHelp:true,
+    cols: rptCols(["Patient Name","Agency","Branch","Primary Plan","Zip Code","Referral Source","Referral ID","Referral Date","Referral Response","Referral Hub Data Sync","AT Status","AT Reason"],
+                  ["Referral Hub","Portal Name","Req. SOC","Discharge Date","Type of Care","Receiver Branch Code","Sending Facility","Sending Organization","Referral Comment"],
+                  ["Payer Matched","Zipcode Matched","Referral Source Matched"],
+                  ["Rules Engine Response","Referral Hub Response","Referral Hub Response Reason","Referral Response in Portal","Referral Response Reason"],
+                  ["Portal Synced"]) },
   { key:"intake", label:"Patient Intake", sections:["intake"],
     filters:["date","branch","chartStatus"],
     cols: rptCols(["Patient Name","MRN","Episode ID","Patient ID","Branch","Intake Init. Date","EHR Sync","AT Status","AT Reason","Chart Status","Transaction Start Time","Transaction End Time"]) },
@@ -19,8 +22,8 @@ const RPT_SERVICES = [
     filters:["date","gateway","branch","payorSource","authType"],
     cols: rptCols(["Patient Name","MRN","SOC","SOE","EOE","Payor Source","Gateway","Auth Type","HCHB Task","Arrival Stage","Episode ID","Auth Initiation Date","Auth Subm Date","Payor Resp Date","Payor Resp Time","Auto Approved","Status check done","AT Status","Reason","EHR Sync","Auth Status","Authorization No","PH Auth","SVC","Requested","Approved","Denied","Pending","Stage Completed","Coord Note Entered"],
                   ["Mem ID","Agency","Branch","Mode","Auth Tracking #","Days to Expire","Follow up Dt"]) },
-  { key:"cdm", label:"CDM", sections:["cdm"], filters:["date","branch","payorSource"],
-    cols: rptCols(["Patient Name","Worker Name","MRN","Branch","Episode ID","Primary Payor","Secondary Payor Source","CDM Init Time","Eligible PC Hours","PC Auth Hours","Eligible Attend Hours","Attend Auth Hours","AT Status"]) },
+  { key:"cdm", label:"Scheduling", sections:["cdm"], filters:["date","branch","payorSource"],
+    cols: rptCols(["Patient Name","Worker Name","MRN","Branch","Episode ID","Primary Payor","Secondary Payor Source","Scheduling Init Time","Eligible PC Hours","PC Auth Hours","Eligible Attend Hours","Attend Auth Hours","AT Status"]) },
   { key:"assessments", label:"Assessments", sections:["assessments"], filters:["date","branch","validationStatus"],
     cols: rptCols(["Patient Name","Assessment ID","MRN","Agency","Facility ID","Branch","Assessment Init Date","Submission Date","M0090 Date","Visit Date","Eff Date","XML File Name (M0040)","Message No. / Severity","AT Status","Validation Status"],
                   ["Submission ID","Episode ID","RFA Code","RFA Type","Type of Transaction","Reason Code","WellSky Location","Payor Name","WellSky Task Name","Assessment Date","CCN"]) },
@@ -34,8 +37,6 @@ const RPT_SERVICES = [
                   ["Batch E5 ID","Batch ID","Total Claims in Batch","Payment Model","Batch Status","Parsing Status","Reason","Stage"]) },
   { key:"remits", label:"Remits", sections:["remits"], filters:["date","serviceLine"],
     cols: rptCols(["Patient Name","Trans Init Date","Service Line","Patient Control Number","Payment ID","Denial Codes","Clearing House Location","Clearing House Payor","Clearing House Insurance Code","EOB Uploaded","AT Status","EHR Sync"]) },
-  { key:"collections", label:"Collections", sections:["collections"], filters:["date","branch","collStatus","collReason","collOwner"],
-    cols: rptCols(["Claim #","Patient ID","Payer","Branch","Status","Reason","Payer Code","Billed","Balance","Age (Days)","Deadline","Next Step","Follow up Dt","Owner"]) },
   { key:"docext", label:"Doc Extraction", sections:["docext"], filters:["date","branch","eventType"],
     cols: rptCols(["Patient Name","Patient MRN","Agency Name","Branch Code","Episode ID","Event Type","Referral Attachment","Visit Notes","Download Status","AT Status"]) },
   { key:"f2f", label:"F2F Audit", sections:["audit_f2f"], filters:["date","branch","auditor"],
@@ -51,6 +52,10 @@ const RPT_FILTERS = {
   branch:          { label:"Branch", options:["All","Bcode","BR-101","BR-204","BR-310"] },
   agency:          { label:"Agency", options:["All","Agency 1","Agency 2","Agency 3"] },
   referralHub:     { label:"Referral Hub", options:["All","Availity","Waystar"] },
+  ierPayer:        { label:"Primary Plan", get options(){ const rows=(typeof window!=="undefined"&&window.IER_ROWS)||[]; const v=rows.map(r=>r.plan).filter(Boolean); return ["All", ...new Set(v.length?v:["Medicare Advantage HMO","State Medicaid Plan","Commercial PPO","Medicare Part A","Commercial HMO","Commercial EPO"])]; } },
+  ierZip:          { label:"Zip Code", get options(){ const rows=(typeof window!=="undefined"&&window.IER_ROWS)||[]; const v=rows.map(r=>r.zip).filter(Boolean); return ["All", ...new Set(v.length?v:["60441","77002","60540","60453","60126","60611","60153","60067","60563","60525"])]; } },
+  ierRefSource:    { label:"Sending Organisation", get options(){ const rows=(typeof window!=="undefined"&&window.IER_ROWS)||[]; const v=rows.map(r=>r.sendOrg).filter(Boolean); return ["All", ...new Set(v.length?v:["Silver Cross Hosp","St. Luke's Health","Rush Copley","Advocate Christ","Amita St Alexius","Adventist LaGrange"])]; } },
+  ierResp:         { label:"Referral Response", options:["All","Accepted","Declined","User Decision","Ineligible","Exceptions"] },
   payorSource:     { label:"Payor Source", options:["All","Medicare","Medicare Advantage","Medicaid","Commercial"], wide:true },
   authType:        { label:"Auth Type", options:["All","Recert","SOC","ROC"] },
   validationStatus:{ label:"Validation Status", options:["All","Accepted","Rejected","Warning"] },
@@ -63,9 +68,6 @@ const RPT_FILTERS = {
   auditor:         { label:"Auditor", options:["All","Fiona Gallagher","Bob Smith","Ethan Hunt","Diana Ross"] },
   auditResult:     { label:"Audit Result", options:["All","Met","Unmet","Resolved"] },
   chartStatus:     { label:"Chart Status", options:["All","With Chart Status","No Chart Status"] },
-  collStatus:      { label:"Status", options:["All","Completed","Paid","Denied","ADR","Underpaid","Pending","Rejected"] },
-  collReason:      { label:"Reason", options:["All","Authorization","Medical necessity","Missing information","Duplicate claim","Timely filing","Coverage / eligibility","No payer response","Payer shows paid","Records request","Patient share","Second payer due","Paid in full","Invalid MBI / demographics","Provider NPI mismatch"], wide:true },
-  collOwner:       { label:"Assigned To", options:["All","Asha Menon","Daniel Brooks","Maria Lopez","Kevin Osei","Priya Shah","Jordan Ellis","Unassigned"] },
   preValidation:   { label:"Pre-Validation", options:["All","Yes","No"] },
 };
 
@@ -196,7 +198,7 @@ function RptDateRange({ from, to, setFrom, setTo }) {
 function ReportsDrawer({ section }) {
   const [open, setOpen] = React.useState(false);
   const [done, setDone] = React.useState(false);
-  const pickDefault = () => (RPT_SERVICES.find(s => s.sections.includes(section) && ["eligibility","authorization","claims","remits","collections"].includes(s.key)) || RPT_SERVICES[2]).key;
+  const pickDefault = () => (window.__rptContext && RPT_SERVICES.some(s => s.key === window.__rptContext)) ? window.__rptContext : (RPT_SERVICES.find(s => s.sections.includes(section)) || RPT_SERVICES[2]).key;
   const [svc, setSvc] = React.useState(pickDefault);
   const today = new Date(), monthAgo = new Date(Date.now() - 30*864e5);
   const [from, setFrom] = React.useState(rptIso(monthAgo));
@@ -252,7 +254,7 @@ function ReportsDrawer({ section }) {
               <div style={{display:"flex",flexDirection:"column",gap:16,paddingBottom:24,borderBottom:`1px solid ${RPT_LINE}`}}>
                 <RptStep n={1} text="Select Service for the Report" />
                 <div style={{display:"grid",gridTemplateColumns:"repeat(5, max-content)",justifyContent:"space-between",gap:"12px 18px"}}>
-                  {["eligibility","authorization","claims","remits","collections"].map(k => RPT_SERVICES.find(x => x.key===k)).map(s => <RptRadio key={s.key} on={svc===s.key} label={s.label} onClick={()=>setSvc(s.key)} />)}
+                  {RPT_SERVICES.map(s => <RptRadio key={s.key} on={svc===s.key} label={s.label} onClick={()=>setSvc(s.key)} />)}
                 </div>
               </div>
 
@@ -262,12 +264,12 @@ function ReportsDrawer({ section }) {
                   {service.filters.map(k => {
                     const f = RPT_FILTERS[k];
                     if (f.type === "date") return (
-                      <RptField key={k} label={f.label} noHelp={service.key==="intake"}>
+                      <RptField key={k} label={f.label} noHelp={service.key==="intake"||service.noHelp}>
                         <RptDateRange from={from} to={to} setFrom={setFrom} setTo={setTo} />
                       </RptField>
                     );
                     return (
-                      <RptField key={k} label={f.label} wide={f.wide} noHelp={service.key==="intake"}>
+                      <RptField key={k} label={f.label} wide={f.wide} noHelp={service.key==="intake"||service.noHelp}>
                         <div style={{maxWidth:f.wide?"100%":undefined}}><RptSelect value={fval(k)} options={f.options} onChange={v=>setFilters(o=>({...o,[k]:v}))} /></div>
                       </RptField>
                     );

@@ -2401,7 +2401,10 @@ function PCRInterventions({ row }) {
   const [done, setDone] = useED({});
   const IntTable = (typeof window!=="undefined") && window.RCDIntTable;
   const cols = (typeof window!=="undefined") && window.RCD_DONE_COLS;
-  const all = (typeof window!=="undefined" && window.rcdInterventions) ? window.rcdInterventions(row) : [];
+  // Bulk completion only holds while the grid still shows the record as resolved; once it is back in Needs Intervention, items return to Pending.
+  const bulk = (row.at!=="intervention" && typeof window!=="undefined" && window.__pcrBulkDone && window.__pcrBulkDone[row.id]) || null;
+  const allRaw = (typeof window!=="undefined" && window.rcdInterventions) ? window.rcdInterventions(bulk ? {...row, at:"intervention"} : row) : [];
+  const all = bulk ? allRaw.map(it=>({ ...it, status:"Completed", completed: bulk.at, by: bulk.by, notes: bulk.notes || "—" })) : allRaw;
   const isDone = (it)=> !!done[it.id] || it.status==="Completed";
   const items = all.map(it=> isDone(it)
     ? (done[it.id]
@@ -2420,7 +2423,7 @@ function PCRInterventions({ row }) {
   const pad2 = (n)=>String(n).padStart(2,"0");
   const pending = items.filter(it=>!it._done);
   const doneItems = items.filter(it=>it._done);
-  const [subTab, setSubTab] = useED("pending");
+  const [subTab, setSubTab] = useED(bulk ? "done" : "pending");
   const shown = subTab==="pending" ? pending : doneItems;
   const tabs = [["pending",`Pending Interventions (${pad2(active)})`],["done",`Completed Interventions (${pad2(completed)})`]];
   const focusOpen = typeof window!=="undefined" && window.__pcrIntFocus;

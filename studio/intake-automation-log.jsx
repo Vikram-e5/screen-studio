@@ -1,11 +1,11 @@
 // Intake — Automation Log. Same structure as ARV/CDM automation logs. Columns
-// per the Intake field-list spec, split into E-Referral and Patient Intake tabs:
-// Ref ID, Service, Workflow, Current Stage, Patient Name, Episode ID, Patient ID, Sparc ID,
+// per the Intake field-list spec, split into E-referral and Patient Intake tabs:
+// Ref ID, Service, Workflow, Current Stage, Patient Name, Episode ID, Patient ID,
 // Pre-Validation, Queue Added Time, Start/End time, AT Status.
 const { useState: useIAL } = React;
 
 function ialWorkflowFor(src, r) {
-  if (src==="ereferral")    return "E-Referral Processing";
+  if (src==="ereferral")    return "E-referral Processing";
   if (src==="preeligibility") return "Intake - Pre-eligibility Check";
   return "Intake - Patient Intake Processing";
 }
@@ -17,7 +17,7 @@ function ialPIStage(r) {
 }
 if (typeof window !== "undefined") window.ialPIStage = ialPIStage;
 function ialStageFor(src, r) {
-  if (src==="ereferral")    return r.resp==="accepted" ? "Response Received" : r.resp==="declined" ? "Declined" : "Ineligibility Review";
+  if (src==="ereferral")    return r.resp==="accepted" ? ((window.IER_STAGES||[])[5] || "Stage VI - Referral Event Notification") : r.resp==="declined" ? "Declined" : "Ineligibility Review";
   if (src==="preeligibility") return r.cov==="accepted" ? "Coverage Confirmed" : r.cov==="declined" ? "Coverage Declined" : "Ineligibility Review";
   return ialPIStage(r);
 }
@@ -37,7 +37,7 @@ function ialPreVal(fail) { return { ok:!fail, checks:[["Episode ID",true],["Pati
 // Built on demand so it always reflects the loaded E-referral / Patient intake rows.
 function ialRows(tab) {
   const ier = window.IER_ROWS || [], ipt = window.IPT_ROWS || [];
-  if (tab === "ereferral") return ier.map((r,i)=>{ const m = ipt.find(x=>x.name===r.name)||{}; const st = r.refDate+" 09:12 AM"; return { ref:"IER"+String(i+1).padStart(9,"0"), src:"ereferral", srcLabel:"E-Referral", agency:r.agency||m.agency||"Agency 1", wf:ialWorkflowFor("ereferral",r), stage:ialStageFor("ereferral",r), name:r.name, branch:r.branch, refId:r.refId, atGroup:r.atGroup, atReason:r.atReason, episodeId:m.episodeId||r.episodeId||("EP"+String(70412+i*13)), patientId:m.patientId||r.patientId||String(4002210+i*17), sparcId:m.sparcId||("SPC"+String(208310+i*23)), pre:ialPreVal(r.resp==="ineligible"||r.resp==="exception"), queued:ialMinus(st, 4+(i%3)*3), st, et:r.at==="hourglass"?"—":r.refDate+" 09:41 AM", at:r.at }; });
+  if (tab === "ereferral") return ier.map((r,i)=>{ const m = ipt.find(x=>x.name===r.name)||{}; const st = r.refDate+" 09:12 AM"; return { ref:"IER"+String(i+1).padStart(9,"0"), src:"ereferral", srcLabel:"E-referral", agency:r.agency||m.agency||"Agency 1", wf:ialWorkflowFor("ereferral",r), stage:ialStageFor("ereferral",r), name:r.name, branch:r.branch, refId:r.refId, atGroup:r.atGroup, atReason:r.atReason, episodeId:m.episodeId||r.episodeId||("EP"+String(70412+i*13)), patientId:m.patientId||r.patientId||String(4002210+i*17), sparcId:m.sparcId||("SPC"+String(208310+i*23)), pre:ialPreVal(r.resp==="ineligible"||r.resp==="exception"), queued:ialMinus(st, 4+(i%3)*3), st, et:r.at==="hourglass"?"—":r.refDate+" 09:41 AM", at:r.at }; }).map(x=>{ const end = x.et!=="—" ? x.et : x.st.slice(0,8)+" 09:45 AM"; return { ...x, retryElapsed: ialElapsed(x.st, end), elapsed: ialElapsed(x.queued, end) }; });
   return ipt.map((r,i)=>{ const st="04/16/25 08:30 AM"; return { ref:"IPT"+String(i+1).padStart(9,"0"), src:"patientintake", srcLabel:"Patient Intake", agency:r.agency, wf:ialWorkflowFor("patientintake",r), stage:ialStageFor("patientintake",r), name:r.name, branch:r.branch, atGroup:r.atGroup, atReason:r.atReason, episodeId:r.episodeId, patientId:r.patientId, sparcId:r.sparcId, pre:ialPreVal(r.preVal==="No"), queued:ialMinus(st, 5+(i%4)*4), st, et:r.at==="hourglass"?"—":"04/16/25 08:58 AM", at:r.at }; }).map(x=>({ ...x, elapsed: ialElapsed(x.queued, x.et!=="—" ? x.et : "04/16/25 09:45 AM") }));
 }
 const IAL_ROWS = ialRows("patientintake");
@@ -67,7 +67,6 @@ const IAL_COLS = [
   { key:"name",   label:"Patient Name",  w:"150px", sort:true },
   { key:"episodeId",label:"Episode ID",  w:"100px", sort:true },
   { key:"patientId",label:"Patient ID",  w:"90px",  sort:true },
-  { key:"sparcId",label:"Sparc ID",      w:"100px", sort:true },
   { key:"queued", label:"Queue Added Time", w:"140px", sort:true, freeze:674 },
   { key:"elapsed", label:"Elapsed Time since Transaction Arrived Date", w:"300px", sort:true, freeze:368 },
   { key:"st",     label:"Start Time",    w:"140px", sort:true, freeze:222 },
@@ -75,11 +74,13 @@ const IAL_COLS = [
   { key:"at",     label:"AT Status",     w:"70px",  sort:false, align:"center", freeze:0 },
 ];
 const IAL_EREF_COLS = [
-  { key:"ref",    label:"Ref ID",        w:"minmax(110px,1.1fr)", sort:true },
+  { key:"ref",    label:"E5 ID",         w:"minmax(110px,1.1fr)", sort:true },
   { key:"agency", label:"Agency",        w:"minmax(90px,0.9fr)",  sort:true },
-  { key:"stage",  label:"Current Stage", w:"minmax(140px,1.4fr)", sort:true },
+  { key:"stage",  label:"Current Stage", w:"minmax(220px,1.8fr)", sort:true },
   { key:"name",   label:"Patient Name",  w:"minmax(130px,1.3fr)", sort:true },
   { key:"refId",  label:"Referral ID",   w:"minmax(110px,1.1fr)", sort:true },
+  { key:"retryElapsed", label:"Elapsed Time since Last Retry", w:"minmax(120px,1fr)", sort:true, wrap:true },
+  { key:"elapsed", label:"Elapsed Time since Transaction Arrived Time", w:"minmax(150px,1.1fr)", sort:true, wrap:true },
   { key:"st",     label:"Start Time",    w:"minmax(130px,1.2fr)", sort:true },
   { key:"et",     label:"End Time",      w:"minmax(130px,1.2fr)", sort:true },
   { key:"at",     label:"AT Status",     w:"70px",                sort:false, align:"center" },
@@ -92,7 +93,7 @@ function IALATCell({ r }) {
   return H ? <H row={r} label={label} icon={icon} /> : icon;
 }
 
-const IAL_TABS = [["ereferral","E-Referral"],["patientintake","Patient Intake"]];
+const IAL_TABS = [["ereferral","E-referral"],["patientintake","Patient Intake"]];
 function IntakeAutomationLogView({ onRefClick }) {
   const [tab, setTabRaw] = useIAL("ereferral");
   const [cardFilter, setCardFilter] = useIAL(null);
@@ -102,7 +103,7 @@ function IntakeAutomationLogView({ onRefClick }) {
   const [sortDir, setSortDir] = useIAL("asc");
   const [fieldFilters, setFieldFilters] = useIAL([]);
   const [detail, setDetail] = useIAL(null);
-  const openRef = r => { if (tab==="patientintake") { const p=(window.IPT_ROWS||[]).find(x=>x.name===r.name); if (p) { setDetail(p); return; } } onRefClick && onRefClick(r); };
+  const openRef = r => { if (tab==="ereferral") { const ir=(window.IER_ROWS||[]).find(x=>x.refId===r.refId); if (ir && window.__openReferralLog) { window.__openReferralLog(ir); return; } } if (tab==="patientintake") { const p=(window.IPT_ROWS||[]).find(x=>x.name===r.name); if (p) { setDetail(p); return; } } onRefClick && onRefClick(r); };
   const setTab = (k) => { setTabRaw(k); setCardFilter(null); setSearchQ(""); setFieldFilters([]); };
   const handleSort = k => { if(sortKey===k) setSortDir(d=>d==="asc"?"desc":"asc"); else{ setSortKey(k); setSortDir("asc"); } };
   const activeCard = cardFilter ? IAL_SUMMARY_CARDS.find(c=>c.id===cardFilter) : null;
@@ -123,7 +124,7 @@ function IntakeAutomationLogView({ onRefClick }) {
         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:24,flexWrap:"wrap",marginBottom:12}}>
           <div>
             <div style={{font:"600 18px/24px Roboto",color:"#0f172a"}}>Automation Log</div>
-            <div style={{font:"400 13px/18px Roboto",color:"#3A424A",marginTop:8}}>Transaction Status of {tab==="ereferral"?"E-Referral":"Patient Intake"} Workflows</div>
+            <div style={{font:"400 13px/18px Roboto",color:"#3A424A",marginTop:8}}>Transaction Status of {tab==="ereferral"?"E-referral":"Patient Intake"} Workflows</div>
           </div>
           <div style={{display:"flex",gap:28,flexShrink:0,flexWrap:"wrap",justifyContent:"flex-end"}}>
             {IAL_SUMMARY_CARDS.map(c=>{
@@ -150,14 +151,14 @@ function IntakeAutomationLogView({ onRefClick }) {
           ); })}
         </div>
         <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block",marginBottom:16}}>
-          Click E5 ID to view the related {tab==="ereferral"?"E-Referral":"Patient Intake"} transaction
+          Click E5 ID to view the related {tab==="ereferral"?"E-referral":"Patient Intake"} transaction
         </div>
         <div style={{overflow:"auto",maxHeight:"calc(100vh - 300px)"}}>
         <div style={{width:wide?"max-content":"auto",minWidth:"100%"}}>
         <div style={{display:"grid",gridTemplateColumns:GRID,alignItems:"stretch",background:"#f8fafc",borderBottom:"1px solid #e2e8f0",minHeight:44,padding:"0 12px",gap:6,position:"sticky",top:0,zIndex:3}}>
           {COLS.map(c=>(
             <div key={c.key} onClick={c.sort?()=>handleSort(c.key):undefined}
-              style={{display:"flex",alignItems:"center",justifyContent:c.align==="center"?"center":"flex-start",gap:3,font:"500 11px/14px Roboto",color:"#64748b",whiteSpace:"nowrap",cursor:c.sort?"pointer":"default",userSelect:"none",overflow:"hidden",padding:"0 2px",...ialFrz(c,"#f8fafc")}}>
+              style={{display:"flex",alignItems:"center",justifyContent:c.align==="center"?"center":"flex-start",gap:3,font:"500 11px/14px Roboto",color:"#64748b",whiteSpace:c.wrap?"normal":"nowrap",cursor:c.sort?"pointer":"default",userSelect:"none",overflow:"hidden",padding:"0 2px",...ialFrz(c,"#f8fafc")}}>
               {c.sort&&ARVSortArrows&&<ARVSortArrows active={sortKey===c.key} dir={sortDir} />}
               {c.label}
             </div>

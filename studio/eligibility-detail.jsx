@@ -2267,18 +2267,15 @@ function PatientAutomationLog({ patient, onBack, initialSubTab, onSubTab, only }
   return (
     <div style={{padding:"0 28px 32px"}}>
         <div style={{display:"flex",alignItems:"flex-end",borderBottom:"1px solid #e2e8f0",marginBottom:14}}>
-          {(only==="referral" ? [["referral","E-Referral"]] : [["elig","Eligibility"],["auth","Authorization"],["pcr","PCR"],["notif","Notifications"]]).map(([k,lbl])=>{
+          {(only==="referral" ? [["referral","E-referral"]] : [["elig","Eligibility"],["auth","Authorization"],["pcr","PCR"],["notif","Notifications"]]).map(([k,lbl])=>{
             const isSel=subTab===k;
             return <button key={k} type="button" onClick={()=>setSubTab(k)} style={{background:"transparent",border:"none",cursor:"pointer",padding:"10px 2px",font:`${isSel?500:400} 14px/18px Roboto`,color:isSel?COLORS.blue:"#64748b",borderBottom:`2px solid ${isSel?COLORS.blue:"transparent"}`,marginRight:28,marginBottom:-1}}>{lbl}</button>;
           })}
         </div>
-        <div style={{font:"400 12px/16px Roboto",color:"#64748b",marginBottom:12}}>Transaction Status of {subTab==="referral"?"E-Referral":subTab==="elig"?"Eligibility":subTab==="auth"?"Authorization":"PCR"} Workflows</div>
+        <div style={{font:"400 12px/16px Roboto",color:"#64748b",marginBottom:12}}>Transaction Status of {subTab==="referral"?"E-referral":subTab==="elig"?"Eligibility":subTab==="auth"?"Authorization":"PCR"} Workflows</div>
         <div style={{display:"flex",gap:10,marginBottom:16}}>
           {subTab==="referral"
-            ? <React.Fragment>
-                <select style={selSt}><option>Select Workflow</option></select>
-                <select style={selSt}><option>Select Referral ID</option></select>
-              </React.Fragment>
+            ? null
             : subTab==="elig"
             ? <React.Fragment>
                 <select style={selSt}><option>Select Workflow</option></select>
@@ -2298,21 +2295,22 @@ function PatientAutomationLog({ patient, onBack, initialSubTab, onSubTab, only }
           const rr = (typeof window!=="undefined" && window.__referralForDrawer) || {};
           const d = rr.refDate || "04/15/25";
           const last = rr.at==="warning" ? "warn" : rr.at==="hourglass" ? "prog" : "thumb";
-          const runs = [
-            { wf:"E-Referral - Intake", stage:"Referral Received from "+(rr.gw||"Referral Hub"), st:d+" 08:12 AM", et:d+" 08:14 AM", at:"thumb" },
-            { wf:"E-Referral - Validation", stage:"Payer, Zipcode & Referral Source Match", st:d+" 08:14 AM", et:d+" 08:19 AM", at:"thumb" },
-            { wf:"E-Referral - Response", stage:"Referral Response Sent to Sending Organization", st:d+" 08:19 AM", et:d+" 08:26 AM", at:last },
-          ];
+          const STG = (typeof window!=="undefined" && window.IER_STAGES) || [];
+          const allIer = (typeof window!=="undefined" && window.IER_ROWS) || [];
+          const e5 = "IER"+String(Math.max(0, allIer.findIndex(x=>x.refId===rr.refId))+1).padStart(9,"0");
+          const n = rr.resp==="accepted" ? 6 : 3, tm = [12,14,19,23,26,30,34];
+          const hm = (m)=>d+" 08:"+String(m).padStart(2,"0")+" AM";
+          const runs = STG.slice(0,n).map((s,i)=>({ stage:s, st:hm(tm[i]), et:hm(tm[i+1]), at: i===n-1 ? last : "thumb" })).reverse();
           return (
           <div style={{overflowX:"auto"}}>
             <table style={{borderCollapse:"collapse",width:"100%",minWidth:1000}}>
-              <thead><tr>{["Referral ID","Workflow","Current Stage","Patient Name","Referral Hub","Sending Organization","Start Time","End Time","Status"].map(h=><th key={h} style={hd}>{h}</th>)}</tr></thead>
+              <thead><tr>{["E5 ID","Current Stage","Patient Name","Referral ID","Referral Hub","Sending Organization","Start Time","End Time","Status"].map(h=><th key={h} style={hd}>{h}</th>)}</tr></thead>
               <tbody>{runs.map((r,i)=>(
                 <tr key={i} style={{background:i%2===0?"#fff":"#fafafa"}}>
-                  <td style={{...td,color:COLORS.blue,fontWeight:500}}>{rr.refId||"—"}</td>
-                  <td style={td}>{r.wf}</td>
-                  <td style={{...td,maxWidth:300,overflow:"hidden",textOverflow:"ellipsis"}} title={r.stage}>{r.stage}</td>
-                  <td style={td}>{rr.name||"—"}</td><td style={td}>{rr.gw||"—"}</td>
+                  <td style={{...td,color:COLORS.blue,fontWeight:500}}>{e5}</td>
+                  <td style={{...td,maxWidth:360,overflow:"hidden",textOverflow:"ellipsis"}} title={r.stage}>{r.stage}</td>
+                  <td style={td}>{rr.name||"—"}</td>
+                  <td style={td}>{rr.refId||"—"}</td><td style={td}>{rr.gw||"—"}</td>
                   <td style={{...td,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis"}} title={rr.sendOrg}>{rr.sendOrg||"—"}</td>
                   <td style={td}>{r.st}</td><td style={td}>{r.at==="prog"?"—":r.et}</td>
                   <td style={{...td,textAlign:"center"}}>{r.at==="prog" && window.ARVATIcon ? <window.ARVATIcon kind="hourglass" /> : <ALStatusIcon at={r.at} />}</td>
@@ -2397,7 +2395,7 @@ function RefTip({ text }) {
   return (
     <span onMouseEnter={()=>setShow(true)} onMouseLeave={()=>setShow(false)} style={{position:"relative",display:"inline-flex",cursor:"help"}}>
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#94a3b8"/><path d="M8 7.2v3.6M8 5.2v.1" stroke="#94a3b8" strokeWidth="1.4" strokeLinecap="round"/></svg>
-      {show && <span role="tooltip" style={{position:"absolute",bottom:"calc(100% + 6px)",left:"50%",transform:"translateX(-50%)",background:"#1F2530",color:"#fff",font:"400 12px/16px Roboto",padding:"6px 10px",borderRadius:4,whiteSpace:"nowrap",zIndex:20,boxShadow:"0 4px 12px rgba(0,0,0,0.18)",pointerEvents:"none"}}>{text}</span>}
+      {show && <span role="tooltip" style={{position:"absolute",bottom:"calc(100% + 6px)",left:-10,background:"#1F2530",color:"#fff",font:"400 12px/16px Roboto",padding:"6px 10px",borderRadius:4,whiteSpace:"nowrap",zIndex:20,boxShadow:"0 4px 12px rgba(0,0,0,0.18)",pointerEvents:"none"}}>{text}</span>}
     </span>
   );
 }
@@ -2467,10 +2465,10 @@ function ReferralInfo() {
   const Val = ({ x, pill }) => { const s = v(x); const t = pill && s!=="-" ? tone(s) : null;
     return t ? <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:36,height:20,padding:"0 8px",borderRadius:10,background:t[0],color:t[1],font:"500 11px/20px Roboto",whiteSpace:"nowrap"}}>{s}</span>
              : <div style={{font:"500 14px/18px Roboto",color:COLORS.textBody,overflowWrap:"anywhere"}}>{s}</div>; };
-  const Section = ({ title, items, first }) => (
+  const Section = ({ title, items, first, cols }) => (
     <div style={{border:"1px solid #e2e8f0",borderRadius:6,overflow:"hidden",marginTop:first?0:14,background:"#fff"}}>
       <div style={{background:"#f8fafc",borderBottom:"1px solid #e2e8f0",padding:"12px 18px",font:"500 14px/18px Roboto",color:"#0f172a"}}>{title}</div>
-      <div style={{background:"#fff",padding:18,display:"grid",gridTemplateColumns:"repeat(4,minmax(140px,1fr))",rowGap:20,columnGap:24}}>
+      <div style={{background:"#fff",padding:18,display:"grid",gridTemplateColumns:`repeat(${cols||4},minmax(140px,1fr))`,rowGap:20,columnGap:24}}>
         {items.map(([l,x,pill,wide,tip])=>(
           <div key={l} style={{minWidth:0,gridColumn:wide?"1 / -1":undefined}}>
             <div style={{font:"400 12px/16px Roboto",color:COLORS.textMute,marginBottom:4,display:"flex",alignItems:"center",gap:4}}>{l}{tip && <RefTip text={tip} />}</div>
@@ -2480,27 +2478,41 @@ function ReferralInfo() {
       </div>
     </div>
   );
-  const resp = row.respBlank ? "" : (respTxt[row.resp] || row.resp);
+  const OVR = {
+    "marvin mckinney":   { rules:"Accept", resp:"Accept", reason:"" },
+    "esther howard":     { rules:"Skip", resp:"", reason:"", docSend:"", portal:"" },
+    "cameron williamson":{ rules:"User Decision", resp:"Accept", reason:"" },
+    "brooklyn simmons":  { rules:"User Decision", resp:"", reason:"" },
+    "leslie alexander":  { rules:"Decline", resp:"Decline", reason:"Out of Service Area" },
+  };
+  const nm = String(row.name || row.patient || "").toLowerCase().replace(/\s+/g," ").trim();
+  const o = row.excBlank ? { rules:"", resp:"", reason:"", docSend:"", portal:"" } : (OVR[Object.keys(OVR).find(k => nm.includes(k))] || null);
+  const rulesVal = o ? o.rules : row.rulesResp;
+  const resp = o ? o.resp : (row.respBlank ? "" : (respTxt[row.resp] || row.resp));
+  const respReason = o ? o.reason : (row.respBlank ? "" : row.respReason);
+  const docSend = row.at==="warning" && window.ierDocSend ? window.ierDocSend(row) : (o && "docSend" in o ? o.docSend : row.docSendStatus);
+  const portal = o && "portal" in o ? o.portal : (row.ehrSync==null ? "" : row.ehrSync ? "Yes" : "No");
   // Response + its reason stacked as a pair; reason text wraps freely (up to ~255 chars) across the full column.
-  const RespPair = ({ label, value, reasonLabel, reason }) => (
+  const RespPair = ({ label, value, reasonLabel, reason, tip }) => (
     <div style={{minWidth:0,display:"flex",flexDirection:"column",gap:10,padding:"16px 18px",border:"1px solid #eef2f7",borderRadius:6,background:"#FBFCFD"}}>
-      <div><div style={{font:"400 12px/16px Roboto",color:COLORS.textMute,marginBottom:6}}>{label}</div><Val x={value} pill /></div>
+      <div><div style={{font:"400 12px/16px Roboto",color:COLORS.textMute,marginBottom:6,display:"flex",alignItems:"center",gap:4}}>{label}{tip && <RefTip text={tip} />}</div><Val x={value} pill /></div>
       <div><div style={{font:"400 12px/16px Roboto",color:COLORS.textMute,marginBottom:4}}>{reasonLabel}</div>
         <div style={{font:"400 14px/20px Roboto",color:COLORS.textBody,overflowWrap:"anywhere",whiteSpace:"normal",textWrap:"pretty"}}>{v(reason)}</div></div>
     </div>
   );
   return (
     <div style={{padding:"22px clamp(16px, 2.4vw, 36px) 40px"}}>
-      <Section title="Referral Details" first items={[["Referral ID",row.refId],["Referral Date",row.refDate],["Referral Hub",row.gw],["Portal Name",row.portalName || "Careport"],["SOC",row.ssd],["Discharge Date",row.pdd,false,false,"Projected Discharge Date"],["Type of Care",row.careType],["Branch",row.branch],["Zipcode",row.zip],["Receiver Branch Code",row.receiverCode],["Sending Facility",row.sendFac],["Sending Organization",row.sendOrg],["Referral Source",row.refSource],["Referral Comment",row.comments]]} />
-      <Section title="Validation Results" items={[["Payer Matched",row.payerMatched,true],["Zipcode Matched",row.zipMatched,true],["Referral Source Matched",row.srcMatched,true],["Rules Engine Response",row.rulesResp,true]]} />
+      <Section title="Referral Details" first items={[["Referral ID",row.refId],["Referral Date",row.refDate],["Referral Hub",row.gw],["Portal Name",row.portalName || "Careport"],["Req. SOC",row.ssd,false,false,"Requested Start of Care"],["Discharge Date",row.pdd,false,false,"Projected Discharge Date"],["Type of Care",row.careType],["Branch",row.branch],["Primary Plan",row.plan],["Zipcode",row.zip],["Referral Source",row.refSource],["Receiver Branch Code",row.receiverCode],["Sending Facility",row.sendFac],["Sending Organization",row.sendOrg],["Referral Comment",row.comments]]} />
+      <Section title="Validation Results" cols={3} items={[["Payer Matched",row.payerMatched,true],["Zipcode Matched",row.zipMatched,true],["Referral Source Matched",row.srcMatched,true]]} />
       <div style={{border:"1px solid #e2e8f0",borderRadius:6,overflow:"hidden",marginTop:14,background:"#fff"}}>
         <div style={{background:"#f8fafc",borderBottom:"1px solid #e2e8f0",padding:"12px 18px",font:"500 14px/18px Roboto",color:"#0f172a"}}>Responses</div>
-        <div style={{background:"#fff",padding:18,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,alignItems:"start"}}>
-          <RespPair label="Referral Response" value={resp} reasonLabel="Referral Response Reason" reason={row.respBlank ? "" : row.respReason} />
-          <RespPair label="Agency Referral Response" value={row.agencyResp} reasonLabel="Agency Referral Response Reason" reason={row.agencyRespReason} />
+        <div style={{background:"#fff",padding:18,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,alignItems:"stretch"}}>
+          <div style={{minWidth:0,padding:"16px 18px",border:"1px solid #eef2f7",borderRadius:6,background:"#FBFCFD"}}><div style={{font:"400 12px/16px Roboto",color:COLORS.textMute,marginBottom:6}}>Rules Engine Response</div><div style={{display:"flex",alignItems:"center",gap:6}}><Val x={rulesVal} pill />{/^skip$/i.test(rulesVal||"") && <RefTip text="Ineligible records excluded from processing." />}</div></div>
+          <RespPair label="Referral Hub Response" value={({Accepted:"Accept",Declined:"Decline"})[row.hubResp!==undefined ? row.hubResp : resp] || (row.hubResp!==undefined ? row.hubResp : resp)} reasonLabel="Referral Hub Response Reason" reason={row.hubRespReason!==undefined ? row.hubRespReason : respReason} />
+          <RespPair label="Referral Response in Portal" tip="Referral response updated into referral portal" value={resp} reasonLabel="Referral Response Reason" reason={respReason} />
         </div>
       </div>
-      <Section title="Delivery Acknowledgment" items={[["Document Send Status",row.docSendStatus,true],["Portal Synced",row.ehrSync?"Yes":"No",true]]} />
+      <Section title="Delivery Acknowledgment" items={[["Referral Hub Data Sync",docSend,true,false,"Status of Patient Data and Documents sent to Referral Hub"],["Portal Synced",portal,true,false,"Referral Response updated in Referral Portal"]]} />
     </div>
   );
 }
@@ -2517,8 +2529,10 @@ function PCRInterventions({ row, completedRun }) {
   // Completed records normally carry no interventions; a few (never Clara) resolved some along the way.
   const nId = parseInt(String(row.id||"").replace(/\D/g,""),10) || 0;
   const hadInt = row.at==="thumb" && !/^Clara/i.test(row.name||"") && nId % 2 === 0;
-  const raw = (typeof window!=="undefined" && window.rcdInterventions) ? window.rcdInterventions(row) : [];
-  const all = hadInt ? raw.map(it=>({ ...it, status:"Completed", completed: it.completed && it.completed!=="—" ? it.completed : (row.bpStartDate ? row.bpStartDate+" 02:18 PM" : "—"), by: it.by && it.by!=="—" ? it.by : row.clinician, notes: it.notes || "Resolved before the decision letter was uploaded." })) : raw;
+  // Bulk completion only holds while the grid still shows the record as resolved; once it is back in Needs Intervention, items return to Pending.
+  const bulk = (row.at!=="intervention" && typeof window!=="undefined" && window.__pcrBulkDone && window.__pcrBulkDone[row.id]) || null;
+  const raw = (typeof window!=="undefined" && window.rcdInterventions) ? window.rcdInterventions(bulk ? {...row, at:"intervention"} : row) : [];
+  const all = bulk ? raw.map(it=>({ ...it, status:"Completed", completed: bulk.at, by: bulk.by, notes: bulk.notes || "—" })) : hadInt ? raw.map(it=>({ ...it, status:"Completed", completed: it.completed && it.completed!=="—" ? it.completed : (row.bpStartDate ? row.bpStartDate+" 02:18 PM" : "—"), by: it.by && it.by!=="—" ? it.by : row.clinician, notes: it.notes || "Resolved before the decision letter was uploaded." })) : raw;
   const isDone = (it)=> !!done[it.id] || it.status==="Completed";
   const items = all.map(it=> isDone(it)
     ? (done[it.id]
@@ -2537,12 +2551,12 @@ function PCRInterventions({ row, completedRun }) {
   const pad2 = (n)=>String(n).padStart(2,"0");
   const pending = items.filter(it=>!it._done);
   const doneItems = items.filter(it=>it._done);
-  const [subTab, setSubTab] = useED("pending");
+  const [subTab, setSubTab] = useED(bulk ? "done" : "pending");
   const shown = subTab==="pending" ? pending : doneItems;
   const tabs = [["pending",`Pending Interventions (${pad2(active)})`],["done",`Completed Interventions (${pad2(completed)})`]];
   const focusOpen = typeof window!=="undefined" && window.__pcrIntFocus;
-  if (row.at!=="intervention" && !hadInt) return null;
-  if (completedRun && !hadInt) return null;
+  if (row.at!=="intervention" && !hadInt && !bulk) return null;
+  if (completedRun && !hadInt && !bulk) return null;
   if (items.length===0) return null;
   // Ineligible records carry no actionable intervention — show why the record is ineligible instead.
   // Ineligible records: show the pending item, but it cannot be marked complete.

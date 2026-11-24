@@ -49,6 +49,7 @@ function ipdPayloadFor(row) {
   d.Demographics.service_location.Zip = row.zip;
   d.PayorSources.PayorSource[0].PolicyNumber = row.policy;
   d.PayorSources.PayorSource[0].Payor_Source = row.plan;
+  if (row.careType) d.ReferralSource.CareTypes = [{ CareType:row.careType.toUpperCase(), EffectiveFrom:row.refDate || d.ReferralSource.CareTypes[0].EffectiveFrom }];
   d.RPA_Chart_Status = row.chartPct==null ? "" : String(row.chartPct);
   d.DataEntryStatus = row.chartPct===100 ? "Completed" : row.terminatedOn ? "Terminated" : row.at==="warning" ? "Failed" : "Pending";
   return d;
@@ -316,7 +317,7 @@ function ipdRuns(row) {
   }
   return out.map(r=>({ ...r, agency:row.agency, wf:"Intake - Patient Intake Processing", episodeId:row.episodeId, patientId:row.patientId, sparcId:row.sparcId, preVal:row.preVal||"Yes", queued:ipdAddMins(start, 0) }));
 }
-const IPD_LOG_COLS = [["e5","E5 ID","minmax(110px,1fr)"],["agency","Agency","minmax(90px,0.8fr)"],["stage","Current Stage","minmax(220px,2fr)"],["episodeId","Episode ID","minmax(90px,0.8fr)"],["patientId","Patient ID","minmax(80px,0.7fr)"],["sparcId","Sparc ID","minmax(90px,0.8fr)"],["queued","Queue Added Time","minmax(130px,1.1fr)"],["st","Start Time","minmax(130px,1.1fr)"],["et","End Time","minmax(130px,1.1fr)"],["status","Status","minmax(110px,1fr)"],["at","AT Status","70px"]];
+const IPD_LOG_COLS = [["e5","E5 ID","minmax(110px,1fr)"],["agency","Agency","minmax(90px,0.8fr)"],["stage","Current Stage","minmax(220px,2fr)"],["episodeId","Episode ID","minmax(90px,0.8fr)"],["patientId","Patient ID","minmax(80px,0.7fr)"],["queued","Queue Added Time","minmax(130px,1.1fr)"],["st","Start Time","minmax(130px,1.1fr)"],["et","End Time","minmax(130px,1.1fr)"],["status","Status","minmax(110px,1fr)"],["at","AT Status","70px"]];
 function IPDAutoLog({ row }) {
   const runs = ipdRuns(row), grid = IPD_LOG_COLS.map(c=>c[2]).join(" ");
   const ARVATIcon = window.ARVATIcon, H = window.IPTATHover;

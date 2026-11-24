@@ -64,7 +64,7 @@ function CDMFilterBar({ search, onSearch, reviewActive }) {
   return (
     <div style={{background:"#eef4fb",borderBottom:"1px solid #e2e8f0",padding:"10px 24px",display:"flex",alignItems:"center",gap:14,flexWrap:"nowrap"}}>
       <button type="button" style={{background:"#fff",border:"1px solid #d8d8d8",borderRadius:4,padding:"5px 12px",font:"400 12px/16px Roboto",color:"#0f172a",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,flexShrink:0,whiteSpace:"nowrap"}}>
-        CDM Initiated Date : 04/01/25 – 04/30/25<span style={{color:"#94a3b8",fontSize:9}}>▾</span>
+        Scheduling Initiated Date : 04/01/25 – 04/30/25<span style={{color:"#94a3b8",fontSize:9}}>▾</span>
       </button>
       <button type="button" style={{background:"transparent",border:"none",cursor:"pointer",color:"#2563eb",font:"500 12px/16px Roboto",display:"inline-flex",alignItems:"center",gap:6,padding:"5px 4px",whiteSpace:"nowrap"}}>
         <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:14,height:14,borderRadius:"50%",background:"#2563eb",color:"#fff",fontSize:10,fontWeight:600,lineHeight:1}}>+</span>
@@ -86,7 +86,7 @@ function CDMFilterBar({ search, onSearch, reviewActive }) {
 
 // ── Title cluster (left, mirrors ERVTitleCluster) ─────────────
 const CDM_MODE_OPTIONS = [
-  { id:"all",       label:"All CDM Requests" },
+  { id:"all",       label:"All Scheduling Requests" },
   { id:"manual",    label:"All Non-Automated Requests" },
   { id:"automated", label:"All Automated Requests" },
 ];
@@ -98,10 +98,10 @@ function CDMTitleCluster({ modeFilter, onModeFilter }) {
   return (
     <div>
       <div style={{display:"flex",alignItems:"baseline",gap:6,flexWrap:"wrap",position:"relative"}} ref={ref}>
-        <span style={{font:"500 15px/20px Roboto",color:"#0f172a"}}>CDM Request View</span>
+        <span style={{font:"500 15px/20px Roboto",color:"#0f172a"}}>Scheduling Request View</span>
       </div>
-      <div style={{font:"400 12px/18px Roboto",color:"#94a3b8",marginTop:6}}>Status Summary of CDM Requests</div>
-      <div style={{marginTop:10,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block"}}>Click Patient Name to view related transactions for specific CDM request</div>
+      <div style={{font:"400 12px/18px Roboto",color:"#94a3b8",marginTop:6}}>Status Summary of Scheduling Requests</div>
+      <div style={{marginTop:10,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block"}}>Click Patient Name to view related transactions for specific Scheduling request</div>
     </div>
   );
 }
@@ -190,7 +190,7 @@ const CDM_COLS = [
   { key:"episodeId",      label:"Episode ID",        grid:"minmax(90px,0.9fr)",  sortable:true  },
   { key:"primaryPayor",   label:"Primary Payor",     grid:"minmax(120px,1.2fr)", sortable:true  },
   { key:"secondaryPayorSource", label:"Secondary Payor Source", grid:"minmax(130px,1.3fr)", sortable:true },
-  { key:"cdmInitTime",    label:"CDM Init Time",     grid:"minmax(140px,1.3fr)", sortable:true  },
+  { key:"cdmInitTime",    label:"Scheduling Init Time",     grid:"minmax(140px,1.3fr)", sortable:true  },
   { key:"eligPcHours",    label:"Eligible PC Hours",  grid:"minmax(80px,0.8fr)",  sortable:true  },
   { key:"pcAuthHours",    label:"PC Auth Hours",     grid:"minmax(75px,0.75fr)", sortable:true  },
   { key:"eligAttendHours",label:"Eligible Attend Hours",grid:"minmax(90px,0.9fr)",sortable:true  },
@@ -450,7 +450,7 @@ function CDMAutomationLogView({ onRefClick }) {
   // Map CDM_ROWS to the ERV AL row format
   const CDM_AL_ROWS = CDM_ROWS.map((r, i) => ({
     ref: "CDM" + String(i + 1).padStart(10, "0"),
-    wf: "CDM - Transaction Processing",
+    wf: "Scheduling - Transaction Processing",
     stage: r.currentStage,
     agency: r.branchId,
     name: r.name,
@@ -472,7 +472,7 @@ function CDMAutomationLogView({ onRefClick }) {
   ];
   const ERV_AL_FILTER_FIELDS = [
     { key:"agency", label:"Agency" },
-    { key:"gw",     label:"CDM Status" },
+    { key:"gw",     label:"Scheduling Status" },
     { key:"src",    label:"Current Status" },
   ];
   const ERV_AL_COLS = [
@@ -484,7 +484,7 @@ function CDMAutomationLogView({ onRefClick }) {
     { key:"mrn",   label:"Patient MRN",   w:"minmax(110px,1.1fr)", sort:true },
     { key:"memId", label:"Episode ID",    w:"minmax(78px,0.78fr)", sort:true },
     { key:"src",   label:"Current Status",w:"minmax(100px,1fr)",   sort:true },
-    { key:"gw",    label:"CDM Status",    w:"minmax(70px,0.7fr)",  sort:true },
+    { key:"gw",    label:"Scheduling Status",    w:"minmax(70px,0.7fr)",  sort:true },
     { key:"st",    label:"Arrived Date",  w:"minmax(110px,1.1fr)", sort:true },
     { key:"et",    label:"End Date",      w:"minmax(110px,1.1fr)", sort:true },
     { key:"at",    label:"AT Status",     w:"70px",                sort:false, align:"center" },
@@ -516,7 +516,7 @@ function CDMAutomationLogView({ onRefClick }) {
         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:24,flexWrap:"wrap",marginBottom:12}}>
           <div>
             <div style={{font:"600 18px/24px Roboto",color:"#0f172a"}}>Automation Log</div>
-            <div style={{font:"400 13px/18px Roboto",color:"#3A424A",marginTop:8}}>Transaction Status of CDM Workflows</div>
+            <div style={{font:"400 13px/18px Roboto",color:"#3A424A",marginTop:8}}>Transaction Status of Scheduling Workflows</div>
           </div>
           <div style={{display:"flex",gap:28,flexShrink:0,flexWrap:"wrap",justifyContent:"flex-end"}}>
             {ERV_AL_SUMMARY_CARDS.map(c=>{
@@ -538,7 +538,7 @@ function CDMAutomationLogView({ onRefClick }) {
           </div>
         </div>
         <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 12px",font:"400 12px/16px Roboto",color:"#64748b",display:"inline-block",marginBottom:16}}>
-          Click Ref ID to view related CDM transactions
+          Click Ref ID to view related Scheduling transactions
         </div>
         {/* Header */}
         <div style={{display:"grid",gridTemplateColumns:GRID,alignItems:"stretch",background:"#f8fafc",borderBottom:"1px solid #e2e8f0",minHeight:44,padding:"0 12px",gap:6}}>

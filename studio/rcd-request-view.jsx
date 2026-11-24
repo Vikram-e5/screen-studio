@@ -969,12 +969,12 @@ function RCDChildSection({ row }) {
   );
 }
 
-function RCDTableRow({ row, expanded, onToggle, reviewed, onReviewed, onIntervention, onInProgress, onContact, onPatient, accent="#2563eb", bulkMode, selected, onSelect, reviewModeOn }) {
+function RCDTableRow({ row, expanded, onToggle, reviewed, onReviewed, onIntervention, onInProgress, onContact, onPatient, accent="#2563eb", bulkMode, selected, onSelect, reviewModeOn, completeOnly }) {
   const cell = (align, ci) => ({font:"500 12px/16px Roboto",color:"#333333",display:"flex",alignItems:"center",gap:bulkMode&&ci===0?16:8,justifyContent:align==="center"?"center":"flex-start",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0,...(rcdFrozen(ci==null?-1:ci,11)||{})});
   return (
     <div style={{position:"relative",display:"grid",gridTemplateColumns:RCD_GRID_FLEX,alignItems:"center",height:48,padding:"0 11px",border:"1px solid #e2e8f0",borderRadius:6,marginBottom:8,boxShadow:"0 1px 2px rgba(15,23,42,0.03)",background:"#fff",gap:6}}>
       <div style={cell(null,0)}>
-        {bulkMode && <RCDCheck on={selected} accent={accent} onClick={()=>onSelect && onSelect(row.id)} title="Select record" disabled={!reviewModeOn && row.at!=="intervention" && row.at!=="hourglass"} />}
+        {bulkMode && <RCDCheck on={selected} accent={accent} onClick={()=>onSelect && onSelect(row.id)} title="Select record" disabled={completeOnly ? row.at!=="intervention" : (!reviewModeOn && row.at!=="intervention" && row.at!=="hourglass")} />}
         <a href="#" title={row.name} onClick={(e)=>{e.preventDefault(); e.stopPropagation(); onPatient && onPatient(row);}} style={{color:accent,font:"500 13px/16px Roboto",textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{row.name}</a>
       </div>
       <div style={cell(null,1)}>{row.mrn}</div>
@@ -1303,7 +1303,7 @@ function RCDRequestView({ review, reviewUnreviewedOnly, onExitReview, focusId, n
   if (typeof window!=="undefined" && !window.__rcdManualTerm) window.__rcdManualTerm = {};
   const [manualTerm, setManualTerm] = useRCD(()=>({...((typeof window!=="undefined"&&window.__rcdManualTerm)||{})}));
   // Intervention records whose whole queue was worked off in the slider.
-  const [intResolved, setIntResolved] = useRCD({});
+  const [intResolved, setIntResolved] = useRCD(()=>{ if (typeof window!=="undefined") window.__pcrBulkDone = {}; return {}; });
   const terminateRow = (row, note) => {
     const info = { reason: note || "Manually terminated by user", note, by:row.clinician, at:rcdNowStamp() };
     rcdStartManualTerm(row, info);
@@ -1402,16 +1402,21 @@ function RCDRequestView({ review, reviewUnreviewedOnly, onExitReview, focusId, n
   // Bulk Review can select any visible row; Bulk Terminate only rows the
   // automation is still working (Needs Intervention / In Progress).
   const bulkReviewMode = bulkKind ? bulkKind==="review" : review;
-  const bulkSelectable = (rs) => bulkReviewMode ? rs : rs.filter(r=>r.at==="intervention"||r.at==="hourglass");
+  const bulkSelectable = (rs) => bulkKind==="complete" ? rs.filter(r=>r.at==="intervention") : bulkReviewMode ? rs : rs.filter(r=>r.at==="intervention"||r.at==="hourglass");
   const selCount = Object.keys(selectedIds).filter(k=>selectedIds[k]).length;
   const [bulkTermConfirm, setBulkTermConfirm] = useRCD(false);
   const [bulkReviewConfirm, setBulkReviewConfirm] = useRCD(false);
+  const [bulkCompleteConfirm, setBulkCompleteConfirm] = useRCD(false);
+  const [bulkCompleteNote, setBulkCompleteNote] = useRCD("");
+  const [completeToast, setCompleteToast] = useRCD(null);
+  useRCDE(()=>{ if(!completeToast) return; const t=setTimeout(()=>setCompleteToast(null),3500); return ()=>clearTimeout(t); },[completeToast]);
   useRCDE(()=>{
     if (!onBulkApi) return;
     onBulkApi(bulkMode ? {
       count: selCount,
       terminate: () => setBulkTermConfirm(true),
       markReviewed: () => setBulkReviewConfirm(true),
+      completeIntervention: () => setBulkCompleteConfirm(true),
     } : null);
   },[bulkMode, selCount]);
   // Switching between Bulk Terminate and Bulk Review starts from a clean selection.
@@ -1469,7 +1474,7 @@ function RCDRequestView({ review, reviewUnreviewedOnly, onExitReview, focusId, n
             <div style={{padding:"48px 24px",textAlign:"center",font:"400 13px/18px Roboto",color:"#94a3b8",border:"1px solid #e2e8f0",borderRadius:6,background:"#fff"}}>No RCD records match the current filters.</div>
           ) : pageRows.map(r=>(
             <React.Fragment key={r.id}>
-              <RCDTableRow row={r} bulkMode={bulkMode} selected={!!selectedIds[r.id]} onSelect={(id)=>setSelectedIds(m=>({...m,[id]:!m[id]}))} reviewModeOn={bulkKind ? bulkKind==="review" : review}
+              <RCDTableRow row={r} bulkMode={bulkMode} selected={!!selectedIds[r.id]} onSelect={(id)=>setSelectedIds(m=>({...m,[id]:!m[id]}))} reviewModeOn={bulkKind ? bulkKind==="review" : review} completeOnly={bulkKind==="complete"}
                 reviewed={!!reviewedSet[r.id]} onReviewed={toggleReviewed} onIntervention={(row)=>{ window.__pcrIntFocus = true; onPatient && onPatient(row); }} onInProgress={setInProgressRow} onContact={setContactPop} onPatient={onPatient} />
             </React.Fragment>
           ))}
@@ -1484,6 +1489,31 @@ function RCDRequestView({ review, reviewUnreviewedOnly, onExitReview, focusId, n
           const ids = Object.keys(selectedIds).filter(k=>selectedIds[k]); const byId = {}; allRows.forEach(r=>{ byId[r.id]=r; }); ids.forEach(id=>{ const row = byId[id]; if(row) terminateRow(row, "Bulk terminated by user"); });
           setSelectedIds({});
         }} />
+      )}
+      {completeToast && (
+        <div role="status" style={{position:"fixed",top:72,left:"50%",transform:"translateX(-50%)",zIndex:1100,background:"#fff",borderRadius:8,boxShadow:"0 10px 28px rgba(6,17,33,.22)",padding:"10px 16px",display:"flex",alignItems:"center",gap:10,maxWidth:"calc(100vw - 32px)"}}>
+          <span style={{width:18,height:18,borderRadius:"50%",background:"#52c41a",color:"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",font:"700 11px/1 Roboto",flex:"none"}}>✓</span>
+          <span style={{font:"400 13px/18px Roboto",color:"#0f172a"}}>Intervention marked as complete for {String(completeToast.n).padStart(2,"0")} record{completeToast.n===1?"":"s"}.</span>
+          <span onClick={()=>setCompleteToast(null)} style={{cursor:"pointer",color:"#94a3b8",font:"400 14px/1 Roboto",marginLeft:4}}>×</span>
+        </div>
+      )}
+      {bulkCompleteConfirm && (
+        <div onClick={()=>{ setBulkCompleteConfirm(false); setBulkCompleteNote(""); }} style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(6,17,33,.45)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:8,width:420,maxWidth:"calc(100vw - 32px)",padding:"22px 24px",boxShadow:"0 16px 40px rgba(6,17,33,.3)",display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{font:"500 16px/22px Roboto",color:"#0f172a"}}>Complete Intervention</div>
+            <div style={{font:"400 13px/20px Roboto",color:"#475569"}}>Mark the pending interventions on {selCount} record{selCount===1?"":"s"} as completed? Automation resumes and the records move to In Progress.</div>
+            <label style={{display:"flex",flexDirection:"column",gap:6}}>
+              <span style={{font:"500 12px/16px Roboto",color:"#334155"}}>Notes <span style={{fontWeight:400,color:"#94a3b8"}}>(Optional)</span></span>
+              <textarea value={bulkCompleteNote} onChange={e=>setBulkCompleteNote(e.target.value)} maxLength={500} rows={3} placeholder="Add a note for the completed interventions"
+                style={{resize:"vertical",minHeight:72,border:"1px solid #d9d9d9",borderRadius:6,padding:"8px 10px",font:"400 13px/18px Roboto",color:"#0f172a",outline:"none"}} />
+              <span style={{alignSelf:"flex-end",font:"400 11px/14px Roboto",color:"#94a3b8"}}>{bulkCompleteNote.length}/500</span>
+            </label>
+            <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:2}}>
+              <button type="button" onClick={()=>{ setBulkCompleteConfirm(false); setBulkCompleteNote(""); }} style={{background:"#fff",border:"1px solid #d9d9d9",borderRadius:6,padding:"6px 16px",font:"400 13px/18px Roboto",color:"#0f172a",cursor:"pointer"}}>Cancel</button>
+              <button type="button" onClick={()=>{ const ids = Object.keys(selectedIds).filter(k=>selectedIds[k]); setIntResolved(m=>{ const next={...m}; ids.forEach(id=>{ next[id]=true; }); return next; }); { const stamp = rcdNowStamp(); const byId = {}; allRows.forEach(x=>{ byId[x.id]=x; }); window.__pcrBulkDone = window.__pcrBulkDone || {}; ids.forEach(id=>{ window.__pcrBulkDone[id] = { at: stamp, by: (byId[id]||{}).clinician || "—", notes: bulkCompleteNote.trim() }; }); } setCompleteToast({ n: ids.length }); setBulkCompleteNote(""); setSelectedIds({}); setBulkCompleteConfirm(false); if(onExitBulk) onExitBulk(); }} style={{background:"#1677FF",border:"none",borderRadius:6,padding:"6px 16px",font:"500 13px/18px Roboto",color:"#fff",cursor:"pointer"}}>Complete</button>
+            </div>
+          </div>
+        </div>
       )}
       {bulkReviewConfirm && (typeof window!=="undefined") && window.PCRMarkReviewedModal && (
         <window.PCRMarkReviewedModal count={selCount} onClose={()=>{ setBulkReviewConfirm(false); if(onExitBulk) onExitBulk(); }} onConfirm={()=>{

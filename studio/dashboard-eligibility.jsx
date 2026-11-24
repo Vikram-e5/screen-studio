@@ -30,7 +30,7 @@ function DownloadGlyph({ size = 18, color = "#fff" }) {
 }
 
 // ── donut chart (SVG arcs) ───────────────────────────────────
-function Donut({ segments, size = 152, thickness = 26, centerTop, centerBottom, centerTopSize = 12, centerTopWeight = 400, centerBottomSize = 20, centerBottomWeight = 600, centerTopY = "46%", centerBottomY = "60%" }) {
+function Donut({ segments, onSeg, size = 152, thickness = 26, centerTop, centerBottom, centerTopSize = 12, centerTopWeight = 400, centerBottomSize = 20, centerBottomWeight = 600, centerTopY = "46%", centerBottomY = "60%" }) {
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
   const r = (size - thickness) / 2;
   const circ = 2 * Math.PI * r;
@@ -43,7 +43,8 @@ function Donut({ segments, size = 152, thickness = 26, centerTop, centerBottom, 
           const el = (
             <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none"
               stroke={s.color} strokeWidth={thickness}
-              strokeDasharray={`${len} ${circ - len}`} strokeDashoffset={-offset} />
+              strokeDasharray={`${len} ${circ - len}`} strokeDashoffset={-offset}
+              onClick={onSeg && s.value >= 1 ? () => onSeg(s, i) : undefined} style={onSeg && s.value >= 1 ? { cursor: "pointer" } : undefined}>{s.title && <title>{s.title}</title>}</circle>
           );
           offset += len;
           return el;
@@ -58,9 +59,10 @@ function Donut({ segments, size = 152, thickness = 26, centerTop, centerBottom, 
 function Swatch({ color }) {
   return <span style={{ width: 12, height: 12, borderRadius: 2, background: color, display: "inline-block", flexShrink: 0 }} />;
 }
-function LegendRow({ color, label, value, divider = true, valueStyle }) {
+function LegendRow({ color, label, value, divider = true, valueStyle, onClick }) {
   return (
-    <div style={{ borderBottom: divider ? "1px solid #F3E0E0" : "none" }}>
+    <div onClick={onClick} title={onClick ? "Click to view records" : undefined} style={{ borderBottom: divider ? "1px solid #F3E0E0" : "none", cursor: onClick ? "pointer" : "default" }}
+      onMouseEnter={onClick ? e => { e.currentTarget.style.background = "#F7F9FC"; } : undefined} onMouseLeave={onClick ? e => { e.currentTarget.style.background = ""; } : undefined}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", font: "400 15px/20px Roboto", color: "rgba(0,0,0,.65)" }}>
         <Swatch color={color} />
         <span style={{ flex: 1 }}>{label}</span>
@@ -238,7 +240,7 @@ function PCRStatCard({ label, value, pct, count, group, growth, growthTip, tip, 
 
 // ── horizontal bar row ───────────────────────────────────────
 // ── horizontal bar chart (categories on Y, record counts on X) ──
-function HBarChart({ data, xLabel, legend, labelW = 152 }) {
+function HBarChart({ data, xLabel, legend, labelW = 152, onBar }) {
   const max = Math.max(4, Math.ceil(Math.max(...data.map(d=>d.value), 1) / 4) * 4);
   const ticks = [0, max/4, max/2, (max*3)/4, max];
   return (
@@ -256,7 +258,7 @@ function HBarChart({ data, xLabel, legend, labelW = 152 }) {
         {data.map(d => (
           <React.Fragment key={d.label}>
             <span title={d.label} style={{ font: "400 12px/16px Roboto", color: "#6A717D", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: 10 }}>{d.label}</span>
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span onClick={onBar && d.value ? () => onBar(d) : undefined} title={onBar && d.value ? d.label + " — " + d.value + " · Click to view" : undefined} style={{ display: "flex", alignItems: "center", gap: 8, cursor: onBar && d.value ? "pointer" : "default" }}>
               <span style={{ height: 14, width: `${(d.value / max) * 100}%`, background: d.color || "#4C9FD1", borderRadius: "0 2px 2px 0", minWidth: d.value ? 2 : 0 }} />
               <span style={{ font: "500 12px/16px Roboto", color: "#3A424A" }}>{d.value}</span>
             </span>
@@ -289,10 +291,10 @@ function BarRow({ label, value, max }) {
 }
 
 // ── action-item rows ─────────────────────────────────────────
-function BigActionRow({ label, count, onClick, noIcon, icon }) {
+function BigActionRow({ label, count, onClick, noIcon }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "#fff", border: "1px solid #F1E4E4", borderRadius: 9, marginBottom: 12, boxShadow: "0 1px 3px rgba(86,86,86,.06)" }}>
-      {icon || (!noIcon && <UserGlyph />)}
+      {!noIcon && <UserGlyph />}
       <span style={{ flex: 1, font: "500 16px/20px Roboto", color: "#3A424A" }}>{label}</span>
       <span onClick={onClick} style={{ font: "400 16px Roboto", color: "#CF1322", borderBottom: "1px solid #CF1322", lineHeight: "20px", cursor: onClick ? "pointer" : "default" }}>{count}</span>
     </div>
@@ -388,7 +390,7 @@ function DashboardBand({ active, onTab, subtitle }) {
   const tabs = [
     { key: "elig", label: "Eligibility", menu: true },
     { key: "auth", label: "Authorization" },
-    { key: "referral", label: "E-Referral" },
+    { key: "referral", label: "E-referral" },
     { key: "pcr",  label: "PCR" },
     { key: "claim", label: "Claims" },
     { key: "assess", label: "Assessment" },
@@ -553,7 +555,7 @@ function DashboardView({ onPatient, onAlertNav, onAuthNav, onPcrNav, onReferralN
         activeTab === "eligHO" ? "Hospice Intake Referrals Pending Eligibility" :
         activeTab === "auth" ? "Authorization Status Summary and Trends" :
         activeTab === "pcr"  ? "Summary of PCR Status" :
-        activeTab === "referral" ? "Summary of E-Referral Status" :
+        activeTab === "referral" ? "Summary of E-referral Status" :
         activeTab === "assess" ? "OASIS / HOPE Submission Performance" :
         activeTab === "notif" ? "Summary of Notification Status" : "Claim Status Summary"} />
 
@@ -835,7 +837,7 @@ function RadioPick({ options, value, onChange }) {
 }
 
 // Trend line chart — x axis dates, y axis transaction counts.
-function SimpleLineChart({ data, max, step, yLabel, xLabel, color = "#4C9FD1" }) {
+function SimpleLineChart({ data, max, step, yLabel, xLabel, color = "#4C9FD1", onPoint }) {
   const plotH = 168;
   const ticks = []; for (let t = max; t >= 0; t = +(t - step).toFixed(2)) ticks.push(t);
   const n = data.length;
@@ -864,7 +866,9 @@ function SimpleLineChart({ data, max, step, yLabel, xLabel, color = "#4C9FD1" })
               </svg>
             )}
             {data.map((d, i) => (
-              <span key={"dot"+i} style={{ position: "absolute", left: px(i) + "%", top: (py(d.value) / plotH) * 100 + "%", width: 6, height: 6, marginLeft: -3, marginTop: -3, borderRadius: "50%", background: color }} />
+              onPoint && d.value > 0
+                ? <span key={"dot"+i} role="button" title={d.label + " — " + d.value + " record" + (d.value === 1 ? "" : "s") + " · Click to view"} onClick={() => onPoint(d, i)} style={{ position: "absolute", left: px(i) + "%", top: (py(d.value) / plotH) * 100 + "%", width: 18, height: 18, marginLeft: -9, marginTop: -9, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .12s" }} onMouseEnter={e => { e.currentTarget.style.background = color + "33"; e.currentTarget.firstChild.style.transform = "scale(1.5)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.firstChild.style.transform = ""; }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: color, transition: "transform .12s" }} /></span>
+                : <span key={"dot"+i} style={{ position: "absolute", left: px(i) + "%", top: (py(d.value) / plotH) * 100 + "%", width: 6, height: 6, marginLeft: -3, marginTop: -3, borderRadius: "50%", background: color }} />
             ))}
           </div>
         </div>
@@ -929,7 +933,7 @@ function GroupedBarChart({ data, series, max, step, yLabel, barW = 7 }) {
   );
 }
 
-function SimpleBarChart({ data, max, step, yLabel, unit = "", color = "#4C9FD1", barW = 42 }) {
+function SimpleBarChart({ data, max, step, yLabel, unit = "", color = "#4C9FD1", barW = 42, onBar }) {
   const plotH = 168;
   const ticks = []; for (let t = max; t >= 0; t = +(t - step).toFixed(2)) ticks.push(t);
   const dec = step < 1 ? 1 : 0;
@@ -946,7 +950,7 @@ function SimpleBarChart({ data, max, step, yLabel, unit = "", color = "#4C9FD1",
           ); })}
           <div style={{ position: "absolute", left: 40, top: 0, bottom: 0, borderLeft: "1px solid #B7C2D0" }} />
           <div style={{ position: "absolute", left: 42, right: 4, bottom: 0, top: 0, display: "flex", justifyContent: "space-around", alignItems: "flex-end" }}>
-            {data.map(d => <div key={d.label} style={{ width: barW, height: `${Math.max((d.value / max) * 100, 0)}%`, background: color, borderRadius: "3px 3px 0 0" }} />)}
+            {data.map(d => <div key={d.label} onClick={onBar && d.value ? () => onBar(d) : undefined} title={onBar ? d.label + " — " + d.value + (d.value ? " · Click to view" : "") : undefined} style={{ width: barW, height: `${Math.max((d.value / max) * 100, 0)}%`, background: color, borderRadius: "3px 3px 0 0", cursor: onBar && d.value ? "pointer" : "default" }} />)}
           </div>
         </div>
         <div style={{ marginLeft: 42, marginRight: 4, display: "flex", justifyContent: "space-around", marginTop: 9 }}>
@@ -1414,6 +1418,10 @@ function PCRDashboard({ onNav }) {
   // live unreviewed PCR records and carries the exact record ids behind the
   // badge, so the PCR grid lands on those same records.
   const idsOf = (rs) => rs.map(r => r.id);
+  // Chart drill-in: land on Notifications Center with Fax Status + AT Status tiles set from the clicked subset.
+  const atIdOf = { thumb: "completed", warning: "warning", intervention: "intervention", hourglass: "inprogress" };
+  const go = (subset, label, extra) => { if (!onNav || !subset.length) return; const ds = [...new Set(subset.map(r => r.delivery))], as = [...new Set(subset.map(r => r.at))];
+    onNav({ ids: idsOf(subset), label, status: ds.length === 1 ? ds[0] : null, at: as.length === 1 ? atIdOf[as[0]] : null, dateRange, ...(extra || {}) }); };
   const naGroups = [
     ["terminated", "Terminated", "Business Exception"],
     ["failed", "Failed", "Technical/Business Exception"],
@@ -1608,14 +1616,6 @@ function PCRDashboard({ onNav }) {
           {/* 30-column grid: 6 summary cards span 5 each, 5 cost cards span 6 each — both rows fill the same width with equal cards. */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(30, minmax(0, 1fr))", gap: 9, marginTop: 16 }}>
             {stats.map(s => <div key={s.label} style={{ display: "flex", minWidth: 0, gridColumn: "span 5" }}><PCRStatCard {...s} fill onClick={s.nav ? () => onNav && onNav(s.nav) : undefined} /></div>)}
-            <div style={{ gridColumn: "1 / -1", font:"500 18px/22px Roboto", color:"#0f172a", marginTop: 11, marginBottom: 3 }}>Cost And Time Metrics</div>
-            {[
-              ["Throughput Per Day", prod.perDay],
-              ["Avg Completion Time", prod.avgDays + " Days"],
-              ["FTE Saved", p2(prod.fte)],
-              ["Days Saved", p2(prod.daysSaved)],
-              ["Total Cost Savings", "$" + prod.savings + "k"],
-            ].map(([l,v]) => <div key={l} style={{ display: "flex", minWidth: 0, gridColumn: "span 6" }}><StatCard label={l} value={v} fill /></div>)}
           </div>
           <React.Fragment>
           <div className="ws-scrollbody" style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 24, overflowY: "auto", maxHeight: "calc(100vh - 500px)", paddingRight: 4 }}>
@@ -1703,20 +1703,22 @@ function PCRDashboard({ onNav }) {
 }
 
 
-// ── E-Referral dashboard ─────────────────────────────────────
+// ── E-referral dashboard ─────────────────────────────────────
 // Same shell as the PCR dashboard. Every number comes from the Intake › E-referral
 // rows (window.IER_ROWS); clicking a card or action item opens that grid filtered
 // to the exact records behind the count.
 const REF_DASH_FILTER_FIELDS = [
+  { key: "agency",    label: "Agency" },
   { key: "branch",    label: "Branch" },
+  { key: "payor",     label: "Payer" },
+  { key: "zip",       label: "Zip Code" },
   { key: "refSource", label: "Referral Source" },
-  { key: "plan",      label: "Payer Name" },
-  { key: "zip",       label: "Zipcode" },
 ];
 const REF_RESP = [["Accepted","accepted","#61AA6B"],["Declined","declined","#F87D7C"],["Exceptions","ineligible","#F8C87C"]];
 const REF_RESP_V2 = [["Accepted","accepted","#61AA6B"],["Declined","declined","#F87D7C"],["User Decision","userDecision","#618EAA"],["Ineligible","ineligible","#A18B6D"],["Exceptions","exceptions","#F8C87C"]];
 const REF_HUB_COLORS = ["#156082","#618EAA","#F8C87C","#A18B6D","#7C6BD6","#4FC3B1"];
 function ReferralDashboard({ onNav }) {
+  React.useEffect(() => { window.__rptContext = "ereferral"; return () => { if (window.__rptContext === "ereferral") window.__rptContext = null; }; }, []);
   const [aiTab, setAiTab] = useDash("attention");
   const [trendGrain, setTrendGrain] = useDash("day");
   const [, setTick] = useDash(0);
@@ -1746,19 +1748,223 @@ function ReferralDashboard({ onNav }) {
   const trend = (() => {
     const parse = (s) => { const m = String(s||"").match(/(\d+)\/(\d+)\/(\d+)/); return m ? new Date(2000 + +m[3], +m[1]-1, +m[2]) : null; };
     const b = new Map();
-    rows.forEach(r => { const d = parse(r.refDate); if (!d) return; if (trendGrain === "week") d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); b.set(d.getTime(), (b.get(d.getTime()) || 0) + 1); });
-    const data = [...b.keys()].sort((a, c) => a - c).map(k => { const d = new Date(k); return { label: String(d.getMonth()+1).padStart(2,"0") + "/" + String(d.getDate()).padStart(2,"0") + "/" + d.getFullYear(), value: b.get(k) }; });
+    rows.forEach(r => { const d = parse(r.refDate); if (!d) return; if (trendGrain === "week") d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const k = d.getTime(); if (!b.has(k)) b.set(k, []); b.get(k).push(r); });
+    const data = [...b.keys()].sort((a, c) => a - c).map(k => { const d = new Date(k); return { label: String(d.getMonth()+1).padStart(2,"0") + "/" + String(d.getDate()).padStart(2,"0") + "/" + d.getFullYear(), value: b.get(k).length, rs: b.get(k) }; });
     return { data, max: Math.max(4, Math.ceil(Math.max(...data.map(d => d.value), 1) / 4) * 4) };
   })();
   const respSeg = (V2 ? REF_RESP_V2 : REF_RESP).map(([l, k, c]) => [l, rows.filter(r => r.resp === k).length, c]);
   const hubs = (() => { const m = {}; rows.forEach(r => { const k = r.gw || "Direct"; m[k] = (m[k] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map((k, i) => [k, m[k], REF_HUB_COLORS[i % REF_HUB_COLORS.length]]); })();
-  const countBy = (k) => { const m = {}; rows.forEach(r => { const v = r[k] || "—"; m[v] = (m[v] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map(l => ({ label: l, value: m[l] })); };
-  const planData = countBy("plan"), zipData = countBy("zip");
+  const countBy = (k) => { const m = {}; rows.forEach(r => { const v = r[k] || "—"; (m[v] = m[v] || []).push(r); }); return Object.keys(m).sort((a, b) => m[b].length - m[a].length).map(l => ({ label: l, value: m[l].length, rs: m[l] })); };
+  const top5 = (d, c) => { const top = d.slice(0, 5); const restRs = d.slice(5).flatMap(x => x.rs); return (restRs.length ? top.concat([{ label: "Others", value: restRs.length, rs: restRs }]) : top).map(x => ({ ...x, color: x.label === "Others" ? "#A18B6D" : c })); };
+  const planData = top5(countBy("plan"), "#618EAA"), zipData = top5(countBy("zip"), "#156082");
   const scaleOf = (d) => Math.max(4, Math.ceil(Math.max(...d.map(x => x.value), 1) / 2) * 2);
   const planMax = scaleOf(planData), zipMax = scaleOf(zipData);
   const checks = [["Payer", "payerMatched"], ["Zipcode", "zipMatched"], ["Referral Source", "srcMatched"]];
-  const valData = checks.map(([l, k]) => ({ label: l, value: rows.filter(r => r[k] === "No").length }));
-  const valMax = Math.max(4, Math.ceil(Math.max(...valData.map(x => x.value), 1) / 2) * 2);
+  const valData = checks.map(([l, k]) => { const rs = rows.filter(r => r[k] === "No"); return { label: l, value: rs.length, rs }; });
+  const valColors = ["#F87D7C", "#F8C87C", "#618EAA"];
+  const valSeg = valData.map((x, i) => [x.label, x.value, valColors[i], x.rs]);
+  const valTotal = valData.reduce((s, x) => s + x.value, 0);
+  // Rules Engine outcome → final Referral Response, plus sync / AT / care / source breakdowns.
+  const RULES = ["Accept", "Decline", "User Decision", "Skip", "Pending"];
+  const rulesOf = (r) => RULES.includes(r.rulesResp) ? r.rulesResp : "Pending";
+  const respSeries = (V2 ? REF_RESP_V2 : REF_RESP).map(([l, k, c]) => ({ key: k, name: l, color: c }));
+  const rulesData = RULES.map(l => { const rs = rows.filter(r => rulesOf(r) === l); const values = {}; respSeries.forEach(s => { values[s.key] = rs.filter(r => r.resp === s.key).length; }); return { label: l, values, total: rs.length }; }).filter(d => d.total);
+  const rulesMax = Math.max(4, Math.ceil(Math.max(...rulesData.map(d => d.total), 1) / 2) * 2);
+  const seg = (l, rs, c) => [l, rs.length, c, rs];
+  const dsOf = (r) => { const s = String(window.ierDocSend ? window.ierDocSend(r) : (r.docSendStatus || "")); return !s ? "na" : /^(sent|yes)$/i.test(s) ? "sent" : "not"; };
+  const portalSeg = [seg("Synced", rows.filter(r => r.ehrSync === true), "#61AA6B"), seg("Not Synced", rows.filter(r => r.ehrSync === false), "#F87D7C"), seg("Not Available", rows.filter(r => r.ehrSync == null), "#B7C2D0")];
+  const syncSeg = [seg("Sent", rows.filter(r => dsOf(r) === "sent"), "#61AA6B"), seg("Not Sent", rows.filter(r => dsOf(r) === "not"), "#F87D7C"), seg("Not Available", rows.filter(r => dsOf(r) === "na"), "#B7C2D0")];
+  // Decision matrix: Rules Engine outcome (rows) × final Referral Response (columns).
+  const mxCols = respSeries.filter(s => rows.some(r => r.resp === s.key));
+  const mxRows = RULES.filter(l => l !== "Pending").map(l => ({ label: l, rs: rows.filter(r => rulesOf(r) === l) })).filter(x => x.rs.length);
+  const mxMax = Math.max(1, ...mxRows.flatMap(x => mxCols.map(c => x.rs.filter(r => r.resp === c.key).length)));
+  const MODE = { "Accept": "Automated", "Decline": "Automated", "Skip": "Automated", "User Decision": "Manual", "Pending": "Awaiting" };
+  const udRs = rows.filter(r => rulesOf(r) === "User Decision");
+  const udSplit = [["Accepted", udRs.filter(r => r.resp === "accepted"), "#61AA6B"], ["Declined", udRs.filter(r => r.resp === "declined"), "#F87D7C"], ["Awaiting Decision", udRs.filter(r => r.resp === "userDecision"), "#618EAA"]];
+  const tint = (hex, a) => { const h = hex.replace("#", ""); return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; };
+  const mxGrid = `150px repeat(${mxCols.length}, minmax(0,1fr)) 64px`;
+  const DecisionMatrix = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "5px 12px", background: "#F7F9FC", border: "1px solid #EEF1F7", borderRadius: 4 }}>
+        <span style={{ font: "500 12px/16px Roboto", color: "#3A424A" }}>User Decision Outcomes</span>
+        <span style={{ display: "flex", flex: "1 1 160px", height: 10, borderRadius: 2, overflow: "hidden", background: "#EEF1F7", minWidth: 120 }}>
+          {udSplit.map(([l, rs, c]) => rs.length ? <span key={l} title={l + ": " + rs.length} style={{ width: (rs.length / (udRs.length || 1)) * 100 + "%", background: c }} /> : null)}
+        </span>
+        {udSplit.map(([l, rs, c]) => (
+          <span key={l} onClick={() => rs.length && go("User Decision → " + l, rs)} style={{ display: "inline-flex", alignItems: "center", gap: 5, font: "400 12px/16px Roboto", color: "#6A717D", cursor: rs.length ? "pointer" : "default" }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: c }} />{l}<span style={{ font: "500 12px/16px Roboto", color: "#3A424A" }}>{p2(rs.length)}</span>
+          </span>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: mxGrid, alignItems: "center", columnGap: 4, rowGap: 3 }}>
+        <span style={{ font: "500 11px/14px Roboto", color: "#8A94A6" }}>Rules Engine Response</span>
+        {mxCols.map(c => <span key={c.key} style={{ font: "500 11px/14px Roboto", color: "#8A94A6", textAlign: "center" }}>{c.name}</span>)}
+        <span style={{ font: "500 11px/14px Roboto", color: "#8A94A6", textAlign: "center" }}>Total</span>
+        {mxRows.map(x => {
+          const ud = x.label === "User Decision";
+          return (
+            <React.Fragment key={x.label}>
+              <span onClick={() => go("Rules Engine: " + x.label, x.rs)} style={{ font: `${ud ? 500 : 400} 12px/16px Roboto`, color: "#3A424A", cursor: "pointer" }}>{x.label}</span>
+              {mxCols.map(c => { const rs = x.rs.filter(r => r.resp === c.key); const v = rs.length; return (
+                <span key={c.key} onClick={() => v && go(x.label + " → " + c.name, rs)} title={v ? `${x.label} → ${c.name}: ${v}` : undefined}
+                  style={{ height: 25, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 2, background: v ? tint(c.color, 0.18 + 0.62 * (v / mxMax)) : "#F7F9FC", font: `${v ? 500 : 400} 12px/16px Roboto`, color: v ? "#1F2937" : "#B7C2D0", cursor: v ? "pointer" : "default" }}>{v ? p2(v) : "—"}</span>
+              ); })}
+              <span onClick={() => go("Rules Engine: " + x.label, x.rs)} style={{ textAlign: "center", font: "500 12px/16px Roboto", color: "#1677FF", cursor: "pointer" }}>{p2(x.rs.length)}</span>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+  const atSeg = [seg("Completed", rows.filter(r => r.at === "thumb"), "#61AA6B"), seg("Needs Attention", rows.filter(r => r.at === "warning"), "#F8C87C"), seg("In Progress", rows.filter(r => r.at === "hourglass"), "#4C9FD1")];
+  const careSeg = [seg("Home Health", rows.filter(r => r.careType === "Home Health"), "#618EAA"), seg("Hospice", rows.filter(r => r.careType === "Hospice"), "#A18B6D")];
+  const orgData = (() => { const d = countBy("sendOrg"); const top = d.slice(0, 5); const restRs = d.slice(5).flatMap(x => x.rs); return (restRs.length ? top.concat([{ label: "Others", value: restRs.length, rs: restRs }]) : top).map(x => ({ ...x, color: x.label === "Others" ? "#A18B6D" : "#156082" })); })();
+  const DonutCard = ({ title, tip, seg, center, prefix, showPct, totalOverride }) => { const tot = totalOverride != null ? totalOverride : n; const pc = (v) => tot ? Math.round(v / tot * 100) + "%" : "0%"; return (
+    <DashCard title={title} info={tip} style={{ height: 294 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 }}>
+        <Donut size={180} thickness={30} segments={seg.map(x => ({ value: x[1] || 0.001, color: x[2], title: x[0] + ": " + x[1], rs: x[3], label: x[0] }))} onSeg={s => go(prefix + ": " + s.label, s.rs)}
+          centerTop={tot} centerBottom={center} centerTopSize={18} centerTopWeight={600} centerTopY="47%" centerBottomSize={10} centerBottomWeight={500} centerBottomY="61%" />
+        <div style={{ flex: "0 1 240px", minWidth: 0 }}>{seg.length ? seg.map((x, i) => <LegendRow key={x[0]} color={x[2]} label={x[0]} value={showPct ? p2(x[1]) + "  ·  " + pc(x[1]) : p2(x[1])} divider={i < seg.length - 1} onClick={x[1] ? () => go(prefix + ": " + x[0], x[3]) : undefined} />) : <div style={{ font: "400 13px/18px Roboto", color: "#8A94A6" }}>No records in range</div>}</div>
+      </div>
+    </DashCard>
+  ); };
+  // Referral Response mix by how the decision was reached.
+  const mixSeg = [seg("Auto Accept", rows.filter(r => r.rulesResp === "Accept"), "#61AA6B"), seg("Auto Decline", rows.filter(r => r.rulesResp === "Decline"), "#F87D7C"), seg("Ineligible", rows.filter(r => r.resp === "ineligible"), "#A18B6D"), seg("User Decision", rows.filter(r => r.rulesResp === "User Decision"), "#618EAA")];
+  const mixTotal = mixSeg.reduce((a, x) => a + x[1], 0);
+  // Declined referrals by Referral Response Reason.
+  const DECL_COLORS = ["#F87D7C", "#F8C87C", "#A18B6D", "#618EAA", "#7C6BD6", "#156082"];
+  const declSeg = (() => { const m = {}; dec.forEach(r => { const k = r.respReason || "Reason not provided"; (m[k] = m[k] || []).push(r); }); return Object.keys(m).sort((a, b) => m[b].length - m[a].length).map((k, i) => seg(k, m[k], DECL_COLORS[i % DECL_COLORS.length])); })();
+  // User Decision resolution: Rules Engine "User Decision" → final Referral Response.
+  const udOut = [["Changed to Accepted", udRs.filter(r => r.resp === "accepted"), "#61AA6B"], ["Changed to Declined", udRs.filter(r => r.resp === "declined"), "#F87D7C"], ["Remains User Decision", udRs.filter(r => r.resp === "userDecision"), "#618EAA"]];
+  const udOther = udRs.filter(r => !["accepted", "declined", "userDecision"].includes(r.resp));
+  if (udOther.length) udOut.push(["Moved to Exceptions", udOther, "#F8C87C"]);
+  const udN = udRs.length, udPct = (c) => udN ? Math.round(c / udN * 100) + "%" : "0%";
+  const udResolved = udOut[0][1].length + udOut[1][1].length;
+  const UDResolution = () => (
+    <div style={{ display: "flex", alignItems: "stretch", gap: 28, flex: 1, minHeight: 0, padding: "6px 4px 0" }}>
+      <div onClick={() => udN && go("Rules Engine: User Decision", udRs)} style={{ flex: "0 0 180px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 14, paddingRight: 24, borderRight: "1px solid #EEF1F7", cursor: udN ? "pointer" : "default" }}>
+        <div><div style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>Routed to User Decision</div><div style={{ font: "600 30px/36px Roboto", color: "#3A424A", marginTop: 2 }}>{p2(udN)}</div></div>
+        <div><div style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>Final Responses</div><div style={{ font: "600 20px/26px Roboto", color: "#3A424A", marginTop: 2 }}>{p2(udResolved)} <span style={{ font: "500 13px/18px Roboto", color: "#8A94A6" }}>{udPct(udResolved)}</span></div></div>
+      </div>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
+        <div style={{ display: "flex", height: 14, borderRadius: 3, overflow: "hidden", background: "#EEF1F7" }}>
+          {udOut.map(([l, rs, c]) => rs.length ? <span key={l} title={l + ": " + rs.length + " (" + udPct(rs.length) + ")"} onClick={() => go("User Decision → " + l, rs)} style={{ width: (rs.length / (udN || 1)) * 100 + "%", background: c, cursor: "pointer" }} /> : null)}
+        </div>
+        {udOut.map(([l, rs, c]) => (
+          <div key={l} onClick={() => rs.length && go("User Decision → " + l, rs)} style={{ display: "grid", gridTemplateColumns: "170px minmax(0,1fr) 40px 48px", alignItems: "center", gap: 12, cursor: rs.length ? "pointer" : "default" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "400 13px/18px Roboto", color: "#3A424A" }}><span style={{ width: 10, height: 10, borderRadius: 2, background: c, flex: "none" }} />{l}</span>
+            <span style={{ height: 8, borderRadius: 4, background: "#F2F4F8", overflow: "hidden" }}><span style={{ display: "block", height: "100%", width: (rs.length / (udN || 1)) * 100 + "%", background: c, borderRadius: 4 }} /></span>
+            <span style={{ font: "600 14px/18px Roboto", color: "#3A424A", textAlign: "right" }}>{p2(rs.length)}</span>
+            <span style={{ font: "500 13px/18px Roboto", color: "#8A94A6", textAlign: "right" }}>{udPct(rs.length)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  // Linked view: Decision Type (level 1) → User Decision Outcomes (level 2). Two presentation options.
+  const mixPct = (c) => mixTotal ? Math.round(c / mixTotal * 100) + "%" : "0%";
+  const udIdx = mixSeg.findIndex(x => x[0] === "User Decision");
+  const udColor = mixSeg[udIdx][2];
+  const udStart = mixSeg.slice(0, udIdx).reduce((a, x) => a + x[1], 0) / (mixTotal || 1) * 100;
+  const udEnd = udStart + udN / (mixTotal || 1) * 100;
+  const OptBadge = ({ id, label }) => <span style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "500 12px/16px Roboto", color: "#3A424A" }}><span style={{ padding: "2px 8px", borderRadius: 10, background: "#1C2D42", color: "#fff", font: "600 11px/14px Roboto" }}>{id}</span>{label}</span>;
+  const StackBar = ({ items, base, prefix }) => (
+    <div style={{ display: "flex", height: 24, borderRadius: 3, overflow: "hidden", background: "#EEF1F7" }}>
+      {items.map(([l, v, c, rs]) => v ? <span key={l} title={l + ": " + v} onClick={() => go(prefix + l, rs)} style={{ width: (v / (base || 1)) * 100 + "%", background: c, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", font: "600 12px/16px Roboto", color: "#fff", borderRight: "1px solid #fff", boxSizing: "border-box" }}>{p2(v)}</span> : null)}
+    </div>
+  );
+  const LegendLine = ({ items, base, prefix, pctLabel }) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 28px" }}>
+      {items.map(([l, v, c, rs]) => (
+        <span key={l} onClick={() => v && go(prefix + l, rs)} style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "400 13px/18px Roboto", color: "#3A424A", cursor: v ? "pointer" : "default" }}>
+          <span style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}
+          <span style={{ font: "600 13px/18px Roboto" }}>{p2(v)}</span>
+          <span style={{ color: "#6A717D" }}>{base ? Math.round(v / base * 100) : 0}%{pctLabel}</span>
+        </span>
+      ))}
+    </div>
+  );
+  const udItems = udOut.map(([l, rs, c]) => [l, rs.length, c, rs]);
+  const tierLabel = (t, n2) => <div style={{ display: "flex", alignItems: "baseline", gap: 8, font: "500 13px/18px Roboto", color: "#3A424A" }}>{t}<span style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>{n2}</span></div>;
+  const LinkedHybrid = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {tierLabel("Referral Responses By Decision Type", p2(mixTotal) + " responses")}
+      <StackBar items={mixSeg} base={mixTotal} prefix="Decision Type: " />
+      <LegendLine items={mixSeg} base={mixTotal} prefix="Decision Type: " />
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none" style={{ width: "100%", height: 44, display: "block" }}>
+        <polygon points={udStart + ",0 " + udEnd + ",0 100,40 0,40"} fill={udColor} fillOpacity="0.14" />
+        <line x1={udStart} y1="0" x2="0" y2="40" stroke={udColor} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        <line x1={udEnd} y1="0" x2="100" y2="40" stroke={udColor} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      </svg>
+      {tierLabel("User Decision Outcomes", p2(udN) + " routed to User Decision · " + p2(udResolved) + " final responses (" + udPct(udResolved) + ")")}
+      <StackBar items={udItems} base={udN} prefix="User Decision → " />
+      <LegendLine items={udItems} base={udN} prefix="User Decision → " pctLabel=" of User Decision" />
+    </div>
+  );
+  // Exceptions: before outcome (exclusive of other types) + User Decision → Exceptions.
+  const knownRules = ["Accept", "Decline", "User Decision"];
+  const preExc = rows.filter(r => r.resp === "exceptions" && r.resp !== "ineligible" && !knownRules.includes(r.rulesResp));
+  const udExc = udRs.filter(r => r.resp === "exceptions");
+  const excColor = "#F8C87C";
+  const donutSeg = preExc.length ? mixSeg.concat([seg("Exceptions", preExc, excColor)]) : mixSeg;
+  const lvTotal = donutSeg.reduce((a, x) => a + x[1], 0);
+  const levelSeg = mixSeg.concat([seg("Exceptions", preExc, excColor)]);
+  const ConcentricDonut = () => {
+    const S = 172, cx = S / 2;
+    const ring = (items, r, th, prefix) => { const tot = items.reduce((a, x) => a + x[1], 0) || 1; const circ = 2 * Math.PI * r; let off = 0;
+      return [<circle key={"bg" + r} cx={cx} cy={cx} r={r} fill="none" stroke="#EEF1F7" strokeWidth={th} />].concat(items.map(([l, v, c, rs]) => { if (!v) return null; const len = circ * v / tot; const el = (
+        <circle key={prefix + l} cx={cx} cy={cx} r={r} fill="none" stroke={c} strokeWidth={th} strokeDasharray={len + " " + (circ - len)} strokeDashoffset={-off}
+          onClick={() => go(prefix + l, rs)} style={{ cursor: "pointer" }}><title>{l + ": " + v}</title></circle>); off += len; return el; })); };
+    return (
+      <svg width={S} height={S} viewBox={"0 0 " + S + " " + S} style={{ flexShrink: 0 }}>
+        <g transform={"rotate(-90 " + cx + " " + cx + ")"}>
+          {ring(donutSeg, 74, 20, "Decision Type: ")}
+          {ring(udItems, 50, 16, "User Decision → ")}
+        </g>
+        <text x="50%" y="40%" textAnchor="middle" style={{ fontFamily: "Roboto, sans-serif", fontSize: 8, fontWeight: 500, fill: "#7E8B99" }}>LEVEL 1</text>
+        <text x="50%" y="50%" textAnchor="middle" style={{ fontFamily: "Roboto, sans-serif", fontSize: 14, fontWeight: 600, fill: "#1F5676" }}>{p2(lvTotal)}</text>
+        <line x1={cx - 16} y1={cx + 4} x2={cx + 16} y2={cx + 4} stroke="#D6E2EA" strokeWidth="1" />
+        <text x="50%" y="60%" textAnchor="middle" style={{ fontFamily: "Roboto, sans-serif", fontSize: 8, fontWeight: 500, fill: "#7E8B99" }}>LEVEL 2</text>
+        <text x="50%" y="70%" textAnchor="middle" style={{ fontFamily: "Roboto, sans-serif", fontSize: 14, fontWeight: 600, fill: "#1F5676" }}>{p2(udN)}</text>
+      </svg>
+    );
+  };
+  const LinkedTiers = () => (
+    <div style={{ display: "grid", gridTemplateColumns: "180px repeat(" + levelSeg.length + ", minmax(0,1fr))", columnGap: 12, rowGap: 14 }}>
+      <div style={{ gridRow: "1 / 4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <ConcentricDonut />
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, font: "400 11px/14px Roboto", color: "#6A717D" }}>
+            <span>Outer ring: Level 1 · {p2(lvTotal)}</span><span>Inner ring: Level 2 · {p2(udN)}</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ gridColumn: "2 / -1", marginBottom: -6 }}>{tierLabel(<span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><span style={{ padding: "2px 8px", borderRadius: 10, background: "#E3ECF3", color: "#1F5676", font: "600 11px/14px Roboto" }}>Level 1</span>Validation Outcomes</span>, p2(lvTotal) + " responses")}</div>
+      {levelSeg.map(([l, v, c, rs], i) => {
+        const isUd = i === udIdx, isExc = l === "Exceptions";
+        return (
+          <div key={l} onClick={() => v && go("Decision Type: " + l, rs)} style={{ border: isUd ? "1.5px solid " + c : "1px solid #E8E9EA", background: isUd ? "#F3F7FA" : "#fff", borderRadius: 8, padding: "12px 14px", cursor: v ? "pointer" : "default", display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "400 13px/18px Roboto", color: "#3A424A" }}><span style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}</span>
+            <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}><span style={{ font: "600 24px/30px Roboto", color: "#3A424A" }}>{p2(v)}</span><span style={{ font: "500 13px/18px Roboto", color: "#6A717D" }}>{lvTotal ? Math.round(v / lvTotal * 100) : 0}%</span></span>
+            {isExc && <span style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>{p2(preExc.length)} before Validation outcome</span>}
+          </div>
+        );
+      })}
+      <div style={{ gridColumn: "2 / -1", position: "relative", background: "#F3F7FA", border: "1px solid #D6E2EA", borderRadius: 8, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <span style={{ position: "absolute", top: -8, left: "calc(" + udIdx + " * (100% + 12px) / " + levelSeg.length + " + (100% - " + (12 * (levelSeg.length - 1)) + "px) / " + (2 * levelSeg.length) + " - 7px)", width: 14, height: 14, background: "#F3F7FA", borderLeft: "1px solid #D6E2EA", borderTop: "1px solid #D6E2EA", transform: "rotate(45deg)" }} />
+        {tierLabel(<span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><span style={{ padding: "2px 8px", borderRadius: 10, background: "#E3ECF3", color: "#1F5676", font: "600 11px/14px Roboto" }}>Level 2</span>User Decision Outcomes</span>, p2(udN) + " routed to User Decision · " + p2(udResolved) + " of " + p2(udN) + " reached a final response (" + udPct(udResolved) + ")")}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(" + udItems.length + ", minmax(0,1fr))", gap: 12 }}>
+          {udItems.map(([l, v, c, rs]) => (
+            <div key={l} onClick={() => v && go("User Decision → " + l, rs)} style={{ background: "#fff", borderRadius: 6, padding: "10px 12px", cursor: v ? "pointer" : "default", display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "400 13px/18px Roboto", color: "#3A424A" }}><span style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}</span>
+              <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}><span style={{ font: "600 20px/26px Roboto", color: "#3A424A" }}>{p2(v)}</span><span style={{ font: "500 13px/18px Roboto", color: "#6A717D" }}>{udPct(v)}</span></span>
+              <span style={{ height: 6, borderRadius: 3, background: "#EEF1F7", overflow: "hidden" }}><span style={{ display: "block", height: "100%", width: (v / (udN || 1)) * 100 + "%", background: c }} /></span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
   // Action items — open (unreviewed) records only.
   const naRows = rows.filter(r => r.at === "warning");
   const reasonsOf = (rs) => { const m = {}; rs.forEach(r => { const t = r.atReason || "Unspecified reason"; (m[t] = m[t] || []).push(r); }); return Object.keys(m).sort((x, y) => m[y].length - m[x].length).map(k => ({ reason: k, rs: m[k] })); };
@@ -1766,40 +1972,39 @@ function ReferralDashboard({ onNav }) {
   const termReasons = reasonsOf(termRows), failReasons = reasonsOf(failRows);
   const valGroups = checks.map(([l, k]) => ({ reason: l + " not matched", rs: rows.filter(r => r[k] === "No") })).filter(x => x.rs.length);
   const agDeclined = rows.filter(r => r.agencyResp === "Declined");
-  const respAction = V2 ? [["Exceptions", exc], ["Ineligible", inel]] : [["Exceptions", inel], ["Declined", dec]];
+  const respAction = V2 ? [["User Decision", ud], ["Ineligible", inel], ["Exceptions", exc]] : [["Exceptions", inel], ["Declined", dec]];
   const respActionN = respAction.reduce((s, x) => s + x[1].length, 0);
-  const total = respActionN + naRows.length;
+  const rulesPending = rows.filter(r => rulesOf(r) === "Pending");
+  const total = new Set(respAction.flatMap(x => x[1]).concat(naRows).map(r => r.id)).size;
   return (
     <div style={{ display: "flex", alignItems: "stretch" }}>
       <div style={{ flex: "1 1 0", minWidth: 0 }}>
         <ARVFilterBarChips hideSearch={true} datePicker={{ label: "Referral Date", value: range, available: dates, onChange: setDateRange }}
           filterFields={REF_DASH_FILTER_FIELDS} filterRows={all} fieldFilters={fieldFilters} onFieldFilters={setFieldFilters} />
         <div style={{ padding: "20px 32px 32px" }}>
-          <div style={{ font: "500 18px/22px Roboto", color: "#0f172a" }}>E-Referral Summary</div>
+          <div style={{ font: "500 18px/22px Roboto", color: "#0f172a" }}>E-referral Summary</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(" + stats.length + ", minmax(0, 1fr))", gap: 9, marginTop: 16 }}>
             {stats.map(s => <div key={s.label} style={{ display: "flex", minWidth: 0 }}><PCRStatCard label={s.label} value={s.value} pct={s.pct} count={s.count} fill onClick={() => go(s.label, s.rs)} /></div>)}
           </div>
           <div className="ws-scrollbody" style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 24, overflowY: "auto", maxHeight: "calc(100vh - 400px)", paddingRight: 4 }}>
-            <div style={{ font: "500 16px/20px Roboto", color: "#3A424A" }}>E-Referral Analytics</div>
+            <div style={{ font: "500 16px/20px Roboto", color: "#3A424A" }}>E-referral Analytics</div>
+            <DashCard title="Referral Volume Trend" info right={<PickerBtn options={[["day","By Day"],["week","By Week"]]} value={trendGrain} onChange={setTrendGrain} />} style={{ height: 294, flex: "none" }} bodyStyle={{ paddingTop: 10 }}>
+              <SimpleLineChart data={trend.data} max={trend.max} step={trend.max / 4} yLabel="No. Of Referrals" color="#7C6BD6" onPoint={d => go("Referral Date: " + d.label, d.rs)} />
+            </DashCard>
+            <DashCard title="Validation Outcomes → User Decision Outcomes" info="Level 1: Outcomes determined by Rules Engine validations. Level 2: User Decision to final decision rendered by Referral Hub." style={{ height: "auto", flex: "none" }} bodyStyle={{ paddingTop: 2 }}>
+              <LinkedTiers />
+            </DashCard>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridAutoRows: "294px", gap: 18 }}>
-              <DashCard title="Referral Volume Trend" info right={<PickerBtn options={[["day","By Day"],["week","By Week"]]} value={trendGrain} onChange={setTrendGrain} />} style={{ height: 294, gridColumn: "1 / -1" }} bodyStyle={{ paddingTop: 10 }}>
-                <SimpleLineChart data={trend.data} max={trend.max} step={trend.max / 4} yLabel="No. Of Referrals" color="#7C6BD6" />
+              <DonutCard title="E-Referrals By Decline Reason" tip="Declined referrals grouped by Referral Response Reason." seg={declSeg} center="DECLINED" prefix="Decline Reason" showPct totalOverride={dec.length} />
+              <DonutCard title="Referral Hub Data Sync" tip="Summary of status of Patient data and document sent to Referral Hub" seg={syncSeg} center="REFERRALS" prefix="Referral Hub Data Sync" />
+              <DonutCard title="Portal Sync Status" tip="Referrals synced back to the referral portal. Records with no sync status show as Not Available." seg={portalSeg} center="REFERRALS" prefix="Portal Sync" />
+              <DonutCard title="Automation Status" tip="AT status of each referral as shown in the E-referral View." seg={atSeg} center="REFERRALS" prefix="AT Status" />
+              <DonutCard title="Referrals By Type Of Care" tip="Referrals grouped by Type of Care." seg={careSeg} center="REFERRALS" prefix="Type Of Care" showPct />
+              <DashCard title="Referrals By Sending Organization" info style={{ height: 294 }} bodyStyle={{ paddingTop: 10 }}>
+                <HBarChart data={orgData} xLabel="No. Of Referrals" labelW={150} onBar={d => go("Sending Organization: " + d.label, d.rs)} />
               </DashCard>
-              <DashCard title="Referral Response Distribution" info style={{ height: 294 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 }}>
-                  <Donut size={180} thickness={30} segments={respSeg.map(x => ({ value: x[1] || 0.001, color: x[2] }))}
-                    centerTop={n} centerBottom="REFERRALS" centerTopSize={18} centerTopWeight={600} centerTopY="47%" centerBottomSize={10} centerBottomWeight={500} centerBottomY="61%" />
-                  <div style={{ flex: "0 1 220px", minWidth: 0 }}>{respSeg.map((x, i) => <LegendRow key={x[0]} color={x[2]} label={x[0]} value={String(x[1]).padStart(2, "0")} divider={i < respSeg.length - 1} />)}</div>
-                </div>
-              </DashCard>
-              <DashCard title="Validation Failures By Check" info style={{ height: 294 }} bodyStyle={{ paddingTop: 10 }}>
-                <SimpleBarChart data={valData} max={valMax} step={valMax / 2} yLabel="No. Of Referrals" color="#F87D7C" barW={56} />
-              </DashCard>
-              <DashCard title="E-Referral Count By Primary Plan" info style={{ height: 294, gridColumn: "1 / -1" }} bodyStyle={{ paddingTop: 10 }}>
-                <SimpleBarChart data={planData} max={planMax} step={planMax / 2} yLabel="No. Of Referrals" color="#618EAA" barW={44} />
-              </DashCard>
-              <DashCard title="E-Referral Count By Zip Code" info style={{ height: 294, gridColumn: "1 / -1" }} bodyStyle={{ paddingTop: 10 }}>
-                <SimpleBarChart data={zipData} max={zipMax} step={zipMax / 2} yLabel="No. Of Referrals" color="#156082" barW={44} />
+              <DashCard title="E-referrals By Primary Plan" info style={{ height: 294 }} bodyStyle={{ paddingTop: 10 }}>
+                <HBarChart data={planData} xLabel="No. Of Referrals" labelW={150} onBar={d => go("Primary Plan: " + d.label, d.rs)} />
               </DashCard>
             </div>
           </div>
@@ -1810,7 +2015,7 @@ function ReferralDashboard({ onNav }) {
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 51, background: "#FFF1F1" }} />
         <div style={{ position: "relative", padding: "16px 20px 28px 32px", display: "flex", flexDirection: "column", minHeight: "calc(100vh - 190px)" }}>
           <div style={{ background: "#fff", border: "1px solid #F3E0E0", borderRadius: 9, boxShadow: "0 1px 3px rgba(86,86,86,.06)", display: "flex", alignItems: "center", padding: "16px 18px", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}><WarnGlyph /><span style={{ font: "500 19px/23px Roboto", color: "#3A424A" }}>E-Referral Action Items</span></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}><WarnGlyph /><span style={{ font: "500 19px/23px Roboto", color: "#3A424A" }}>E-referral Action Items</span></div>
             <span style={{ marginLeft: "auto", font: "400 15px/20px Roboto", color: "#6A717D" }}><span style={{ color: "#CF1322" }}>{total} Items</span> Needs Review</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
@@ -2182,7 +2387,35 @@ function NotifHeadline({ value, growth, goodDown }) {
     </span>
   );
 }
-function NotificationsDashboard({ onNav }) {
+const NOTIF_AT_DEFS = [["thumb","completed","Completed","#61AA6B"],["warning","warning","Needs Attention","#F8C87C"],["intervention","intervention","Needs Intervention","#F87D7C"],["hourglass","inprogress","In Progress","#618EAA"]];
+const NOTIF_FAX_DEFS = [["delivered","Sent"],["pending","In Progress"],["failed","Not Sent"],["exception","Exception"]];
+function NotifFaxAtMatrix({ rows, onPick }) {
+  const data = NOTIF_FAX_DEFS.map(([k, l]) => { const rs = rows.filter(r => r.delivery === k); return { k, l, total: rs.length, segs: NOTIF_AT_DEFS.map(([kind, id, al, c]) => ({ id, al, c, v: rs.filter(r => r.at === kind).length })) }; });
+  const max = Math.max(1, ...data.map(d => d.total));
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 12 }}>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        {NOTIF_AT_DEFS.map(([, id, al, c]) => <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "400 11px/14px Roboto", color: "#6A717D" }}><span style={{ width: 9, height: 9, borderRadius: 2, background: c }} />{al}</span>)}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "92px minmax(0,1fr) 32px", rowGap: 18, columnGap: 10, alignItems: "center", flex: 1, alignContent: "center" }}>
+        {data.map(d => (
+          <React.Fragment key={d.k}>
+            <span style={{ font: "400 12px/16px Roboto", color: "#6A717D" }}>{d.l}</span>
+            <span style={{ display: "flex", height: 18, width: (d.total / max * 100) + "%", minWidth: d.total ? 4 : 0, borderRadius: 2, overflow: "hidden" }}>
+              {d.segs.filter(x => x.v).map(x => <span key={x.id} title={"Fax Status: " + d.l + " · AT Status: " + x.al + " — " + x.v + " · Click to view"} onClick={() => onPick(d.k, x.id)} style={{ flex: x.v + " 0 0", background: x.c, cursor: "pointer", borderRight: "1px solid #fff" }} />)}
+            </span>
+            <span style={{ font: "500 12px/16px Roboto", color: "#3A424A", textAlign: "right" }}>{d.total}</span>
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{ textAlign: "center", font: "400 12px Roboto", color: "#8A94A6" }}>Fax Status by Automation (AT) Status</div>
+    </div>
+  );
+}
+function NotificationsDashboard({ onNav: onNavRaw }) {
+  // Every drill-in carries the dashboard's date range + field filters so the grid lands on the same record set.
+  const onNav = onNavRaw ? (o) => onNavRaw({ dateRange, fieldFilters, ...o }) : null;
+  React.useEffect(() => { window.__rptContext = "notifications"; return () => { if (window.__rptContext === "notifications") window.__rptContext = null; }; }, []);
   const [actTab, setActTab] = useDash("na");
   const [grain, setGrain] = useDash("week");
   const [tpGrain, setTpGrain] = useDash("week");
@@ -2266,6 +2499,10 @@ function NotificationsDashboard({ onNav }) {
   const niOpen = rows.filter(r => r.at === "intervention" && !reviewed[r.id]);
   const niGroups = (() => { const m = {}; niOpen.forEach(r => (r.interventions || [{ key: "Intervention", reason: r.atReason }]).forEach(it => { const g = (m[it.key] = m[it.key] || { g: it.key, rows: [], reasons: {} }); if (!g.rows.includes(r)) g.rows.push(r); g.reasons[it.reason] = (g.reasons[it.reason] || 0) + 1; })); return Object.values(m).map(g => ({ ...g, title: "Pending Interventions", sub: "Open - Awaiting Action", reasons: Object.entries(g.reasons) })); })();
   const idsOf = (rs) => rs.map(r => r.id);
+  // Chart drill-in: land on Notifications Center with Fax Status + AT Status tiles set from the clicked subset.
+  const atIdOf = { thumb: "completed", warning: "warning", intervention: "intervention", hourglass: "inprogress" };
+  const go = (subset, label, extra) => { if (!onNav || !subset.length) return; const ds = [...new Set(subset.map(r => r.delivery))], as = [...new Set(subset.map(r => r.at))];
+    onNav({ ids: idsOf(subset), label, status: ds.length === 1 ? ds[0] : null, at: as.length === 1 ? atIdOf[as[0]] : null, dateRange, ...(extra || {}) }); };
 
   // Insight — terminated records whose Physician/Facility has no fax number on file.
   const FAX_REASON = "Physician fax number is not available";
@@ -2277,18 +2514,23 @@ function NotificationsDashboard({ onNav }) {
   const faxRows = rows.filter(r => r.commMethod === "F-Fax");
   const faxStatus = [["delivered", "Sent", "#61AA6B"], ["pending", "In Progress", "#618EAA"], ["failed", "Not Sent", "#A3A3A3"], ["exception", "Exception", "#F87D7C"]].map(([k, l, c]) => ({ k, l, c, v: faxRows.filter(r => r.delivery === k).length }));
   // RCN vs Notification.
-  const optSplit = [["Notification", "Notification", "#156082"], ["Review Coordination Note (RCN)", "RCN", "#A18B6D"]].map(([k, l, c]) => ({ k, l, c, v: rows.filter(r => r.notifOption === k).length }));
+  const isRcn = (r) => String(r.notifOption || "").indexOf("RCN") >= 0;
+  const optSplit = [["Notification", "Notification", "#156082"], ["RCN", "RCN", "#A18B6D"]].map(([k, l, c]) => ({ k, l, c, v: rows.filter(r => k === "RCN" ? isRcn(r) : !isRcn(r)).length }));
   // Task / Note type mix — straight from the grid's "Task/Note type" column.
   const tcase = (s) => String(s || "").toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\b(Md|Poc|Rcn|Soc)\b/g, (m) => m.toUpperCase());
   const noteTypes = (() => { const m = {}; rows.forEach(r => { const k = r.taskType || "Unspecified"; m[k] = (m[k] || 0) + 1; }); return Object.keys(m).map(k => ({ label: tcase(k), value: m[k] })).sort((a, b) => b.value - a.value); })();
   // Event type mix — the grid's "Event" column (RCN rows have no event).
   const EVT_PAL = ["#156082","#618EAA","#F8C87C","#A18B6D","#61AA6B","#7C6BD6","#F87D7C","#91DCF7"];
   const evtTypes = (() => { const m = {}; rows.forEach(r => { const k = r.event ? tcase(r.event) : "No Event (RCN)"; m[k] = (m[k] || 0) + 1; }); return Object.keys(m).map(k => [k, m[k]]).sort((a, b) => b[1] - a[1]).map(([k, v], i) => ({ k, l: k, c: EVT_PAL[i % EVT_PAL.length], v })); })();
+  const atSplit = NOTIF_AT_DEFS.map(([kind, id, l, c]) => ({ k: id, l, c, v: rows.filter(r => r.at === kind).length }));
+  const naReasons = (() => { const m = {}; rows.filter(r => r.at === "warning" && r.atReason).forEach(r => { m[r.atReason] = (m[r.atReason] || 0) + 1; }); return Object.keys(m).map(k => ({ label: k, value: m[k], color: "#F8C87C" })).sort((a, b) => b.value - a.value); })();
+  const commTypes = (() => { const m = {}; rows.forEach(r => { const k = r.commMethod || "Not Specified"; m[k] = (m[k] || 0) + 1; }); return Object.keys(m).map(k => ({ label: k, value: m[k], color: "#156082" })).sort((a, b) => b.value - a.value); })();
+  const reasonH = Math.max(240, 140 + commTypes.length * 30);
   const mixH = Math.max(300, 120 + evtTypes.length * 34, 140 + noteTypes.length * 26);
   const donutCard = (title, items, total, center, onPick, h, tip) => (
     <DashCard title={title} info={tip || true} style={{ height: h || 300 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flex: 1 }}>
-        <Donut size={180} thickness={30} segments={items.map(x => ({ value: x.v || 0.001, color: x.c }))}
+        <Donut size={180} thickness={30} segments={items.map(x => ({ value: x.v || 0.001, color: x.c, title: x.l + " — " + x.v + (onPick ? " · Click to view" : ""), k: x.k }))} onSeg={onPick ? (sg) => onPick(sg.k) : undefined}
           centerTop={total} centerBottom={center} centerTopSize={18} centerTopWeight={600} centerTopY="47%" centerBottomSize={10} centerBottomWeight={500} centerBottomY="61%" />
         <div style={{ flex: "0 1 240px", minWidth: 0 }}>
           {items.map((x, i) => <div key={x.k} onClick={onPick ? () => onPick(x.k) : undefined} style={{ cursor: onPick ? "pointer" : "default" }}><LegendRow color={x.c} label={x.l} value={x.v + " (" + (total ? Math.round(x.v / total * 100) : 0) + "%)"} divider={i < items.length - 1} /></div>)}
@@ -2310,35 +2552,25 @@ function NotificationsDashboard({ onNav }) {
           </div>
           <div className="ws-scrollbody" style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 24, overflowY: "auto", maxHeight: "calc(100vh - 400px)", paddingRight: 4 }}>
             <div style={{ font: "500 16px/20px Roboto", color: "#3A424A" }}>Notification Transaction Analytics</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gridAutoRows: "300px", gap: 18 }}>
-              {donutCard("Fax Sent Status", faxStatus, faxRows.length, "FAX RECORDS", (k) => onNav && onNav({ status: k }), null, "Fax-channel notifications in the selected period, split by delivery status. Click a legend row to open those records.")}
-              {donutCard("RCN vs Notification", optSplit, n, "RECORDS", null, null, "Share of records initiated as a Notification vs. a Review Coordination Note (RCN).")}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 18, alignItems: "stretch" }}>
+              
+              <DashCard title="Notifications By Communication Method" info="Records by communication method. Click a bar to open those records." style={{ height: reasonH, gridColumn: "1 / -1" }} bodyStyle={{ paddingTop: 10 }}>
+                {commTypes.length
+                  ? <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}><HBarChart labelW={150} data={commTypes} xLabel="No. Of Records" onBar={(d) => go(rows.filter(r => (r.commMethod || "Not Specified") === d.label), "Communication method: " + d.label)} /></div>
+                  : <div style={{ font: "400 13px/18px Roboto", color: "#8A94A6" }}>No records in this period.</div>}
+              </DashCard>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 18, alignItems: "stretch" }}>
-            {donutCard("Notifications By Event Type", evtTypes, n, "RECORDS", null, mixH, "Records grouped by triggering event (EOE, Discharge, Transfer, etc.). RCN records carry no event.")}
+            {donutCard("Notifications By Event Type", evtTypes, n, "RECORDS", (k) => go(rows.filter(r => (r.event ? tcase(r.event) : "No Event (RCN)") === k), "Event: " + k), mixH, "Records grouped by triggering event (EOE, Discharge, Transfer, etc.). RCN records carry no event.")}
             <DashCard title="Notifications By Task / Note Type" info="Records grouped by Task / Note type, as shown in the Notifications View grid." style={{ height: mixH }} bodyStyle={{ paddingTop: 10 }}>
               {noteTypes.length
-                ? <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}><HBarChart labelW={210} data={noteTypes.map(x => ({ ...x, color: "#618EAA" }))} xLabel="No. Of Records" /></div>
+                ? <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}><HBarChart labelW={210} data={noteTypes.map(x => ({ ...x, color: "#618EAA" }))} xLabel="No. Of Records" onBar={(d) => go(rows.filter(r => tcase(r.taskType || "Unspecified") === d.label), "Task/Note type: " + d.label)} /></div>
                 : <div style={{ font: "400 13px/18px Roboto", color: "#8A94A6" }}>No records in this period.</div>}
             </DashCard>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gridAutoRows: "320px", gap: 18 }}>
-              <DashCard title="Overall Transaction Volume" info="Total notification transactions initiated per day or week. Headline compares against the previous period of equal length." style={{ height: 320 }} bodyStyle={{ paddingTop: 10 }}
-                right={<span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}><NotifHeadline value={cur.n} growth={growth(cur.n, prev && prev.n)} /><PickerBtn options={[["day", "By Day"], ["week", "By Week"]]} value={grain} onChange={setGrain} /></span>}>
-                <SimpleLineChart data={volData} max={volMax} step={volMax / 4} yLabel="No. Of Transactions" color="#7C6BD6" />
-              </DashCard>
-              <DashCard title="Overall Success Rate" info="Percent of transactions with Sent status, per week. Headline compares against the previous period." style={{ height: 320 }} bodyStyle={{ paddingTop: 10 }}
-                right={<NotifHeadline value={cur.rate.toFixed(2) + "%"} growth={growth(cur.rate, prev && prev.rate)} />}>
-                <SimpleLineChart data={rateData} max={100} step={25} yLabel="Success Rate (%)" color="#61AA6B" />
-              </DashCard>
-              <DashCard title={<>Throughput Per Day<InfoTip text="Average transactions processed per day, bucketed by day or week. Headline compares against the previous period." /><span style={{ marginLeft: 8 }}><NotifHeadline value={cur.perDay.toFixed(1)} growth={growth(cur.perDay, prev && prev.perDay)} /></span></>} style={{ height: 320 }} bodyStyle={{ paddingTop: 10 }}
-                right={<PickerBtn options={[["day", "By Day"], ["week", "By Week"]]} value={tpGrain} onChange={setTpGrain} />}>
-                <SimpleBarChart data={tpData} max={tpMax} step={tpMax / 4} yLabel="Transactions / Day" color="#618EAA" barW={38} />
-              </DashCard>
-              <DashCard title={<>Avg. Trans. Completion Time<InfoTip text="Average hours from initiation to Sent, for Sent transactions only. Lower is better." /><span style={{ marginLeft: 8 }}><NotifHeadline value={cur.hours.toFixed(2) + " hrs"} growth={growth(cur.hours, prev && prev.hours)} goodDown /></span></>} style={{ height: 320 }} bodyStyle={{ paddingTop: 10 }}
-                right={<PickerBtn options={[["day", "By Day"], ["week", "By Week"]]} value={hrGrain} onChange={setHrGrain} />}>
-                <SimpleBarChart data={hrData} max={hrMax} step={hrMax / 4} yLabel="Hrs" color="#A18B6D" barW={38} />
-              </DashCard>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gridAutoRows: "300px", gap: 18 }}>
+              {donutCard("RCN vs Notification", optSplit, n, "RECORDS", (k) => go(rows.filter(r => k === "RCN" ? isRcn(r) : !isRcn(r)), "Notification option: " + optSplit.find(x => x.k === k).l), null, "Share of records initiated as a Notification vs. a Review Coordination Note (RCN).")}
+              {donutCard("Automation (AT) Status", atSplit, n, "RECORDS", (k) => onNav && onNav({ at: k, dateRange }), null, "Records by Automation (AT) Status. Click a slice or legend row to open those records.")}
             </div>
           </div>
         </div>
@@ -2373,7 +2605,7 @@ function NotificationsDashboard({ onNav }) {
                 {grp.reasons.map(([reason, c]) => <AutomationItem key={reason} label={reason} count={p2(c)} onClick={() => onNav && onNav({ ids: idsOf(grp.rows.filter(r => (r.interventions || []).some(it => it.reason === reason))), label: reason, dateRange })} />)}
               </AutomationGroup>
             )) : <div style={{ padding: "18px", font: "400 14px/20px Roboto", color: "#8A94A6" }}>No open Needs Intervention records</div>) : naGroups.length ? naGroups.map((grp, gi) => (
-              <AutomationGroup key={grp.g} title={grp.title} sub={grp.sub} count={p2(grp.rows.length)} defaultOpen={gi === 0}
+              <AutomationGroup key={grp.g} title={grp.title} sub={grp.sub} count={p2(grp.rows.length)} defaultOpen
                 onNav={() => onNav && onNav({ ids: idsOf(grp.rows), label: grp.title + " - " + grp.sub, dateRange })}>
                 {grp.reasons.map(([reason, c]) => <AutomationItem key={reason} label={reason} count={p2(c)} onClick={() => onNav && onNav({ ids: idsOf(grp.rows.filter(r => r.atReason === reason)), label: reason, dateRange })} />)}
               </AutomationGroup>
@@ -2417,7 +2649,7 @@ function EligSectionDashboard({ section, onNav }) {
   const donut = (title, items, center) => { const tot = items.reduce((s, x) => s + x.v, 0); return (
     <DashCard title={title} info style={{ height: 300 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flex: 1 }}>
-        <Donut size={180} thickness={30} segments={items.map(x => ({ value: x.v || 0.001, color: x.c }))} centerTop={tot} centerBottom={center} centerTopSize={18} centerTopWeight={600} centerTopY="47%" centerBottomSize={10} centerBottomWeight={500} centerBottomY="61%" />
+        <Donut size={180} thickness={30} segments={items.map(x => ({ value: x.v || 0.001, color: x.c, title: x.l + " — " + x.v + (onPick ? " · Click to view" : ""), k: x.k }))} onSeg={onPick ? (sg) => onPick(sg.k) : undefined} centerTop={tot} centerBottom={center} centerTopSize={18} centerTopWeight={600} centerTopY="47%" centerBottomSize={10} centerBottomWeight={500} centerBottomY="61%" />
         <div style={{ flex: "0 1 240px", minWidth: 0 }}>{items.map((x, i) => <LegendRow key={x.k} color={x.c} label={x.l} value={x.v + " (" + (tot ? Math.round(x.v / tot * 100) : 0) + "%)"} divider={i < items.length - 1} />)}</div>
       </div>
     </DashCard>); };
