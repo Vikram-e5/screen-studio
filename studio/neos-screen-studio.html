@@ -122,11 +122,21 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
               <div style="display:flex;align-items:center;gap:8px">
-                <div style="font:500 13px Roboto;color:#1C2D42">Anthropic API key</div>
+                <div style="font:500 13px Roboto;color:#1C2D42">Claude access</div>
                 <div style="font:500 12px Roboto;color:{{ connColor }};margin-left:auto">{{ connLabel }}</div>
               </div>
-              <input type="password" value="{{ apiKey }}" onChange="{{ onKey }}" placeholder="sk-ant-…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
-              <div style="font:400 12px/16px Roboto;color:#6A717D">Only needed outside this workspace, such as on a NEOS server. Stays in this browser.</div>
+              <div style="display:flex;border:1px solid #D8D8D8;border-radius:4px;overflow:hidden">
+                <button onClick="{{ setModeKey }}" style="flex:1;border:none;padding:6px 8px;font:500 12px Roboto;cursor:pointer;background:{{ modeKeyBg }};color:{{ modeKeyColor }}">Anthropic API key</button>
+                <button onClick="{{ setModeOauth }}" style="flex:1;border:none;border-left:1px solid #D8D8D8;padding:6px 8px;font:500 12px Roboto;cursor:pointer;background:{{ modeOauthBg }};color:{{ modeOauthColor }}">Claude OAuth token</button>
+              </div>
+              <sc-if value="{{ isKeyMode }}" hint-placeholder-val="{{ true }}">
+                <input type="password" value="{{ apiKey }}" onChange="{{ onKey }}" placeholder="sk-ant-api…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
+                <div style="font:400 12px/16px Roboto;color:#6A717D">Only needed outside this workspace, such as on a NEOS server. Stays in this browser.</div>
+              </sc-if>
+              <sc-if value="{{ isOauthMode }}" hint-placeholder-val="{{ false }}">
+                <input type="password" value="{{ oauthToken }}" onChange="{{ onOauth }}" placeholder="sk-ant-oat…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
+                <div style="font:400 12px/16px Roboto;color:#6A717D">Token created with Claude (claude setup-token). Stays in this browser. Anthropic may restrict these tokens to Claude Code and reject them here. If chat fails, switch back to an API key.</div>
+              </sc-if>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
               <div style="font:500 13px Roboto;color:#1C2D42">Figma personal access token</div>
@@ -208,7 +218,7 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
               <sc-if value="{{ lockOn }}" hint-placeholder-val="{{ true }}">
               <div style="display:flex;flex-direction:column;gap:4px;background:rgba(215,167,24,.12);border:1px solid rgba(255,229,143,.3);border-radius:8px;padding:9px 12px">
                 <div style="display:flex;align-items:center;gap:6px;font:500 12px Roboto;color:#FFE58F"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFE58F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v9H5z"></path></svg>Locked NEOS structure</div>
-                <div style="font:400 12px/18px Roboto;color:rgba(255,255,255,.8)">Top menu, section band, filter strip and screen title can't be changed. Turn the lock off from the Lock chip below.</div>
+                <div style="font:400 12px/18px Roboto;color:rgba(255,255,255,.8)">Top menu, section band, filter strip, screen title and tab style can't be changed. Turn the lock off from the Lock chip below.</div>
               </div>
               </sc-if>
               <div style="display:flex;flex-direction:column;gap:8px">
@@ -510,6 +520,12 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
             <div style="padding:10px 16px 4px;font:500 11px Roboto;letter-spacing:.4px;color:#6A717D">DOWNLOAD</div>
             <button onClick="{{ downloadHtml }}" style="text-align:left;background:#fff;border:none;padding:8px 16px;display:flex;flex-direction:column;gap:2px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">HTML file</span><span style="font:400 12px/16px Roboto;color:#6A717D">One self-contained file. Opens by double-click.</span></button>
             <button onClick="{{ downloadZip }}" style="text-align:left;background:#fff;border:none;padding:8px 16px 14px;display:flex;flex-direction:column;gap:2px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">{{ zipLabel }}</span><span style="font:400 12px/16px Roboto;color:#6A717D">Every module as its own .jsx file, plus index.html and a list of changes.</span></button>
+            <div style="border-top:1px solid #EEF0F3;padding:12px 16px 14px;display:flex;flex-direction:column;gap:6px;background:#FAFBFC">
+              <div style="font:500 11px Roboto;letter-spacing:.4px;color:#6A717D">GITHUB</div>
+              <button onClick="{{ pushSource }}" style="align-self:flex-start;background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:7px 14px;font:500 12px Roboto;cursor:pointer">{{ srcBtnLabel }}</button>
+              <div style="font:400 11px/16px Roboto;color:#6A717D">Pushes every project file to Vikram-e5/screen-studio in source-files/&lt;date&gt;/&lt;serial&gt;, for example source-files/2026-11-25/01.</div>
+              <sc-if value="{{ hasStudioMsg }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px/17px Roboto;color:{{ studioMsgColor }};word-break:break-word">{{ studioMsg }}</div></sc-if>
+            </div>
           </div>
         </sc-if>
       </div>
@@ -728,7 +744,7 @@ const SS_REL_JS = "(function(){\nvar el=document.getElementById('ss-release-note
 const SS_OPEN = "<" + "script";
 const SS_CLOSE = "</" + "script>";
 const SS_LOCK_RE = /^(TopNav|SectionBand|\w*FilterBar\w*|\w*TitleCluster\w*)$/;
-const SS_LOCK_ASK = /\b(top ?(nav|menu|bar|header)|main menu|nav ?bar|navy|section (band|header)|header band|filter (bar|strip|layer|band)|blue (bar|strip|band|layer|filter)|screen (title|name|heading)|title (cluster|bar)|page (title|heading))\b/i;
+const SS_LOCK_ASK = /\b(top ?(nav|menu|bar|header)|main menu|nav ?bar|navy|section (band|header)|header band|filter (bar|strip|layer|band)|blue (bar|strip|band|layer|filter)|screen (title|name|heading)|title (cluster|bar)|page (title|heading)|tabs? (style|look|design|strip|bar)|(underline|pill|segmented) tabs?)\b/i;
 const SS_LOCK_VERB = /\b(change|remove|delete|hide|move|restyle|recolou?r|colou?r|redesign|replace|resize|swap|shrink|enlarge|bigger|smaller|taller|shorter|reorder|darker|lighter|font|gradient|height|padding)\b/i;
 const SS_LOCK_ALLOW = /\badd\b.*\b(menu|nav)\b.*\b(item|entry|link|option)\b|\bnew screen\b|\b(text|label|wording|copy|initials|rename|caption|user ?name|avatar|data|content)\b/i;
 
@@ -754,6 +770,7 @@ LOCKED NEOS STRUCTURE - never change these
 2. Navy section band: SectionBand (section name, breadcrumb, sub-tabs).
 3. Blue filter strip: every *FilterBar* component (#eef4fb strip).
 4. Screen title: every *TitleCluster* component (title plus the tabs or description tag below it).
+5. Tab strip below the screen title: it always uses the Eligibility Request View style - a wrapping row of boxed tab buttons (white, 1px #D8D8D8 border, 4px radius, 14px Roboto, about 32px tall, no gap between neighbours). The active tab has a 1px #1677FF border and #1677FF text; inactive tabs use #3A424A text. Never switch to underline tabs, pills or any other tab look, on any screen. Tab names, the number of tabs and the content below each tab MAY change; the tab style may not. New screens must copy the tab strip of Eligibility Request View exactly.
 Text and data values inside these (string literals, JSX text, initials, names) MAY be edited; edit only the text itself. Do not restyle, move, remove, rebuild or replace these, and don't pass props that change how they look. New screens must render them exactly like sibling screens do. The edit tool rejects non-text edits inside them. If asked to change them, say briefly that they're locked and offer what you can do below them.
 
 SCREEN CONTEXT
@@ -794,7 +811,7 @@ class Component extends DCLogic {
       pagesToken: (() => { try { return JSON.parse(localStorage.getItem(SS_PAGES_KEY) || "{}").token; } catch (e) {} })() || SS_SHARE_TOKEN,
       pagesUrl: (() => { try { return JSON.parse(localStorage.getItem(SS_PAGES_KEY) || "{}").url; } catch (e) {} })() || "https://vikram-e5.github.io/screen-studio/",
       lockOn: (() => { try { return localStorage.getItem("neos-studio-lock") !== "off"; } catch (e) { return true; } })(), layout: "standard", floatPos: null, collapsed: false, dragging: false, zipping: false,
-      model: st.model || "claude-sonnet-4-5", apiKey: st.apiKey || SS_API_KEY, figmaToken: st.figmaToken || "",
+      model: st.model || "claude-sonnet-4-5", apiKey: st.apiKey || SS_API_KEY, oauthToken: st.oauthToken || "", authMode: st.authMode === "oauth" ? "oauth" : "key", figmaToken: st.figmaToken || "",
       rules: st.rules || SS_RULES, useDS: st.useDS !== false, ctxMode: st.ctxMode || "auto",
       auth: (() => { try { const a = JSON.parse(localStorage.getItem(SS_AUTH_KEY) || "null"); return a && a.exp > Date.now() ? a : null; } catch (e) { return null; } })(), authUser: "", authPass: "", authErr: "", authBusy: false, users: [], usersMsg: "", usersErr: false, usersBusy: false, newUName: "", newUPass: "", newURole: "user", buildName: SS_BUILD, tab: "preview", fileOpen: false, newFileName: "", fileMsg: "", newProjMembers: "", collabName: "", collabMsg: "", collabErr: false, linkCopied: false, htmlFiles: (() => { try { return JSON.parse(localStorage.getItem("neos-studio-files") || "[]"); } catch (e) { return []; } })(), loadState: "loading", loadErr: "", baseOrder: [],
       versions: [], cur: -1, previewUrl: "", selFile: "",
@@ -1101,11 +1118,13 @@ class Component extends DCLogic {
     const fb = () => { const t = document.createElement("textarea"); t.value = url; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch (e) {} t.remove(); done(); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, fb); else fb();
   }
-  async publishStudio() {
+  async publishStudio(mode) {
+    const src = mode === "source";
     const s = this.state; if (s.studioBusy) return;
     const fail = m => this.setState({ studioBusy: false, studioMsg: m, studioErr: true });
     const token = (s.pagesToken || SS_SHARE_TOKEN || "").trim(); if (!token) return fail("Add a sharing token in Settings.");
-    const repo = "Vikram-e5/screen-studio", branch = "main", dir = "studio", page = "neos-screen-studio.html";
+    const repo = "Vikram-e5/screen-studio", branch = "main", page = "neos-screen-studio.html";
+    let dir = "studio";
     const encB = branch.split("/").map(encodeURIComponent).join("/");
     this.setState({ studioBusy: true, studioMsg: "Collecting files…", studioErr: false });
     try {
@@ -1135,6 +1154,12 @@ class Component extends DCLogic {
       const ref = await gh("/git/ref/heads/" + encB); const head = ref.object.sha;
       const pc = await gh("/git/commits/" + head);
       let have = {}; try { const rt = await gh("/git/trees/" + pc.tree.sha + "?recursive=1"); (rt.tree || []).forEach(x => { if (x.type === "blob") have[x.path] = x.sha; }); } catch (e) {}
+      let srcLabel = "";
+      if (src) {
+        const d = new Date(), date = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        let max = 0; Object.keys(have).forEach(p => { const m = p.match(/^source-files\/(\d{4}-\d{2}-\d{2})\/(\d+)\//); if (m && m[1] === date) max = Math.max(max, +m[2]); });
+        srcLabel = date + "/" + String(max + 1).padStart(2, "0"); dir = "source-files/" + srcLabel; have = {};
+      }
       const gitSha = async b => { const u = new Uint8Array(await b.arrayBuffer()); const h = new TextEncoder().encode("blob " + u.length + "\0"); const all = new Uint8Array(h.length + u.length); all.set(h); all.set(u, h.length); return [...new Uint8Array(await crypto.subtle.digest("SHA-1", all))].map(x => x.toString(16).padStart(2, "0")).join(""); };
       const todo = []; for (const n of list) { if (have[dir + "/" + n] !== await gitSha(files[n])) todo.push(n); }
       if (!todo.length) { this.setState({ studioBusy: false, studioUrl: "https://vikram-e5.github.io/screen-studio/studio/neos-screen-studio.html", studioMsg: "Already up to date. All " + list.length + " files match the link.", studioErr: false }); return; }
@@ -1147,8 +1172,9 @@ class Component extends DCLogic {
       try { localStorage.setItem("neos-studio-self-url", url); } catch (e) {}
       const nt = await gh("/git/trees", { method: "POST", body: JSON.stringify({ base_tree: pc.tree.sha, tree }) });
       if (nt.sha === pc.tree.sha) { this.setState({ studioBusy: false, studioUrl: url, studioMsg: "Already up to date.", studioErr: false }); return; }
-      const c = await gh("/git/commits", { method: "POST", body: JSON.stringify({ message: "Update Screen Studio (" + list.length + " files)\n\nVia NEOS Screen Studio", tree: nt.sha, parents: [head] }) });
+      const c = await gh("/git/commits", { method: "POST", body: JSON.stringify({ message: src ? "Source files " + srcLabel + " (" + list.length + " files)\n\nVia NEOS Screen Studio" : "Update Screen Studio (" + list.length + " files)\n\nVia NEOS Screen Studio", tree: nt.sha, parents: [head] }) });
       await gh("/git/refs/heads/" + encB, { method: "PATCH", body: JSON.stringify({ sha: c.sha }) });
+      if (src) { this.setState({ studioBusy: false, studioErr: false, studioMsg: "Pushed " + list.length + " files to source-files/" + srcLabel + " in " + repo + "." }); return; }
       try { await navigator.clipboard.writeText(url); } catch (e) {}
       this.setState({ studioBusy: false, studioUrl: url, studioErr: false, studioMsg: "Pushed " + todo.length + " changed file(s). Same link, live in about a minute. Link copied." });
     } catch (e) { fail("Couldn't publish: " + (e.message || e)); }
@@ -1313,8 +1339,8 @@ class Component extends DCLogic {
     if (ps.library !== s.library) this.put("library", s.library);
     if (ps.shares !== s.shares) { try { localStorage.setItem("neos-studio-shares", JSON.stringify(s.shares)); } catch (e) {} }
     if (ps.pagesRepo !== s.pagesRepo || ps.pagesBranch !== s.pagesBranch || ps.pagesToken !== s.pagesToken || ps.pagesUrl !== s.pagesUrl) { try { localStorage.setItem(SS_PAGES_KEY, JSON.stringify({ url: s.pagesUrl, repo: s.pagesRepo, branch: s.pagesBranch, token: s.pagesToken === SS_SHARE_TOKEN ? "" : s.pagesToken })); } catch (e) {} }
-    if (["model", "apiKey", "figmaToken", "rules", "useDS", "ctxMode", "layout", "gitToken", "gitRepo", "gitBase", "gitPath", "gitBranch", "gitAuto"].some(k => ps[k] !== s[k])) {
-      try { localStorage.setItem(SS_SET, JSON.stringify({ model: s.model, apiKey: s.apiKey, figmaToken: s.figmaToken, rules: s.rules, useDS: s.useDS, ctxMode: s.ctxMode, layout: s.layout, gitToken: s.gitToken, gitRepo: s.gitRepo, gitBase: s.gitBase, gitPath: s.gitPath, gitBranch: s.gitBranch, gitAuto: s.gitAuto })); } catch (e) {}
+    if (["model", "apiKey", "oauthToken", "authMode", "figmaToken", "rules", "useDS", "ctxMode", "layout", "gitToken", "gitRepo", "gitBase", "gitPath", "gitBranch", "gitAuto"].some(k => ps[k] !== s[k])) {
+      try { localStorage.setItem(SS_SET, JSON.stringify({ model: s.model, apiKey: s.apiKey, oauthToken: s.oauthToken, authMode: s.authMode, figmaToken: s.figmaToken, rules: s.rules, useDS: s.useDS, ctxMode: s.ctxMode, layout: s.layout, gitToken: s.gitToken, gitRepo: s.gitRepo, gitBase: s.gitBase, gitPath: s.gitPath, gitBranch: s.gitBranch, gitAuto: s.gitAuto })); } catch (e) {}
     }
     if (ps.lockOn !== s.lockOn) { try { localStorage.setItem("neos-studio-lock", s.lockOn ? "on" : "off"); } catch (e) {} }
     if (ps.picking !== s.picking && !s.picking && this.pickBox) this.pickBox.style.display = "none";
@@ -1578,7 +1604,7 @@ class Component extends DCLogic {
     ];
   }
   async api(body) {
-    const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "content-type": "application/json", "x-api-key": this.state.apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify(body) });
+    const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: Object.assign({ "content-type": "application/json", "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, this.state.authMode === "oauth" ? { authorization: "Bearer " + this.state.oauthToken, "anthropic-beta": "oauth-2025-04-20" } : { "x-api-key": this.state.apiKey }), body: JSON.stringify(body) });
     const j = await r.json();
     if (!r.ok) throw new Error((j.error && j.error.message) || ("HTTP " + r.status));
     return j;
@@ -1606,7 +1632,7 @@ class Component extends DCLogic {
     // Model IDs get retired / aren't enabled on every key — fall back instead of failing the chat.
     const isModelErr = e => { const m = String((e && e.message) || e); return /model/i.test(m) && !/overloaded|rate.?limit/i.test(m); };
     const models = [...new Set([this.state.model, "claude-sonnet-4-5-20250929", "claude-sonnet-4-20250514", "claude-haiku-4-5-20251001", "claude-haiku-4-5"].filter(Boolean))];
-    if (this.state.apiKey) {
+    if (this.state.authMode === "oauth" ? this.state.oauthToken : this.state.apiKey) {
       let lastErr = null;
       for (const model of models) {
         try { const out = await this.runKeyLoop(Object.assign({ model }, base), messages, tools); if (model !== this.state.model) this.setState({ model }); return out; }
@@ -1877,7 +1903,7 @@ class Component extends DCLogic {
       relNote: s.relNote, onRelNote: e => this.setState({ relNote: e.target.value }),
       notesOpen: s.notesOpen, closeNotes: () => this.setState({ notesOpen: false }), notesTitle: s.notesTitle, noNotesItems: !s.notesItems.length,
       notesList: s.notesItems.slice().reverse().map((r, i) => ({ tag: "v" + r.v + (i ? "" : " · Latest"), tagBg: i ? "#F1F3F6" : "#E6F4FF", tagColor: i ? "#3A424A" : "#1677FF", when: new Date(r.at).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }), build: r.build ? "Build: " + r.build : "", note: r.note || "No notes added.", noteColor: r.note ? "#3A424A" : "#6A717D", sep: i ? "1px solid #EEF0F3" : "none" })),
-      publishStudio: () => this.publishStudio(), notShareNew: s.shareView !== "new",
+      publishStudio: () => this.publishStudio(), pushSource: () => this.publishStudio("source"), srcBtnLabel: s.studioBusy ? "Working…" : "Push source files", notShareNew: s.shareView !== "new",
       studioBtnLabel: s.studioBusy ? "Publishing…" : "Push to link",
       studioUrl: "https://vikram-e5.github.io/screen-studio/studio/neos-screen-studio.html", hasStudioUrl: !!s.studioUrl, hasStudioMsg: !!s.studioMsg, studioMsg: s.studioMsg || "", studioMsgColor: s.studioErr ? "#CF1322" : "#389E0D",
       shareBtnLabel: s.shareBusy ? "Publishing…" : "Publish and copy link",
@@ -1943,10 +1969,13 @@ class Component extends DCLogic {
       setSonnet: () => this.setState({ model: "claude-sonnet-4-5" }), setHaiku: () => this.setState({ model: "claude-haiku-4-5" }),
       sonnetBg: seg(s.model === "claude-sonnet-4-5")[0], sonnetColor: seg(s.model === "claude-sonnet-4-5")[1],
       haikuBg: seg(s.model === "claude-haiku-4-5")[0], haikuColor: seg(s.model === "claude-haiku-4-5")[1],
-      apiKey: s.apiKey, figmaToken: s.figmaToken,
+      apiKey: s.apiKey, oauthToken: s.oauthToken, isKeyMode: s.authMode !== "oauth", isOauthMode: s.authMode === "oauth", onOauth: e => this.setState({ oauthToken: e.target.value.trim() }),
+      modeKeyBg: s.authMode !== "oauth" ? "#1677FF" : "#fff", modeKeyColor: s.authMode !== "oauth" ? "#fff" : "#3A424A", modeOauthBg: s.authMode === "oauth" ? "#1677FF" : "#fff", modeOauthColor: s.authMode === "oauth" ? "#fff" : "#3A424A",
+      setModeKey: () => this.setState({ authMode: "key" }), setModeOauth: () => this.setState({ authMode: "oauth" }),
+      figmaToken: s.figmaToken,
       onKey: e => this.setState({ apiKey: e.target.value.trim() }), onFigmaToken: e => this.setState({ figmaToken: e.target.value.trim() }),
-      connLabel: s.apiKey ? "Using your key" : host ? "Connected through this workspace" : "Not connected",
-      connColor: s.apiKey || host ? "#389E0D" : "#CF1322",
+      connLabel: (s.authMode === "oauth" ? s.oauthToken : s.apiKey) ? (s.authMode === "oauth" ? "Using your Claude token" : "Using your key") : host ? "Connected through this workspace" : "Not connected",
+      connColor: (s.authMode === "oauth" ? s.oauthToken : s.apiKey) || host ? "#389E0D" : "#CF1322",
       buildLabel: this.kind === "live" ? "Live project source (index.html + .jsx)" : s.buildName, onLoadBuild: e => this.loadBuildFile(e),
       buildStatus: ready ? s.baseOrder.length + " modules · " + (s.cur >= 0 ? changed.length + " changed in this version" : "original") : s.loadState === "loading" ? "Loading…" : "Not loaded",
       buildStatusColor: ready || s.loadState === "loading" ? "#6A717D" : "#CF1322",
