@@ -24,17 +24,64 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
 </style>
 </helmet>
 <div style="height:100vh;display:flex;flex-direction:column;min-width:0;background:#1F1F1E">
-  
+  <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:500;background:#1F1F1E;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div style="width:min(380px,100%);display:flex;flex-direction:column;gap:14px;background:#262624;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:28px;box-shadow:0 20px 48px rgba(0,0,0,.4)">
+        <div style="display:flex;align-items:center;gap:10px"><img src="assets/neos-logo.png" alt="neos" style="height:17px;width:auto" /><div style="width:1px;height:18px;background:rgba(255,255,255,.2)"></div><div style="font:500 14px Roboto;color:#fff">Screen Studio</div></div>
+        <div style="font:600 18px/24px Roboto;color:#fff;margin-top:6px">Sign in</div>
+        <div style="font:400 13px/19px Roboto;color:rgba(255,255,255,.62)">Access is limited to approved users.</div>
+                <input type="text" value="{{ authUser }}" onChange="{{ onAuthUser }}" autocomplete="username" placeholder="Username" style="border:1px solid rgba(255,255,255,.18);background:#2B2B29;color:#fff;border-radius:6px;padding:10px 12px;font:400 14px Roboto;min-width:0" />
+        <input type="password" value="{{ authPass }}" onChange="{{ onAuthPass }}" onKeyDown="{{ onAuthKey }}" autocomplete="current-password" placeholder="Password" style="border:1px solid rgba(255,255,255,.18);background:#2B2B29;color:#fff;border-radius:6px;padding:10px 12px;font:400 14px Roboto;min-width:0" />
+        <sc-if value="{{ hasAuthErr }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px/17px Roboto;color:#FF7875">{{ authErr }}</div></sc-if>
+        <button onClick="{{ login }}" style="background:#1677FF;color:#fff;border:none;border-radius:6px;padding:10px 0;font:500 14px Roboto;cursor:pointer;opacity:{{ authOpacity }}" style-hover="background:#4096FF">{{ authBtn }}</button>
+      </div>
+    </div>
+  </sc-if>
+    
 
   <div ref="{{ studioRef }}" style="flex:1;min-height:0;display:grid;grid-template-columns:{{ gridCols }};position:relative;background:#1F1F1E">
     <sc-if value="{{ sideHidden }}" hint-placeholder-val="{{ false }}">
       <button onClick="{{ toggleSide }}" title="Expand side bar" style="position:absolute;left:8px;top:9px;z-index:50;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#1F1F1E;border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:6px;cursor:pointer" style-hover="background:#2C2C2B"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM9 5v14"></path><path d="M13 10l2 2-2 2"></path></svg></button>
     </sc-if>
     <div style="display:{{ panelDisplay }};flex-direction:column;min-height:0;background:#1F1F1E;overflow:visible;position:{{ panelPos }};left:{{ panelLeft }};top:{{ panelTop }};width:{{ panelW }};height:{{ panelH }};border:{{ panelBorder }};border-right:{{ panelBorderR }};border-radius:{{ panelRadius }};box-shadow:{{ panelShadow }};z-index:{{ panelZ }}">
-      <div onPointerDown="{{ onDragStart }}" style="height:48px;flex:none;display:flex;align-items:center;gap:10px;padding:0 8px 0 14px;cursor:{{ dragCursor }};user-select:none;position:relative;z-index:20;border-bottom:1px solid rgba(255,255,255,.06)">
-        <img src="assets/neos-logo.png" alt="neos" style="height:17px;width:auto;flex:none;pointer-events:none" />
-        <div style="width:1px;height:18px;background:rgba(255,255,255,.2);flex:none"></div>
-        <div style="font:500 14px Roboto;color:#fff;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis">Screen Studio</div>
+      <div onPointerDown="{{ onDragStart }}" style="height:60px;flex:none;display:flex;align-items:center;gap:10px;padding:0 8px 0 14px;cursor:{{ dragCursor }};user-select:none;position:relative;z-index:40;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="display:flex;flex-direction:column;gap:4px;flex:none">
+          <img src="assets/neos-logo.png" alt="neos" style="height:17px;width:auto;flex:none;pointer-events:none;align-self:flex-start" />
+          <div style="font:500 14px Roboto;color:#fff;white-space:nowrap">Screen Studio</div>
+        </div>
+        <div style="width:1px;height:30px;background:rgba(255,255,255,.2);flex:none"></div>
+        <div style="position:relative;min-width:0;max-width:170px;flex:0 1 auto">
+        <button onClick="{{ toggleFile }}" title="HTML file" style="display:flex;align-items:center;gap:8px;background:{{ fileBg }};border:none;color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;text-align:left;max-width:100%;min-width:0" style-hover="background:rgba(255,255,255,.08)">
+          <span style="font:500 13px/18px Roboto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fileName }}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,.6)">▾</span>
+        </button>
+        <sc-if value="{{ fileOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closePops }}" style="position:fixed;inset:0;z-index:59"></div>
+          <div style="position:absolute;left:-80px;top:calc(100% + 8px);z-index:60;width:320px;max-height:460px;overflow:auto;background:#fff;border:1px solid #E8E9EA;border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.3);display:flex;flex-direction:column">
+            <div style="padding:10px 14px 6px;font:500 11px Roboto;letter-spacing:.4px;color:#6A717D">PROJECTS</div>
+            <sc-for list="{{ fileItems }}" as="fi" hint-placeholder-count="2">
+              <div style="display:flex;align-items:stretch;border-top:1px solid #EEF0F3;background:{{ fi.bg }}"><button onClick="{{ fi.go }}" style="flex:1;min-width:0;text-align:left;background:transparent;border:none;padding:9px 14px;display:flex;align-items:flex-start;gap:10px;cursor:pointer" style-hover="background:#F5F9FF">
+                <span style="width:8px;height:8px;border-radius:4px;margin-top:5px;flex:none;background:{{ fi.dot }}"></span>
+                <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                  <span style="font:500 13px/18px Roboto;color:#1C2D42;word-break:break-all">{{ fi.name }}</span>
+                  <span style="font:400 11px Roboto;color:#6A717D">{{ fi.sub }}</span>
+                </span>
+              </button><button onClick="{{ fi.members }}" title="Edit collaborators" style="flex:none;background:transparent;border:none;padding:0 12px;font:500 11px Roboto;color:#1677FF;cursor:pointer;visibility:{{ fi.memVis }}">Collaborators</button></div>
+            </sc-for>
+            <div style="border-top:1px solid #E8E9EA;background:#FAFBFC;padding:10px 14px;display:flex;flex-direction:column;gap:6px">
+              <span style="font:500 12px Roboto;color:#1C2D42">New project</span>
+              <div style="display:flex;gap:6px">
+                <input value="{{ newFileName }}" onChange="{{ onNewFileName }}" placeholder="Project name" style="flex:1;min-width:0;border:1px solid #D8D8D8;border-radius:4px;padding:6px 8px;font:400 12px Roboto;color:#1C2D42" />
+                <button onClick="{{ createFile }}" style="background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:5px 12px;font:500 12px Roboto;cursor:pointer;white-space:nowrap">Create</button>
+              </div>
+              <input value="{{ newProjMembers }}" onChange="{{ onNewProjMembers }}" placeholder="Collaborators (usernames, comma separated) — optional" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 8px;font:400 12px Roboto;color:#1C2D42;min-width:0" />
+              <span style="font:400 11px/15px Roboto;color:{{ fileMsgColor }}">{{ fileMsg }}</span>
+              <span style="font:400 11px/15px Roboto;color:#6A717D">Share links are common to all projects.</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+        <div style="flex:1"></div>
         <button onClick="{{ toggleSide }}" title="Collapse side bar" style="margin-left:auto;flex:none;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#fff;border-radius:6px;cursor:pointer" style-hover="background:rgba(255,255,255,.08)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM9 5v14"></path><path d="M16 10l-2 2 2 2"></path></svg></button>
         <div style="position:relative;flex:none">
           <button onClick="{{ toggleMenu }}" title="More options" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:{{ menuBg }};border:none;color:#fff;border-radius:6px;cursor:pointer" style-hover="background:rgba(255,255,255,.08)"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
@@ -46,6 +93,9 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
               <button onClick="{{ openDesign }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Design system {{ dsCount }}</span><span style="font:400 11px Roboto;color:#6A717D">Figma frames, uploads and rules</span></button>
               <button onClick="{{ openGit }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Git</span><span style="font:400 11px Roboto;color:#6A717D">{{ gitMenuSub }}</span></button>
               <button onClick="{{ openSettings }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Settings</span><span style="font:400 11px Roboto;color:#6A717D">Editor layout, model, keys</span></button>
+              
+              <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openUsers }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Users</span><span style="font:400 11px Roboto;color:#6A717D">Who can sign in to Screen Studio</span></button></sc-if>
+              <button onClick="{{ signOut }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Sign out</span><span style="font:400 11px Roboto;color:#6A717D">{{ authName }}</span></button>
               <label style="padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Load build</span><span style="font:400 11px Roboto;color:#6A717D">{{ headSub }}</span><input type="file" accept=".html,text/html" onChange="{{ onLoadBuild }}" style="display:none" /></label>
             </div>
           </sc-if>
@@ -145,11 +195,15 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
         </sc-if>
       </div>
       
+      <div style="flex:none;display:flex;padding:0 8px;border-bottom:1px solid rgba(255,255,255,.08)">
+        <button onClick="{{ goPreviewTab }}" style="flex:1;height:36px;background:transparent;border:none;border-bottom:2px solid {{ tabPrevLine }};color:{{ tabPrevColor }};padding:0 6px;font:500 12.5px Roboto;cursor:pointer;white-space:nowrap" style-hover="color:#fff">Edit with prompts</button>
+        <button onClick="{{ goBuilderTab }}" style="flex:1;height:36px;background:transparent;border:none;border-bottom:2px solid {{ tabBuildLine }};color:{{ tabBuildColor }};padding:0 6px;font:500 12.5px Roboto;cursor:pointer;white-space:nowrap" style-hover="color:#fff">Edit with Screen builder</button>
+      </div>
       <sc-if value="{{ showMsgs }}" hint-placeholder-val="{{ true }}">
         <div ref="{{ scrollRef }}" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px;display:flex;flex-direction:column;gap:12px">
           <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ true }}">
             <div style="display:flex;flex-direction:column;gap:12px">
-              <div style="font:600 17px/22px Roboto;color:#fff">Edit NEOS with Claude</div>
+              <div style="font:600 17px/22px Roboto;color:#fff">Edit NEOS with prompts</div>
               <div style="font:400 13px/20px Roboto;color:rgba(255,255,255,.65);text-wrap:pretty">Describe a change on any screen. Every change is a version you can undo.</div>
               <sc-if value="{{ lockOn }}" hint-placeholder-val="{{ true }}">
               <div style="display:flex;flex-direction:column;gap:4px;background:rgba(215,167,24,.12);border:1px solid rgba(255,229,143,.3);border-radius:8px;padding:9px 12px">
@@ -205,7 +259,8 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
           </sc-if>
         </div>
       </sc-if>
-      <div style="flex:none;padding:10px 12px 12px">
+      <div style="flex:1;min-height:0;display:{{ builderDisp }};flex-direction:column;background:#1F1F1E"><x-import component-from-global-scope="ScreenBuilderDrawer" from="./screen-builder-drawer.jsx" open="{{ true }}" embedded="rail" style="flex:1;min-height:0;display:block;height:100%" hint-size="100%,100%"></x-import></div>
+      <div style="display:{{ chatDisp }};flex:none;padding:10px 12px 12px">
         <div style="border:1px solid {{ boxBorder }};border-radius:10px;display:flex;flex-direction:column;background:#2B2B29">
           <sc-if value="{{ hasChips }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 8px 0">
@@ -269,18 +324,18 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
       <button onClick="{{ reload }}" title="Reload preview" style="width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:6px;color:#fff;cursor:pointer" style-hover="background:rgba(255,255,255,.08)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg></button>
       <button onClick="{{ undo }}" disabled="{{ undoDisabled }}" title="Undo (previous version)" style="width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:6px;color:#fff;cursor:pointer;opacity:{{ undoOpacity }}" style-hover="background:rgba(255,255,255,.08)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h11a5 5 0 0 1 0 10h-3"></path></svg></button>
       <button onClick="{{ redo }}" disabled="{{ redoDisabled }}" title="Redo (next version)" style="width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:6px;color:#fff;cursor:pointer;opacity:{{ redoOpacity }}" style-hover="background:rgba(255,255,255,.08)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14l5-5-5-5"></path><path d="M20 9H9a5 5 0 0 0 0 10h3"></path></svg></button>
-      <div style="position:relative;min-width:0;max-width:240px;flex:0 1 auto;margin-left:6px">
-        <button onClick="{{ toggleVer }}" style="display:flex;align-items:center;gap:8px;background:{{ verBg }};border:none;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;text-align:left;max-width:100%;min-width:0" style-hover="background:rgba(255,255,255,.08)">
+      <div style="position:relative;min-width:84px;max-width:240px;flex:0 1 auto;margin-left:6px">
+        <button onClick="{{ toggleVer }}" style="display:flex;align-items:center;gap:8px;background:{{ verBg }};border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;text-align:left;max-width:100%;min-width:0" style-hover="background:rgba(255,255,255,.08)">
           <span style="display:flex;flex-direction:column;min-width:0;overflow:hidden">
             <span style="font:500 13px/16px Roboto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ versionShort }}</span>
-            <span style="font:400 11px/14px Roboto;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ headSub }}</span>
+            <span style="font:400 11px/14px Roboto;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ verSub }}</span>
           </span>
           <span style="font-size:10px;color:rgba(255,255,255,.6)">▾</span>
         </button>
         <sc-if value="{{ verOpen }}" hint-placeholder-val="{{ false }}">
           <div onClick="{{ closePops }}" style="position:fixed;inset:0;z-index:59"></div>
           <div style="position:absolute;left:0;top:calc(100% + 6px);z-index:60;width:340px;max-height:420px;overflow:auto;background:#fff;border:1px solid #E8E9EA;border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.3);display:flex;flex-direction:column">
-            <div style="padding:10px 14px 6px;font:500 11px Roboto;letter-spacing:.4px;color:#6A717D">VERSIONS</div>
+            <div style="padding:10px 14px 6px;font:500 11px Roboto;letter-spacing:.4px;color:#6A717D">VERSION HISTORY · {{ fileName }}</div>
             <sc-for list="{{ versionItems }}" as="vi" hint-placeholder-count="1">
               <button onClick="{{ vi.go }}" style="text-align:left;background:{{ vi.bg }};border:none;border-top:1px solid #EEF0F3;padding:9px 14px;display:flex;align-items:flex-start;gap:10px;cursor:pointer" style-hover="background:#F5F9FF">
                 <span style="width:8px;height:8px;border-radius:4px;margin-top:5px;flex:none;background:{{ vi.dot }}"></span>
@@ -434,21 +489,27 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
         </sc-if>
       </div>
       <div style="position:relative">
-        <button onClick="{{ toggleDl }}" title="Download" style="height:30px;display:flex;align-items:center;gap:6px;background:#fff;border:none;color:#1F1F1E;border-radius:6px;padding:0 12px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg>
-          <span>Download</span>
+        <button onClick="{{ toggleDl }}" title="Share, add collaborators or download" style="height:30px;display:flex;align-items:center;gap:6px;background:#fff;border:none;color:#1F1F1E;border-radius:6px;padding:0 12px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"></path><path d="M17 5.5a3 3 0 010 5.8M18.5 14.8c1.5.7 2.5 2.2 2.5 4.2"></path></svg>
+          <span>Collaborate</span><span style="font-size:10px;opacity:.6">▾</span>
         </button>
         <sc-if value="{{ dlOpen }}" hint-placeholder-val="{{ false }}">
           <div onClick="{{ closePops }}" style="position:fixed;inset:0;z-index:59"></div>
-          <div style="position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:300px;background:#fff;border:1px solid #E8E9EA;border-radius:6px;box-shadow:0 8px 24px rgba(6,17,33,.22);overflow:hidden;display:flex;flex-direction:column">
-            <button onClick="{{ downloadHtml }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:12px 14px;display:flex;flex-direction:column;gap:3px;cursor:pointer" style-hover="background:#F5F9FF">
-              <span style="font:500 13px Roboto;color:#1C2D42">HTML file</span>
-              <span style="font:400 12px/16px Roboto;color:#6A717D">One self-contained file. Opens by double-click.</span>
-            </button>
-            <button onClick="{{ downloadZip }}" style="text-align:left;background:#fff;border:none;padding:12px 14px;display:flex;flex-direction:column;gap:3px;cursor:pointer" style-hover="background:#F5F9FF">
-              <span style="font:500 13px Roboto;color:#1C2D42">{{ zipLabel }}</span>
-              <span style="font:400 12px/16px Roboto;color:#6A717D">Every module as its own .jsx file, plus index.html and a list of changes. Run it from a local web server.</span>
-            </button>
+          <div style="position:absolute;right:0;top:calc(100% + 8px);z-index:60;box-sizing:border-box;width:min(360px, calc(100vw - 24px));max-height:80vh;overflow:auto;background:#fff;color:#3A424A;border:1px solid #E8E9EA;border-radius:8px;box-shadow:0 12px 32px rgba(6,17,33,.24);display:flex;flex-direction:column">
+            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #EEF0F3">
+              <div style="font:500 13px Roboto;color:#1C2D42">Share {{ fileName }} with a link</div>
+              <div style="display:flex;gap:6px"><input readonly value="{{ collabLink }}" onFocus="{{ selectAll }}" style="flex:1;min-width:0;border:1px solid #D8D8D8;border-radius:4px;padding:6px 8px;font:400 12px Menlo,Consolas,monospace;color:#1C2D42;background:#F7F9FC" /><button onClick="{{ copyCollabLink }}" style="flex:none;background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:5px 12px;font:500 12px Roboto;cursor:pointer;white-space:nowrap">{{ copyLinkLabel }}</button></div>
+              <div style="font:400 11px/16px Roboto;color:#6A717D">Anyone with a Screen Studio login who opens this link can join the project.</div>
+            </div>
+            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #EEF0F3">
+              <div style="font:500 13px Roboto;color:#1C2D42">Add a collaborator</div>
+              <div style="display:flex;gap:6px"><input value="{{ collabName }}" onChange="{{ onCollabName }}" placeholder="Username" style="flex:1;min-width:0;border:1px solid #D8D8D8;border-radius:4px;padding:6px 8px;font:400 13px Roboto;color:#1C2D42" /><button onClick="{{ addCollab }}" style="flex:none;background:#fff;color:#1677FF;border:1px solid #1677FF;border-radius:4px;padding:5px 12px;font:500 12px Roboto;cursor:pointer">Add</button></div>
+              <div style="font:400 12px/17px Roboto;color:#6A717D">{{ collabMembers }}</div>
+              <sc-if value="{{ hasCollabMsg }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px/17px Roboto;color:{{ collabMsgColor }}">{{ collabMsg }}</div></sc-if>
+            </div>
+            <div style="padding:10px 16px 4px;font:500 11px Roboto;letter-spacing:.4px;color:#6A717D">DOWNLOAD</div>
+            <button onClick="{{ downloadHtml }}" style="text-align:left;background:#fff;border:none;padding:8px 16px;display:flex;flex-direction:column;gap:2px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">HTML file</span><span style="font:400 12px/16px Roboto;color:#6A717D">One self-contained file. Opens by double-click.</span></button>
+            <button onClick="{{ downloadZip }}" style="text-align:left;background:#fff;border:none;padding:8px 16px 14px;display:flex;flex-direction:column;gap:2px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">{{ zipLabel }}</span><span style="font:400 12px/16px Roboto;color:#6A717D">Every module as its own .jsx file, plus index.html and a list of changes.</span></button>
           </div>
         </sc-if>
       </div>
@@ -468,8 +529,9 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
           <div style="font:400 13px/19px Roboto;color:#6A717D;max-width:420px">{{ loadMsg }}</div>
         </div>
       </sc-if>
+      <div style="position:absolute;inset:0;display:{{ builderDisp }};flex-direction:column;background:#262624;min-height:0"><x-import component-from-global-scope="ScreenBuilderDrawer" from="./screen-builder-drawer.jsx" open="{{ true }}" embedded="content" style="flex:1;min-height:0;display:block;height:100%" hint-size="100%,100%"></x-import></div>
       <sc-if value="{{ showFrame }}" hint-placeholder-val="{{ false }}">
-        <iframe ref="{{ frameRef }}" src="{{ previewUrl }}" onLoad="{{ onFrameLoad }}" title="NEOS preview" style="position:absolute;left:0;top:0;border:none;background:#fff;width:{{ frameW }};height:{{ frameH }};transform:{{ frameTf }};transform-origin:0 0;pointer-events:{{ framePE }}"></iframe>
+        <iframe ref="{{ frameRef }}" src="{{ previewUrl }}" onLoad="{{ onFrameLoad }}" title="NEOS preview" style="display:{{ previewDisp }};position:absolute;left:0;top:0;border:none;background:#fff;width:{{ frameW }};height:{{ frameH }};transform:{{ frameTf }};transform-origin:0 0;pointer-events:{{ framePE }}"></iframe>
       </sc-if>
     </div>
     </div>
@@ -506,6 +568,39 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
               </div>
               <pre style="flex:1;margin:0;overflow:auto;background:#1C2D42;color:#D6DEE8;padding:14px;font:400 12px/18px Menlo,Consolas,monospace;white-space:pre">{{ selCode }}</pre>
             </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ usersOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:70;background:rgba(6,17,33,.45);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:min(560px,100%);max-height:100%;background:#fff;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 48px rgba(6,17,33,.35)">
+        <div style="flex:none;height:52px;display:flex;align-items:center;gap:10px;padding:0 12px 0 20px;background:linear-gradient(rgb(44,60,80) 0%, #1F1F1E 100%);color:#fff">
+          <div style="font:500 16px Roboto">Users</div>
+          <div style="font:400 12px Roboto;color:rgba(255,255,255,.7)">Stored in {{ usersFileLabel }}</div>
+          <button onClick="{{ closeModal }}" title="Close" style="margin-left:auto;width:32px;height:32px;background:transparent;border:none;color:#fff;cursor:pointer;border-radius:4px;font:400 18px Roboto" style-hover="background:rgba(255,255,255,.12)">×</button>
+        </div>
+        <div style="overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;border:1px solid #E8E9EA;border-radius:6px">
+            <sc-for list="{{ userRows }}" as="u" hint-placeholder-count="1">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid #EEF0F3">
+                <span style="font:500 13px Roboto;color:#1C2D42;flex:1">{{ u.name }}</span>
+                <span style="font:400 12px Roboto;color:#6A717D">{{ u.role }}</span>
+                <button onClick="{{ u.remove }}" style="background:#fff;border:1px solid #FFA39E;color:#CF1322;border-radius:4px;padding:2px 10px;font:400 12px Roboto;cursor:pointer;visibility:{{ u.rmVis }}">Remove</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font:500 13px Roboto;color:#1C2D42">Add or reset a user</div>
+            <div style="display:flex;gap:8px"><input type="text" value="{{ newUName }}" onChange="{{ onNewUName }}" placeholder="Username" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto;min-width:0;flex:1" /><input type="password" value="{{ newUPass }}" onChange="{{ onNewUPass }}" placeholder="Password (8+ characters)" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto;min-width:0;flex:1" /></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select onChange="{{ onNewURole }}" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto"><option value="user">user</option><option value="admin">admin</option></select>
+              <button onClick="{{ addUser }}" style="margin-left:auto;background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:7px 16px;font:500 13px Roboto;cursor:pointer">{{ usersBtn }}</button>
+            </div>
+            <div style="font:400 12px/17px Roboto;color:{{ usersMsgColor }}">{{ usersMsg }}</div>
+            <div style="font:400 11px/16px Roboto;color:#6A717D">Saving needs a GitHub token in Settings → Share links. Passwords are salted and hashed. Adding the username admin replaces the built-in super admin password.</div>
           </div>
         </div>
       </div>
@@ -622,6 +717,9 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 const SS_BUILD = "NEOS-standalone.html";
+const SS_AUTH_KEY = "neos-studio-auth-pw2", SS_USERS_FILE = "studio-users.json";
+const SS_SUPER = { name: "admin", role: "admin", salt: "036a87c006d0d4b408ac4f0de4e630cf", hash: "eb034e66d798046cb3eec88f2e527c0feddbbab2a457dd043a9a344342b78d43" };
+const SS_PROJ_FILE = "studio-projects.json";
 const SS_SET = "neos-studio-settings-v2";
 const SS_SHARE_TOKEN = "";
 const SS_PAGES_KEY = "neos-studio-pages-v2";
@@ -698,16 +796,17 @@ class Component extends DCLogic {
       lockOn: (() => { try { return localStorage.getItem("neos-studio-lock") !== "off"; } catch (e) { return true; } })(), layout: "standard", floatPos: null, collapsed: false, dragging: false, zipping: false,
       model: st.model || "claude-sonnet-4-5", apiKey: st.apiKey || SS_API_KEY, figmaToken: st.figmaToken || "",
       rules: st.rules || SS_RULES, useDS: st.useDS !== false, ctxMode: st.ctxMode || "auto",
-      buildName: SS_BUILD, loadState: "loading", loadErr: "", baseOrder: [],
+      auth: (() => { try { const a = JSON.parse(localStorage.getItem(SS_AUTH_KEY) || "null"); return a && a.exp > Date.now() ? a : null; } catch (e) { return null; } })(), authUser: "", authPass: "", authErr: "", authBusy: false, users: [], usersMsg: "", usersErr: false, usersBusy: false, newUName: "", newUPass: "", newURole: "user", buildName: SS_BUILD, tab: "preview", fileOpen: false, newFileName: "", fileMsg: "", newProjMembers: "", collabName: "", collabMsg: "", collabErr: false, linkCopied: false, htmlFiles: (() => { try { return JSON.parse(localStorage.getItem("neos-studio-files") || "[]"); } catch (e) { return []; } })(), loadState: "loading", loadErr: "", baseOrder: [],
       versions: [], cur: -1, previewUrl: "", selFile: "",
       msgs: [], draft: "", atts: [], picked: null, picking: false,
       loading: false, t0: 0, tick: 0,
       library: [], figmaUrl: "", figmaBusy: false, dsMsg: "", dsErr: false,
       chatFigma: "", chatFigmaBusy: false, chatFigmaMsg: "", chatFigmaErr: false
     };
+    try { this.pendingProject = new URLSearchParams(location.search).get("project"); } catch (e) { this.pendingProject = null; }
     this.base = {}; this.segs = []; this.lastSig = null;
     this.scrollRef = React.createRef(); this.frameRef = React.createRef(); this.studioRef = React.createRef();
-    this.onEsc = e => { if (e.key === "Escape") this.setState({ menuOpen: false, verOpen: false, gitOpen: false, presenting: false, picking: false, dlOpen: false, settingsOpen: false, attachOpen: false, modal: null }); };
+    this.onEsc = e => { if (e.key === "Escape") this.setState({ menuOpen: false, verOpen: false, fileOpen: false, gitOpen: false, presenting: false, picking: false, dlOpen: false, settingsOpen: false, attachOpen: false, modal: null }); };
     this.onMove = e => {
       if (!this.drag) return;
       const box = this.studioRef.current; const W = box ? box.clientWidth : innerWidth, H = box ? box.clientHeight : innerHeight;
@@ -731,6 +830,9 @@ class Component extends DCLogic {
 
   async componentDidMount() {
     setTimeout(() => this.loadShares(), 300);
+    if (this.state.auth) setTimeout(() => this.loadProjects(), 500);
+    this.onSbExec = e => { const p = e.detail && e.detail.prompt; if (!p || this.state.loading) return; this.setState({ tab: "preview" }, () => this.send(p)); };
+    window.addEventListener("neos-sb-execute", this.onSbExec);
     window.addEventListener("keydown", this.onEsc);
     this.onResize = () => this.setState({ vw: innerWidth }); window.addEventListener("resize", this.onResize);
     window.addEventListener("pointermove", this.onMove);
@@ -753,10 +855,12 @@ class Component extends DCLogic {
   eagerRe() { return new RegExp(SS_OPEN + ' type="text/babel" src="([^"]+\\.jsx)">' + SS_CLOSE, "g"); }
   async loadLive(pref) {
     let want = pref; if (!want) { try { want = localStorage.getItem("neos-studio-shell-v2"); } catch (e) {} }
-    if (want !== "index.html") want = "index-v2.html";
-    let shellName = want;
-    let r = await fetch(shellName, { cache: "no-store" });
-    if (!r.ok) { shellName = want === "index.html" ? "index-v2.html" : "index.html"; r = await fetch(shellName, { cache: "no-store" }); }
+    const cf = this.state.htmlFiles || [];
+    if (!["index.html", "index-v2.html"].concat(cf.map(f => f.name)).includes(want)) want = "index-v2.html";
+    const cust = cf.find(f => f.name === want);
+    let shellName = want, srcName = cust ? cust.from : want;
+    let r = await fetch(srcName, { cache: "no-store" });
+    if (!r.ok) { const alt = srcName === "index.html" ? "index-v2.html" : "index.html"; r = await fetch(alt, { cache: "no-store" }); if (!cust) shellName = alt; }
     if (!r.ok) throw new Error("no index.html");
     const shell = await r.text();
     const eager = [...shell.matchAll(this.eagerRe())].map(m => m[1]);
@@ -779,6 +883,131 @@ class Component extends DCLogic {
     this.kind = "live"; this.shell = shell; this.eager = eager; this.deferred = deferred;
     this.base = {}; order.forEach((n, i) => { this.base[n] = codes[i]; });
     await this.finishLoad(order, shellName);
+  }
+  async hashPw(pw, salt) {
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: new TextEncoder().encode(salt), iterations: 100000 }, key, 256);
+    return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  async fetchUsers() {
+    const s = this.state, repo = s.pagesRepo, branch = s.pagesBranch, token = (s.pagesToken || "").trim();
+    try {
+      if (token) { const f = await this.gh("/repos/" + repo + "/contents/" + SS_USERS_FILE + "?ref=" + encodeURIComponent(branch), { allow404: true, token }); return { users: f ? (JSON.parse(this.unb64(f.content) || "{}").users || []) : [], sha: f ? f.sha : null }; }
+    } catch (e) {}
+    const r = await fetch("https://raw.githubusercontent.com/" + repo + "/" + branch + "/" + SS_USERS_FILE + "?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("users file unavailable");
+    return { users: (await r.json()).users || [], sha: null };
+  }
+  async login() {
+    const s = this.state; if (s.authBusy) return;
+    const name = s.authUser.trim().toLowerCase(), pw = s.authPass;
+    if (!name || !pw) return this.setState({ authErr: "Enter your username and password." });
+    this.setState({ authBusy: true, authErr: "" });
+    let rec = null, listed = false;
+    try { const { users } = await this.fetchUsers(); listed = true; rec = users.find(u => u.name === name) || null; } catch (e) {}
+    if (!rec && name === SS_SUPER.name) rec = SS_SUPER;
+    let ok = false;
+    try { ok = !!rec && (await this.hashPw(pw, rec.salt)) === rec.hash; } catch (e) {}
+    if (!ok) return this.setState({ authBusy: false, authPass: "", authErr: "Incorrect username or password." + (listed ? "" : " (User list couldn't be reached; only the super admin can sign in.)") });
+    const auth = { name, role: rec.role === "admin" ? "admin" : "user", exp: Date.now() + 12 * 3600 * 1000 };
+    try { localStorage.setItem(SS_AUTH_KEY, JSON.stringify(auth)); } catch (e) {}
+    this.setState({ auth, authBusy: false, authUser: "", authPass: "", authErr: "" }, () => this.loadProjects());
+  }
+  signOut() { try { localStorage.removeItem(SS_AUTH_KEY); } catch (e) {} this.setState({ auth: null, menuOpen: false, modal: null }); }
+  async loadUsers() {
+    this.setState({ usersBusy: true, usersMsg: "Loading users…", usersErr: false });
+    try { const f = await this.fetchUsers(); this.setState({ users: f.users, usersBusy: false, usersMsg: "" }); }
+    catch (e) { this.setState({ usersBusy: false, usersMsg: "Couldn't read the user list from GitHub.", usersErr: true }); }
+  }
+  async saveUsers(users, okMsg) {
+    const s = this.state, repo = s.pagesRepo, branch = s.pagesBranch, token = (s.pagesToken || "").trim();
+    if (!token) return this.setState({ usersMsg: "Add a GitHub token in Settings to save users.", usersErr: true });
+    this.setState({ usersBusy: true, usersMsg: "Saving to GitHub…", usersErr: false });
+    try {
+      const f = await this.gh("/repos/" + repo + "/contents/" + SS_USERS_FILE + "?ref=" + encodeURIComponent(branch), { allow404: true, token });
+      const body = JSON.stringify({ users }, null, 2) + "\n";
+      await this.gh("/repos/" + repo + "/contents/" + SS_USERS_FILE, { method: "PUT", token, body: JSON.stringify(Object.assign({ message: "Update Screen Studio users", content: this.b64(body), branch }, f ? { sha: f.sha } : {})) });
+      this.setState({ users, usersBusy: false, usersMsg: okMsg, usersErr: false, newUName: "", newUPass: "" });
+    } catch (e) { this.setState({ usersBusy: false, usersMsg: "Save failed: " + (e.message || e), usersErr: true }); }
+  }
+  async addUser() {
+    const s = this.state; if (s.usersBusy) return;
+    const name = s.newUName.trim().toLowerCase();
+    if (!/^[a-z0-9._-]{2,32}$/.test(name)) return this.setState({ usersMsg: "Username: 2-32 letters, numbers, . _ -", usersErr: true });
+    if (s.newUPass.length < 8) return this.setState({ usersMsg: "Password needs at least 8 characters.", usersErr: true });
+    const salt = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, "0")).join("");
+    const rec = { name, role: s.newURole === "admin" ? "admin" : "user", salt, hash: await this.hashPw(s.newUPass, salt) };
+    await this.saveUsers([...s.users.filter(u => u.name !== name), rec], "Saved " + name + ".");
+  }
+  nextFileName() { const names = ["index.html", "index-v2.html"].concat(this.state.htmlFiles.map(f => f.name)); let k = 1; while (names.includes("index-" + k + ".html")) k++; return "index-" + k + ".html"; }
+  me() { return this.state.auth ? this.state.auth.name : ""; }
+  canSee(f) { const s = this.state, me = this.me(); return !f.owner || (s.auth && s.auth.role === "admin") || f.owner === me || (f.members || []).includes(me); }
+  projTitle(n) { const f = this.state.htmlFiles.find(x => x.name === n); return f ? (f.title || f.name) : n === "index.html" ? "NEOS classic" : "NEOS main"; }
+  async loadProjects() { await this.loadProjects0(); this.openPending(); }
+  projLink(id) { let b = ""; try { b = /^https?:/.test(location.protocol) ? location.href.split(/[?#]/)[0] : ""; } catch (e) {} if (!b) b = "https://vikram-e5.github.io/screen-studio/studio/neos-screen-studio.html"; return b + "?project=" + encodeURIComponent(id); }
+  openPending() {
+    const id = this.pendingProject; if (!id || !this.state.auth) return;
+    if (this.state.loadState !== "ready") { setTimeout(() => this.openPending(), 800); return; }
+    this.pendingProject = null;
+    try { const u = new URL(location.href); u.searchParams.delete("project"); history.replaceState(null, "", u); } catch (e) {}
+    const s = this.state, f = s.htmlFiles.find(x => x.name === id), builtin = id === "index.html" || id === "index-v2.html";
+    if (!f && !builtin) { alert("That project link isn't available. Ask the owner to share it again."); return; }
+    if (f && !this.canSee(f)) {
+      if (!confirm("Join the project \u201c" + (f.title || id) + "\u201d as a collaborator?")) return;
+      const nf = s.htmlFiles.map(x => x.name === id ? Object.assign({}, x, { members: [...(x.members || []), this.me()] }) : x);
+      this.setProjects(nf, () => { this.saveProjects(nf); this.switchShell(id); }); return;
+    }
+    if (id !== s.buildName) this.switchShell(id);
+  }
+  addCollab() {
+    const s = this.state, n = s.buildName, f = s.htmlFiles.find(x => x.name === n), u = s.collabName.trim().toLowerCase();
+    if (!f || !f.owner) return this.setState({ collabMsg: "This is a built-in project. It is already open to everyone.", collabErr: true });
+    if (f.owner !== this.me() && !(s.auth && s.auth.role === "admin")) return this.setState({ collabMsg: "Only the owner or an admin can add collaborators.", collabErr: true });
+    if (!/^[a-z0-9._-]{2,32}$/.test(u)) return this.setState({ collabMsg: "Enter a valid username.", collabErr: true });
+    if (u === f.owner || (f.members || []).includes(u)) return this.setState({ collabMsg: u + " already has access.", collabErr: true });
+    const nf = s.htmlFiles.map(x => x.name === n ? Object.assign({}, x, { members: [...(x.members || []), u] }) : x);
+    this.setState({ collabName: "", collabMsg: "Added " + u + ".", collabErr: false });
+    this.setProjects(nf, () => this.saveProjects(nf));
+  }
+  async loadProjects0() {
+    const s = this.state, repo = s.pagesRepo, branch = s.pagesBranch, token = (s.pagesToken || "").trim();
+    try {
+      let doc = null;
+      if (token) { const f = await this.gh("/repos/" + repo + "/contents/" + SS_PROJ_FILE + "?ref=" + encodeURIComponent(branch), { allow404: true, token }); doc = f ? JSON.parse(this.unb64(f.content) || "{}") : null; }
+      else { const r = await fetch("https://raw.githubusercontent.com/" + repo + "/" + branch + "/" + SS_PROJ_FILE + "?t=" + Date.now(), { cache: "no-store" }); doc = r.ok ? await r.json() : null; }
+      if (!doc || !Array.isArray(doc.projects)) return;
+      const remote = doc.projects, local = this.state.htmlFiles.filter(l => !remote.some(r => r.name === l.name));
+      const nf = remote.concat(local); try { localStorage.setItem("neos-studio-files", JSON.stringify(nf)); } catch (e) {}
+      this.setState({ htmlFiles: nf });
+    } catch (e) {}
+  }
+  async saveProjects(list) {
+    const s = this.state, repo = s.pagesRepo, branch = s.pagesBranch, token = (s.pagesToken || "").trim();
+    if (!token) return this.setState({ fileMsg: "Saved on this browser only. Add a GitHub token in Settings to share projects." });
+    try {
+      const f = await this.gh("/repos/" + repo + "/contents/" + SS_PROJ_FILE + "?ref=" + encodeURIComponent(branch), { allow404: true, token });
+      await this.gh("/repos/" + repo + "/contents/" + SS_PROJ_FILE, { method: "PUT", token, body: JSON.stringify(Object.assign({ message: "Update Screen Studio projects", content: this.b64(JSON.stringify({ projects: list }, null, 2) + "\n"), branch }, f ? { sha: f.sha } : {})) });
+    } catch (e) { this.setState({ fileMsg: "Couldn't sync projects: " + (e.message || e) }); }
+  }
+  setProjects(nf, cb) { try { localStorage.setItem("neos-studio-files", JSON.stringify(nf)); } catch (e) {} this.setState({ htmlFiles: nf }, cb); }
+  createFile() {
+    const s = this.state, title = (s.newFileName || "").trim();
+    if (!title) return this.setState({ fileMsg: "Give the project a name." });
+    if (s.htmlFiles.some(f => (f.title || "").toLowerCase() === title.toLowerCase())) return this.setState({ fileMsg: "A project named " + title + " already exists." });
+    const id = this.nextFileName(), me = this.me();
+    const members = s.newProjMembers.split(",").map(x => x.trim().toLowerCase()).filter(x => x && x !== me);
+    const cur = s.htmlFiles.find(f => f.name === s.buildName);
+    const nf = [...s.htmlFiles, { name: id, title, owner: me || "", members, from: cur ? cur.from : s.buildName, created: Date.now() }];
+    this.setState({ newFileName: "", newProjMembers: "", fileMsg: "", fileOpen: false });
+    this.setProjects(nf, () => { this.switchShell(id); this.saveProjects(nf); });
+  }
+  editMembers(n) {
+    const f = this.state.htmlFiles.find(x => x.name === n); if (!f) return;
+    const v = window.prompt("Collaborators on " + (f.title || f.name) + " (usernames, comma separated):", (f.members || []).join(", "));
+    if (v === null) return;
+    const members = v.split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+    const nf = this.state.htmlFiles.map(x => x.name === n ? Object.assign({}, x, { members }) : x);
+    this.setProjects(nf, () => this.saveProjects(nf));
   }
   async switchShell(n) {
     try { localStorage.setItem("neos-studio-shell-v2", n); } catch (e) {}
@@ -1593,7 +1822,7 @@ class Component extends DCLogic {
     s.atts.forEach((a, i) => chips.push({ label: a.name, remove: () => this.setState(x => ({ atts: x.atts.filter((_, j) => j !== i) })) }));
     const fp = s.floatPos || this.defaultPos();
     const seg = on => on ? ["#1677FF", "#fff"] : ["#fff", "#3A424A"];
-    const closeAll = { dlOpen: false, settingsOpen: false, attachOpen: false, gitOpen: false, shareOpen: false, moreOpen: false, menuOpen: false, verOpen: false };
+    const closeAll = { dlOpen: false, settingsOpen: false, attachOpen: false, gitOpen: false, shareOpen: false, moreOpen: false, menuOpen: false, verOpen: false, fileOpen: false };
     const verShort = s.cur < 0 ? "Original" : "v" + (s.cur + 1) + " of " + s.versions.length;
     return {
       undo: () => { if (s.cur >= 0) this.setCur(s.cur - 1); }, redo: () => { if (s.cur < s.versions.length - 1) this.setCur(s.cur + 1); },
@@ -1607,6 +1836,15 @@ class Component extends DCLogic {
       openChanges: () => this.setState(Object.assign({ modal: "changes", picking: false }, closeAll)),
       openDesign: () => this.setState(Object.assign({ modal: "design", picking: false }, closeAll)),
       closeModal: () => this.setState({ modal: null }), stop: e => e.stopPropagation(),
+      locked: !s.auth, isAdmin: !!s.auth && s.auth.role === "admin", authName: s.auth ? s.auth.name : "",
+      authUser: s.authUser, authPass: s.authPass, authErr: s.authErr, hasAuthErr: !!s.authErr, authBtn: s.authBusy ? "Signing in…" : "Sign in", authOpacity: s.authBusy ? .6 : 1,
+      onAuthUser: e => this.setState({ authUser: e.target.value }), onAuthPass: e => this.setState({ authPass: e.target.value }), onAuthKey: e => { if (e.key === "Enter") this.login(); },
+      login: () => this.login(), signOut: () => this.signOut(),
+      openUsers: () => { this.setState(Object.assign({ modal: "users" }, closeAll)); this.loadUsers(); },
+      usersOpen: s.modal === "users" && !!s.auth && s.auth.role === "admin", usersFileLabel: SS_USERS_FILE + " in " + s.pagesRepo,
+      userRows: (s.users.some(u => u.name === "admin") ? [] : [{ name: "admin", role: "super admin · built-in", rmVis: "hidden", remove: () => {} }]).concat(s.users.map(u => ({ name: u.name, role: u.role, rmVis: u.name === (s.auth && s.auth.name) ? "hidden" : "visible", remove: () => this.saveUsers(s.users.filter(x => x.name !== u.name), "Removed " + u.name + ".") }))),
+      newUName: s.newUName, newUPass: s.newUPass, onNewUName: e => this.setState({ newUName: e.target.value }), onNewUPass: e => this.setState({ newUPass: e.target.value }), onNewURole: e => this.setState({ newURole: e.target.value }),
+      addUser: () => this.addUser(), usersBtn: s.usersBusy ? "Working…" : "Save user", usersMsg: s.usersMsg, usersMsgColor: s.usersErr ? "#CF1322" : "#389E0D",
       changesOpen: s.modal === "changes", designOpen: s.modal === "design",
       dsCount: s.library.length ? "(" + s.library.length + ")" : "",
       toggleDl: () => this.setState(Object.assign({}, closeAll, { dlOpen: !s.dlOpen })),
@@ -1660,7 +1898,24 @@ class Component extends DCLogic {
       shares: s.shares.map(x => ({ url: x.url, path: x.path, status: x.status, dot: x.status === "Live" ? "#389E0D" : x.status === "Publishing" ? "#D7A718" : "#CF1322", update: () => this.updateShare(x.url), notesLabel: (x.notes || []).length ? "View " + x.notes.length + (x.notes.length === 1 ? " release" : " releases") : "None yet", openNotes: () => this.setState({ notesOpen: true, notesItems: x.notes || [], notesTitle: x.url.replace(/^https?:\/\//, "") }), copy: () => this.copyLink(x.url), copyLabel: s.shareCopied === x.url ? "Copied" : "Copy", del: () => this.deleteShare(x) })),
       gitMenuSub: s.gitToken ? "Saving to " + (s.gitBranch || "a work branch") : "Not connected",
       toggleVer: () => this.setState(Object.assign({}, closeAll, { verOpen: !s.verOpen })), verOpen: s.verOpen, verBg: s.verOpen ? "rgba(255,255,255,.1)" : "transparent",
-      versionItems: [...s.versions.map((x, i) => ({ i, label: "v" + (i + 1) + " · " + x.label, sub: (x.commit ? "committed " + x.commit.slice(0, 7) + " · " : "") + Object.keys(x.files).length + " file(s) changed" })).reverse(), ...["index-v2.html", "index.html"].map(n => ({ i: -1, shell: n, label: "Original · " + n, sub: n === s.buildName ? "Project files as they are" : "Switch to this file (keeps its own versions)" }))].map(x => { const on = x.i === s.cur && (!x.shell || x.shell === s.buildName); return { label: x.label, sub: x.sub, bg: on ? "#F0F5FF" : "#fff", dot: on ? "#1677FF" : "#D8D8D8", go: () => { this.setState({ verOpen: false }); if (x.shell && x.shell !== s.buildName) this.switchShell(x.shell); else this.setCur(x.i); } }; }),
+      versionItems: [...s.versions.map((x, i) => ({ i, label: "v" + (i + 1) + " · " + x.label, sub: (x.commit ? "committed " + x.commit.slice(0, 7) + " · " : "") + Object.keys(x.files).length + " file(s) changed" })).reverse(), { i: -1, label: "Original · " + s.buildName, sub: "Project files as they are" }].map(x => { const on = x.i === s.cur; return { label: x.label, sub: x.sub, bg: on ? "#F0F5FF" : "#fff", dot: on ? "#1677FF" : "#D8D8D8", go: () => { this.setState({ verOpen: false }); this.setCur(x.i); } }; }),
+      fileName: this.projTitle(s.buildName), fileBg: s.fileOpen ? "rgba(255,255,255,.1)" : "transparent", fileOpen: s.fileOpen,
+      toggleFile: () => this.setState(Object.assign({}, closeAll, { fileOpen: !s.fileOpen, fileMsg: "" })),
+      verSub: s.cur < 0 ? "Project files as they are" : (s.versions[s.cur] ? s.versions[s.cur].label : ""),
+      fileItems: [{ name: "index-v2.html" }, { name: "index.html" }].concat(s.htmlFiles).filter(f => !f.owner || this.canSee(f)).map(f => { const n = f.name, on = n === s.buildName, own = f.owner ? (f.owner === this.me() ? "you" : f.owner) : ""; return { name: f.title || (n === "index.html" ? "NEOS classic" : n === "index-v2.html" ? "NEOS main" : n), sub: n + (f.owner ? " · owner " + own + ((f.members || []).length ? " · +" + f.members.length + " collaborator" + (f.members.length === 1 ? "" : "s") : "") : " · everyone") + (on ? " · " + s.versions.length + " version" + (s.versions.length === 1 ? "" : "s") : ""), bg: on ? "#F0F5FF" : "#fff", dot: on ? "#1677FF" : "#D8D8D8", memVis: f.owner && (f.owner === this.me() || (s.auth && s.auth.role === "admin")) ? "visible" : "hidden", members: () => this.editMembers(n), go: () => { this.setState({ fileOpen: false }); if (!on) this.switchShell(n); } }; }),
+      newFileName: s.newFileName, collabLink: this.projLink(s.buildName), selectAll: e => e.target.select(),
+      copyLinkLabel: s.linkCopied ? "Copied" : "Copy link",
+      copyCollabLink: () => { const url = this.projLink(s.buildName); const done = () => { this.setState({ linkCopied: true }); setTimeout(() => this.setState({ linkCopied: false }), 1600); }; try { navigator.clipboard.writeText(url).then(done, done); } catch (e) { done(); } },
+      collabName: s.collabName, onCollabName: e => this.setState({ collabName: e.target.value }), addCollab: () => this.addCollab(),
+      collabMsg: s.collabMsg, hasCollabMsg: !!s.collabMsg, collabMsgColor: s.collabErr ? "#CF1322" : "#389E0D",
+      collabMembers: (() => { const f = s.htmlFiles.find(x => x.name === s.buildName); return f && f.owner ? "Owner: " + f.owner + ((f.members || []).length ? " · Collaborators: " + f.members.join(", ") : " · No collaborators yet") : "Built-in project, open to everyone."; })(),
+      newProjMembers: s.newProjMembers, onNewProjMembers: e => this.setState({ newProjMembers: e.target.value }), onNewFileName: e => this.setState({ newFileName: e.target.value }),
+      fileMsg: s.fileMsg, fileMsgColor: "#CF1322",
+      createFile: () => this.createFile(),
+      goPreviewTab: () => this.setState({ tab: "preview" }), goBuilderTab: () => this.setState({ tab: "builder" }),
+      tabPrevLine: s.tab !== "builder" ? "#1677FF" : "transparent", tabPrevColor: s.tab !== "builder" ? "#fff" : "rgba(255,255,255,.6)",
+      tabBuildLine: s.tab === "builder" ? "#1677FF" : "transparent", tabBuildColor: s.tab === "builder" ? "#fff" : "rgba(255,255,255,.6)",
+      previewDisp: s.tab === "builder" ? "none" : "block", builderDisp: s.tab === "builder" ? "flex" : "none",
       dragCursor: float ? "move" : "default", 
       wideHead: s.vw >= 900, narrowHead: s.vw < 900, moreOpen: s.moreOpen, moreBg: s.moreOpen ? "rgba(255,255,255,.14)" : "transparent",
       toggleMore: () => this.setState(Object.assign({}, closeAll, { moreOpen: !s.moreOpen })),
@@ -1717,7 +1972,7 @@ class Component extends DCLogic {
       onDragStart: e => { if (!float || e.target.closest("button,label,input,a")) return; this.drag = { sx: e.clientX, sy: e.clientY, x: fp.x, y: fp.y }; this.setState({ dragging: true, floatPos: fp }); },
       framePE: s.dragging ? "none" : "auto",
       toggleCollapse: () => this.setState({ collapsed: !s.collapsed }), collapseLabel: s.collapsed ? "Expand" : "Collapse",
-      showMsgs: !(float && s.collapsed), taRows: float ? 2 : 3,
+      showMsgs: !(float && s.collapsed) && s.tab !== "builder", chatDisp: s.tab === "builder" ? "none" : "block", taRows: float ? 2 : 3,
 
       scrollRef: this.scrollRef,
       isEmpty: s.msgs.length === 0 && !s.loading,
@@ -1763,7 +2018,7 @@ class Component extends DCLogic {
       sendDisabled: s.loading || !s.draft.trim() || !ready, sendOpacity: s.loading || !s.draft.trim() || !ready ? .4 : 1,
 
       picking: s.picking,
-      showLoad: !ready, loadTitle: s.loadState === "loading" ? "Loading NEOS…" : "NEOS build not loaded", loadMsg: s.loadState === "loading" ? "Reading " + s.buildName : s.loadErr,
+      showLoad: !ready && s.tab !== "builder", loadTitle: s.loadState === "loading" ? "Loading NEOS…" : "NEOS build not loaded", loadMsg: s.loadState === "loading" ? "Reading " + s.buildName : s.loadErr,
       showFrame: ready && !!s.previewUrl, previewUrl: s.previewUrl, frameRef: this.frameRef,
       onFrameLoad: () => this.attachPicker(),
       noChanges: !changed.length,

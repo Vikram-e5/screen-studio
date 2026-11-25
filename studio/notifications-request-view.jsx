@@ -524,8 +524,6 @@ function NOTNotifCard({ r, open, onToggle, current }) {
             {field("Communication Method", r.commMethod)}
             {field("Report Name", r.reportName)}
             {field("Fax Sent Status", r.delivery==="delivered" ? "Sent" : r.delivery==="exception" ? "Failed" : "")}
-            {field("Add Coordination Notes Status", r.ehr && NOT_EHR_ST[r.ehr.coord] ? NOT_EHR_ST[r.ehr.coord].l : "")}
-            {field("Stage Complete Status", r.ehr && NOT_EHR_ST[r.ehr.stage] ? NOT_EHR_ST[r.ehr.stage].l : "")}
             {r.at==="warning" && r.atReason ? field("Needs Attention Reason", r.atReason) : null}
           </div>
         </div>

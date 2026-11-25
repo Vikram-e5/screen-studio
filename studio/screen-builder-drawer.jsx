@@ -5,10 +5,12 @@ const SB_LT = "<", SB_GT = ">";
 // filled, copy-paste-ready prompt for the Neos Claude design chat.
 const { useState: useSB, useEffect: useSBE, useRef: useSBR } = React;
 
+const SB_DARK = typeof window!=="undefined" && !!window.__sbDark;
+const SB_BG = SB_DARK?"#262624":"#fff", SB_BG2 = SB_DARK?"#2B2B29":"#f8fafc", SB_RAIL = SB_DARK?"#1F1F1E":"#fff", SB_SEL = SB_DARK?"rgba(22,119,255,.16)":"#f4f8ff", SB_SELB = SB_DARK?"rgba(105,177,255,.5)":"#bfdbfe", SB_FAINT = SB_DARK?"#3A3A37":"#eef2f7", SB_DASH = SB_DARK?"rgba(255,255,255,.24)":"#cbd5e1", SB_BLUET = SB_DARK?"#69B1FF":"#2563eb", SB_OKBG = SB_DARK?"rgba(22,163,74,.28)":"#dcfce7", SB_HEAD = SB_DARK?"#2B2B29":"linear-gradient(to right, rgb(56,71,90) 0%, rgb(28,45,66) 100%)";
 const SB_W = "clamp(715px, 57.5vw, 1035px)";
 const SB_OFFSET = "0px";
 const SB_RAIL_W = 268;
-const SB_INK = "#1f2937", SB_MUTED = "#6A717D", SB_LINE = "#e2e8f0", SB_BLUE = "#2563eb";
+const SB_INK = SB_DARK?"#F0F2F5":"#1f2937", SB_MUTED = SB_DARK?"rgba(255,255,255,.62)":"#6A717D", SB_LINE = SB_DARK?"rgba(255,255,255,.12)":"#e2e8f0", SB_BLUE = SB_DARK?"#1677FF":"#2563eb";
 
 const SB_COL_TYPES = ["link","text","date","number","status-pill","icon","tag","checkbox","action-button"];
 const SB_ICONS = { none:null, "at-completed":"icons/at-completed.png", "at-in-progress":"icons/at-in-progress.png", "at-needs-attention":"icons/at-needs-attention.png" };
@@ -123,13 +125,13 @@ const SB_TARGETS = [
 ];
 
 // ── tiny wireframe previews ──────────────────────────────────
-function SBBar({ w, h=4, c="#cbd5e1", r=1, mt=0 }){ return <div style={{width:w,height:h,borderRadius:r,background:c,marginTop:mt}}></div>; }
+function SBBar({ w, h=4, c={SB_DASH}, r=1, mt=0 }){ return <div style={{width:w,height:h,borderRadius:r,background:c,marginTop:mt}}></div>; }
 function SBPreview({ id }){
-  const box = { width:"100%", height:96, border:`1px solid ${SB_LINE}`, borderRadius:4, background:"#fff", overflow:"hidden", display:"flex", flexDirection:"column" };
+  const box = { width:"100%", height:96, border:`1px solid ${SB_LINE}`, borderRadius:4, background:SB_BG, overflow:"hidden", display:"flex", flexDirection:"column" };
   const band = <div style={{height:14,background:"linear-gradient(to right, rgb(56,71,90), rgb(28,45,66))",flexShrink:0}}></div>;
-  if (id==="none") return (<div style={box}>{band}<div style={{padding:8,display:"flex",flexDirection:"column",gap:6}}>{[0,1,2,3].map(i=><div key={i} style={{display:"flex",gap:6,alignItems:"center",borderTop:i?`1px solid ${SB_LINE}`:"none",paddingTop:i?5:0}}><SBBar w={92} c="#94a3b8"/><SBBar w={54} c="#e2e8f0"/><SBBar w={38} c="#e2e8f0"/></div>)}</div></div>);
-  if (id==="drawer") return (<div style={box}>{band}<div style={{flex:1,display:"flex"}}><div style={{flex:1,padding:8,display:"flex",flexDirection:"column",gap:6}}>{[0,1,2,3].map(i=><SBBar key={i} w="88%" c={i===1?"#93c5fd":"#cbd5e1"}/>)}</div><div style={{width:"46%",borderLeft:`1px solid ${SB_LINE}`,background:"#f8fafc",padding:8,display:"flex",flexDirection:"column",gap:5}}><SBBar w="70%" c="#93c5fd"/><SBBar w="100%" h={10} c="#fff"/><SBBar w="100%" h={10} c="#fff"/><SBBar w={38} h={9} c="#2563eb" r={2}/></div></div></div>);
-  return (<div style={box}>{band}<div style={{padding:8,display:"flex",flexDirection:"column",gap:6}}><div style={{display:"flex",gap:5,alignItems:"center"}}><span style={{font:"400 8px Roboto",color:"#2563eb"}}>←</span><SBBar w={48} c="#93c5fd"/><SBBar w={30} c="#e2e8f0"/></div><div style={{display:"flex",gap:6,alignItems:"center"}}><div style={{width:16,height:16,borderRadius:"50%",background:"#C6A78F"}}></div><div><SBBar w={54}/><SBBar w={34} h={3} mt={3} c="#e2e8f0"/></div></div><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5}}>{[0,1,2,3].map(i=><div key={i} style={{height:22,border:`1px solid ${SB_LINE}`,borderRadius:3,padding:3}}><SBBar w="60%" h={3} c="#93c5fd"/><SBBar w="80%" h={3} mt={4} c="#eef2f7"/></div>)}</div></div></div>);
+  if (id==="none") return (<div style={box}>{band}<div style={{padding:8,display:"flex",flexDirection:"column",gap:6}}>{[0,1,2,3].map(i=><div key={i} style={{display:"flex",gap:6,alignItems:"center",borderTop:i?`1px solid ${SB_LINE}`:"none",paddingTop:i?5:0}}><SBBar w={92} c="#94a3b8"/><SBBar w={54} c={SB_LINE}/><SBBar w={38} c={SB_LINE}/></div>)}</div></div>);
+  if (id==="drawer") return (<div style={box}>{band}<div style={{flex:1,display:"flex"}}><div style={{flex:1,padding:8,display:"flex",flexDirection:"column",gap:6}}>{[0,1,2,3].map(i=><SBBar key={i} w="88%" c={i===1?"#93c5fd":SB_DASH}/>)}</div><div style={{width:"46%",borderLeft:`1px solid ${SB_LINE}`,background:SB_BG2,padding:8,display:"flex",flexDirection:"column",gap:5}}><SBBar w="70%" c="#93c5fd"/><SBBar w="100%" h={10} c="#fff"/><SBBar w="100%" h={10} c="#fff"/><SBBar w={38} h={9} c="#2563eb" r={2}/></div></div></div>);
+  return (<div style={box}>{band}<div style={{padding:8,display:"flex",flexDirection:"column",gap:6}}><div style={{display:"flex",gap:5,alignItems:"center"}}><span style={{font:"400 8px Roboto",color:SB_BLUET}}>←</span><SBBar w={48} c="#93c5fd"/><SBBar w={30} c={SB_LINE}/></div><div style={{display:"flex",gap:6,alignItems:"center"}}><div style={{width:16,height:16,borderRadius:"50%",background:"#C6A78F"}}></div><div><SBBar w={54}/><SBBar w={34} h={3} mt={3} c={SB_LINE}/></div></div><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5}}>{[0,1,2,3].map(i=><div key={i} style={{height:22,border:`1px solid ${SB_LINE}`,borderRadius:3,padding:3}}><SBBar w="60%" h={3} c="#93c5fd"/><SBBar w="80%" h={3} mt={4} c={SB_FAINT}/></div>)}</div></div></div>);
 }
 // Faithful miniatures of the three real strips shipped in the prototype.
 const SB_RES = k => (typeof window!=="undefined" && window.__resources && window.__resources[k]) || ({ atCompleted:"icons/at-completed.png", atNeedsAttention:"icons/at-needs-attention.png", atInProgress:"icons/at-in-progress.png", mdiUser:"icons/mdi-user.png" })[k];
@@ -152,18 +154,18 @@ const SB_PSV_CARDS = [
   { label:"Denied", n:"04", color:"#dc2626", weight:.9 },
 ];
 function SBStrip({ caption, cards }){
-  return (<div style={{display:"flex",alignItems:"stretch",border:`1px solid ${SB_LINE}`,borderRadius:6,background:"#fff",overflow:"hidden"}}>
-    <div style={{padding:"8px 10px",background:"#f8fafc",borderRight:`1px solid ${SB_LINE}`,display:"flex",flexDirection:"column",justifyContent:"center",font:"500 10px/13px Roboto",color:"#333",flexShrink:0}}>{caption.map(l=><span key={l}>{l}</span>)}</div>
+  return (<div style={{display:"flex",alignItems:"stretch",border:`1px solid ${SB_LINE}`,borderRadius:6,background:SB_BG,overflow:"hidden"}}>
+    <div style={{padding:"8px 10px",background:SB_BG2,borderRight:`1px solid ${SB_LINE}`,display:"flex",flexDirection:"column",justifyContent:"center",font:"500 10px/13px Roboto",color:SB_INK,flexShrink:0}}>{caption.map(l=><span key={l}>{l}</span>)}</div>
     <div style={{display:"flex",alignItems:"flex-start",flex:1,minWidth:0}}>
       {cards.map(c=>(
         <div key={c.label} style={{flex:`${c.weight} 1 0`,minWidth:0,padding:"7px 8px 8px"}}>
           <div style={{height:3,borderRadius:2,background:c.color,opacity:.9,marginBottom:6}}></div>
-          <div style={{display:"flex",alignItems:"center",gap:4,font:"400 10px/13px Roboto",color:"#333",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} title={c.label}>
+          <div style={{display:"flex",alignItems:"center",gap:4,font:"400 10px/13px Roboto",color:SB_INK,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} title={c.label}>
             {c.person && <img src={SB_RES("mdiUser")} alt="" style={{width:11,height:11,objectFit:"contain",flexShrink:0}} />}
             {c.ic && <img src={SB_RES(c.ic)} alt="" style={{width:11,height:11,objectFit:"contain",flexShrink:0}} />}
             <span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{c.label}</span>
           </div>
-          <div style={{font:"600 14px/18px Roboto",color:"#0f172a",marginTop:2}}>{c.n}</div>
+          <div style={{font:"600 14px/18px Roboto",color:SB_INK,marginTop:2}}>{c.n}</div>
         </div>
       ))}
     </div>
@@ -171,13 +173,13 @@ function SBStrip({ caption, cards }){
 }
 function SBATRow(){
   const items = [["atCompleted","Completed","12","#0f172a"],["atNeedsAttention","Needs Attention","04","#d97706"],["atInProgress","In Progress","03","#0f172a"]];
-  return (<div style={{display:"flex",alignItems:"center",font:"400 11px/16px Roboto",color:"#333",marginTop:8}}>
+  return (<div style={{display:"flex",alignItems:"center",font:"400 11px/16px Roboto",color:SB_INK,marginTop:8}}>
     <span style={{color:"#94a3b8",marginRight:10}}>Automation (AT) Status :</span>
     {items.map(([ic,l,n,col],i)=>(<React.Fragment key={l}>
       {i>0 && <span style={{width:1,height:14,background:SB_LINE,margin:"0 10px"}}></span>}
       <span style={{display:"inline-flex",alignItems:"center",gap:6}}>
         <img src={SB_RES(ic)} alt="" style={{width:14,height:14,objectFit:"contain"}} />
-        <span style={{color:"#0f172a"}}>{l}</span>
+        <span style={{color:SB_INK}}>{l}</span>
         <span style={{fontWeight:600,color:col}}>{n}</span>
       </span>
     </React.Fragment>))}
@@ -185,7 +187,7 @@ function SBATRow(){
 }
 function SBSummaryPreview({ style }){
   const note = { A:"Sample — Eligibility Request View (4 of its counters shown).", B:"Sample — CDM Request View. The box IS the AT status, icons inline.", C:"Sample — Patient Auth Summary View. Business statuses only." }[style];
-  return (<div style={{background:"#fff",borderRadius:4}}>
+  return (<div style={{background:SB_BG,borderRadius:4}}>
     {style==="A" && <React.Fragment><SBStrip caption={["Eligibility","Status"]} cards={SB_ELIG_CARDS} /><SBATRow /></React.Fragment>}
     {style==="B" && <SBStrip caption={["Automation","Status"]} cards={SB_CDM_CARDS} />}
     {style==="C" && <SBStrip caption={["Request","Status"]} cards={SB_PSV_CARDS} />}
@@ -194,9 +196,9 @@ function SBSummaryPreview({ style }){
 }
 function SBStylePick({ id, selected, onSelect, title, blurb }){
   const on = selected===id;
-  return (<div onClick={()=>onSelect(id)} style={{border:`1px solid ${on?SB_BLUE:SB_LINE}`,boxShadow:on?"0 0 0 2px rgba(37,99,235,.15)":"none",borderRadius:6,padding:12,cursor:"pointer",background:"#fff",display:"grid",gridTemplateColumns:"250px 1fr",gap:32,alignItems:"center"}}>
+  return (<div onClick={()=>onSelect(id)} style={{border:`1px solid ${on?SB_BLUE:SB_LINE}`,boxShadow:on?"0 0 0 2px rgba(37,99,235,.15)":"none",borderRadius:6,padding:12,cursor:"pointer",background:SB_BG,display:"grid",gridTemplateColumns:"250px 1fr",gap:32,alignItems:"center"}}>
     <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-      <span style={{width:15,height:15,marginTop:2,borderRadius:2,border:`1px solid ${on?SB_BLUE:"#cbd5e1"}`,background:on?SB_BLUE:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>
+      <span style={{width:15,height:15,marginTop:2,borderRadius:2,border:`1px solid ${on?SB_BLUE:SB_DASH}`,background:on?SB_BLUE:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>
       <span style={{display:"flex",flexDirection:"column",gap:3}}>
         <span style={{font:"500 13px/17px Roboto",color:SB_INK}}>{title}</span>
         <span style={{font:"400 11px/15px Roboto",color:SB_MUTED}}>{blurb}</span>
@@ -219,18 +221,18 @@ function SBSection({ n, title, hint, children, open, onNext, nextLabel }){
     {onNext && <div style={{marginTop:20,display:"flex"}}><button onClick={onNext} style={{marginLeft:"auto",background:SB_BLUE,border:"none",borderRadius:4,padding:"9px 18px",font:"500 13px Roboto",color:"#fff",cursor:"pointer"}}>{nextLabel||"Next"} →</button></div>}
   </div>);
 }
-function SBRail({ open, steps, current, onPick }){
-  return (<div style={{position:"fixed",top:15,bottom:15,right:`calc(${SB_W} + ${SB_OFFSET} + 8px)`,transform:open?"translateX(0)":`translateX(${SB_RAIL_W+60}px)`,opacity:open?1:0,transition:"transform .3s cubic-bezier(.4,0,.2,1), opacity .2s",width:SB_RAIL_W,background:"#fff",borderRadius:10,overflow:"hidden",boxShadow:"-6px 0 28px rgba(15,23,42,.20)",zIndex:902,display:"flex",flexDirection:"column",pointerEvents:open?"auto":"none"}}>
-    <div style={{background:"#fff",borderBottom:`1px solid ${SB_LINE}`,color:SB_INK,height:53,padding:"0 18px",display:"flex",flexDirection:"column",justifyContent:"center",flexShrink:0}}>
+function SBRail({ open, steps, current, onPick, embedded }){
+  return (<div style={embedded?{position:"relative",height:"100%",minHeight:0,background:SB_RAIL,borderRight:`1px solid ${SB_LINE}`,overflow:"hidden",display:"flex",flexDirection:"column"}:{position:"fixed",top:15,bottom:15,right:`calc(${SB_W} + ${SB_OFFSET} + 8px)`,transform:open?"translateX(0)":`translateX(${SB_RAIL_W+60}px)`,opacity:open?1:0,transition:"transform .3s cubic-bezier(.4,0,.2,1), opacity .2s",width:SB_RAIL_W,background:SB_RAIL,borderRadius:10,overflow:"hidden",boxShadow:"-6px 0 28px rgba(15,23,42,.20)",zIndex:902,display:"flex",flexDirection:"column",pointerEvents:open?"auto":"none"}}>
+    <div style={{background:SB_RAIL,borderBottom:`1px solid ${SB_LINE}`,color:SB_INK,height:53,padding:"0 18px",display:"flex",flexDirection:"column",justifyContent:"center",flexShrink:0}}>
       <span style={{font:"500 16px/20px Roboto",color:SB_INK}}>Steps</span>
       <span style={{font:"400 12px/16px Roboto",color:SB_MUTED}}>{steps.findIndex(x=>x.n===current)+1} of {steps.length}</span>
     </div>
-    <div className="ws-scrollbody" style={{flex:1,overflowY:"auto",padding:10,display:"flex",flexDirection:"column",gap:8}}>
+    <div className="ws-scrollbody" style={{flex:1,overflowY:"auto",overflowX:"hidden",colorScheme:SB_DARK?"dark":"light",padding:10,display:"flex",flexDirection:"column",gap:8}}>
     {steps.map((st,i)=>{
       const active = current===st.n, done = !active && steps.findIndex(x=>x.n===current) > i;
-      return (<div key={st.n} onClick={()=>onPick(st.n)} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"13px 12px",borderRadius:6,cursor:"pointer",background:active?"#f4f8ff":"transparent",border:`1px solid ${active?"#bfdbfe":"transparent"}`}}
-        onMouseEnter={e=>{ if(!active) e.currentTarget.style.background="#f8fafc"; }} onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
-        <span style={{width:20,height:20,marginTop:1,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",font:"500 9.5px/1 Roboto",background:active?SB_BLUE:done?"#dcfce7":"#eef2f7",color:active?"#fff":done?"#16a34a":SB_MUTED}}>{done?"✓":st.n}</span>
+      return (<div key={st.n} onClick={()=>onPick(st.n)} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"13px 12px",borderRadius:6,cursor:"pointer",background:active?SB_SEL:"transparent",border:`1px solid ${active?SB_SELB:"transparent"}`}}
+        onMouseEnter={e=>{ if(!active) e.currentTarget.style.background=SB_RAIL2; }} onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
+        <span style={{width:20,height:20,marginTop:1,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",font:"500 9.5px/1 Roboto",background:active?SB_BLUE:done?SB_OKBG:SB_FAINT,color:active?"#fff":done?"#16a34a":SB_MUTED}}>{done?"✓":st.n}</span>
         <span style={{display:"flex",flexDirection:"column",gap:2,minWidth:0}}>
           <span style={{font:`${active?500:400} 12.5px/16px Roboto`,color:SB_INK}}>{st.title}</span>
           <span style={{font:"400 10.5px/14px Roboto",color:SB_MUTED}}>{st.desc}</span>
@@ -248,13 +250,13 @@ function SBField({ label, children, hint }){
     {hint && <span style={{font:"400 11px/15px Roboto",color:"#94a3b8"}}>{hint}</span>}
   </label>);
 }
-const sbInput = { width:"100%",border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"7px 9px",font:"400 13px/18px Roboto",color:SB_INK,outline:"none",background:"#fff" };
+const sbInput = { width:"100%",border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"7px 9px",font:"400 13px/18px Roboto",color:SB_INK,outline:"none",background:SB_BG };
 function SBText({ value, onChange, placeholder, mono }){ return <input value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)} style={{...sbInput,fontFamily:mono?"ui-monospace,Menlo,monospace":"Roboto"}} />; }
 function SBArea({ value, onChange, placeholder, rows=3 }){ return <textarea value={value} rows={rows} placeholder={placeholder} onChange={e=>onChange(e.target.value)} style={{...sbInput,resize:"vertical",lineHeight:"18px"}} />; }
 function SBSelect({ value, onChange, options }){ return <select value={value} onChange={e=>onChange(e.target.value)} style={{...sbInput,cursor:"pointer"}}>{options.map(o=><option key={o} value={o}>{o}</option>)}</select>; }
 function SBToggle({ on, onChange, label, sub }){
-  return (<div onClick={()=>onChange(!on)} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"7px 10px",border:`1px solid ${on?"#bfdbfe":SB_LINE}`,borderRadius:4,background:on?"#f4f8ff":"#fff"}}>
-    <span style={{width:32,height:18,borderRadius:999,background:on?"#1677FF":"#cbd5e1",position:"relative",flexShrink:0,transition:"background .15s"}}><span style={{position:"absolute",top:2,left:on?16:2,width:14,height:14,borderRadius:"50%",background:"#fff",transition:"left .15s"}}></span></span>
+  return (<div onClick={()=>onChange(!on)} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"7px 10px",border:`1px solid ${on?SB_SELB:SB_LINE}`,borderRadius:4,background:on?"#f4f8ff":"#fff"}}>
+    <span style={{width:32,height:18,borderRadius:999,background:on?"#1677FF":SB_DASH,position:"relative",flexShrink:0,transition:"background .15s"}}><span style={{position:"absolute",top:2,left:on?16:2,width:14,height:14,borderRadius:"50%",background:"#fff",transition:"left .15s"}}></span></span>
     <span style={{display:"flex",flexDirection:"column"}}>
       <span style={{font:"400 13px/17px Roboto",color:SB_INK}}>{label}</span>
       {sub && <span style={{font:"400 11px/15px Roboto",color:SB_MUTED}}>{sub}</span>}
@@ -263,14 +265,14 @@ function SBToggle({ on, onChange, label, sub }){
 }
 function SBCheck({ on, onChange, label }){
   return (<span onClick={()=>onChange(!on)} style={{display:"inline-flex",alignItems:"center",gap:6,cursor:"pointer",font:"400 12px/16px Roboto",color:SB_INK}}>
-    <span style={{width:15,height:15,borderRadius:2,border:`1px solid ${on?SB_BLUE:"#cbd5e1"}`,background:on?SB_BLUE:"#fff",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>{label}
+    <span style={{width:15,height:15,borderRadius:2,border:`1px solid ${on?SB_BLUE:SB_DASH}`,background:on?SB_BLUE:"#fff",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>{label}
   </span>);
 }
 function SBPick({ selected, onSelect, id, title, blurb, children }){
   const on = selected===id;
-  return (<div onClick={()=>onSelect(id)} style={{border:`1px solid ${on?SB_BLUE:SB_LINE}`,boxShadow:on?"0 0 0 2px rgba(37,99,235,.15)":"none",borderRadius:6,padding:10,cursor:"pointer",background:"#fff",display:"flex",flexDirection:"column",gap:8}}>
+  return (<div onClick={()=>onSelect(id)} style={{border:`1px solid ${on?SB_BLUE:SB_LINE}`,boxShadow:on?"0 0 0 2px rgba(37,99,235,.15)":"none",borderRadius:6,padding:10,cursor:"pointer",background:SB_BG,display:"flex",flexDirection:"column",gap:8}}>
     <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-      <span style={{width:15,height:15,marginTop:1,borderRadius:2,border:`1px solid ${on?SB_BLUE:"#cbd5e1"}`,background:on?SB_BLUE:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>
+      <span style={{width:15,height:15,marginTop:1,borderRadius:2,border:`1px solid ${on?SB_BLUE:SB_DASH}`,background:on?SB_BLUE:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>
       <span style={{display:"flex",flexDirection:"column",gap:2}}>
         <span style={{font:"500 13px/17px Roboto",color:SB_INK}}>{title}</span>
         <span style={{font:"400 11px/15px Roboto",color:SB_MUTED}}>{blurb}</span>
@@ -302,10 +304,10 @@ function SBColumns({ cols, set }){
         </span>
       </div>
     ))}
-    <button onClick={()=>set([...cols,{ label:"New Column", key:"newColumn", type:"text", width:"flexible", sortable:true }])} style={{alignSelf:"flex-start",marginTop:2,background:"#fff",border:`1px dashed #cbd5e1`,borderRadius:4,padding:"6px 12px",font:"400 12px Roboto",color:SB_BLUE,cursor:"pointer"}}>＋ Add column</button>
+    <button onClick={()=>set([...cols,{ label:"New Column", key:"newColumn", type:"text", width:"flexible", sortable:true }])} style={{alignSelf:"flex-start",marginTop:2,background:SB_BG,border:`1px dashed ${SB_DASH}`,borderRadius:4,padding:"6px 12px",font:"400 12px Roboto",color:SB_BLUE,cursor:"pointer"}}>＋ Add column</button>
   </div>);
 }
-const sbMini = { width:20,height:20,borderRadius:3,border:`1px solid ${SB_LINE}`,background:"#fff",cursor:"pointer",font:"400 12px/1 Roboto",color:SB_MUTED,padding:0 };
+const sbMini = { width:20,height:20,borderRadius:3,border:`1px solid ${SB_LINE}`,background:SB_BG,cursor:"pointer",font:"400 12px/1 Roboto",color:SB_MUTED,padding:0 };
 
 // ── counters editor ──────────────────────────────────────────
 function SBCounters({ items, set, showIcons }){
@@ -323,12 +325,12 @@ function SBCounters({ items, set, showIcons }){
         <input value={c.label} onChange={e=>upd(i,"label",e.target.value)} style={{...sbInput,padding:"5px 7px",font:"400 12px/16px Roboto"}} />
         <input value={c.rule} onChange={e=>upd(i,"rule",e.target.value)} placeholder="status === '…'" style={{...sbInput,padding:"5px 7px",font:"400 12px/16px ui-monospace,Menlo,monospace"}} />
         <span style={{position:"relative"}}>
-          <button onClick={()=>setOpenColor(o=>o===i?-1:i)} title={c.color} style={{width:"100%",height:26,border:`1px solid ${SB_LINE}`,borderRadius:4,background:"#fff",cursor:"pointer",display:"flex",alignItems:"center",gap:5,padding:"0 6px"}}>
+          <button onClick={()=>setOpenColor(o=>o===i?-1:i)} title={c.color} style={{width:"100%",height:26,border:`1px solid ${SB_LINE}`,borderRadius:4,background:SB_BG,cursor:"pointer",display:"flex",alignItems:"center",gap:5,padding:"0 6px"}}>
             <span style={{width:14,height:14,borderRadius:3,background:c.color,flexShrink:0}}></span>
             <span style={{font:"400 9px/1 Roboto",color:SB_MUTED,marginLeft:"auto"}}>▾</span>
           </button>
           {openColor===i && (
-            <span style={{position:"absolute",top:30,left:0,zIndex:20,background:"#fff",border:`1px solid ${SB_LINE}`,borderRadius:6,boxShadow:"0 8px 24px rgba(15,23,42,.18)",padding:8,display:"grid",gridTemplateColumns:"repeat(5,18px)",gap:6}}>
+            <span style={{position:"absolute",top:30,left:0,zIndex:20,background:SB_BG,border:`1px solid ${SB_LINE}`,borderRadius:6,boxShadow:"0 8px 24px rgba(15,23,42,.18)",padding:8,display:"grid",gridTemplateColumns:"repeat(5,18px)",gap:6}}>
               {SB_SWATCHES.map(sw=><span key={sw} onClick={()=>{ upd(i,"color",sw); setOpenColor(-1); }} title={sw} style={{width:18,height:18,borderRadius:3,background:sw,cursor:"pointer",outline:c.color===sw?`2px solid ${SB_BLUE}`:"none",outlineOffset:1}}></span>)}
             </span>
           )}
@@ -340,12 +342,12 @@ function SBCounters({ items, set, showIcons }){
         </span>
       </div>
     ))}
-    <button onClick={()=>set([...items,{ label:"New Status", color:"#3f7ba8", icon:"none", rule:"status === '…'" }])} style={{alignSelf:"flex-start",marginTop:2,background:"#fff",border:`1px dashed #cbd5e1`,borderRadius:4,padding:"6px 12px",font:"400 12px Roboto",color:SB_BLUE,cursor:"pointer"}}>＋ Add counter</button>
+    <button onClick={()=>set([...items,{ label:"New Status", color:"#3f7ba8", icon:"none", rule:"status === '…'" }])} style={{alignSelf:"flex-start",marginTop:2,background:SB_BG,border:`1px dashed ${SB_DASH}`,borderRadius:4,padding:"6px 12px",font:"400 12px Roboto",color:SB_BLUE,cursor:"pointer"}}>＋ Add counter</button>
   </div>);
 }
 
 function SBDrawerPreview({ id }){
-  const shell = { width:"100%", border:`1px solid ${SB_LINE}`, borderRadius:5, background:"#fff", overflow:"hidden" };
+  const shell = { width:"100%", border:`1px solid ${SB_LINE}`, borderRadius:5, background:SB_BG, overflow:"hidden" };
   const pair = (l,v) => (<span key={l} style={{display:"flex",flexDirection:"column",gap:1,minWidth:0}}>
     <span style={{font:"400 7px/9px Roboto",color:SB_MUTED,whiteSpace:"nowrap"}}>{l}</span>
     <span style={{font:"500 8.5px/11px Roboto",color:SB_INK,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{v}</span>
@@ -363,23 +365,23 @@ function SBDrawerPreview({ id }){
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"0 10px",borderBottom:`1px solid ${SB_LINE}`}}>
       <span style={{padding:"7px 2px",font:"400 9px/12px Roboto",color:SB_MUTED}}>Eligibility Info</span>
       <span style={{padding:"7px 8px",font:"500 9px/12px Roboto",color:"#1677FF",borderBottom:"2px solid #1677FF"}}>Authorization Info</span>
-      <span style={{marginLeft:"auto",font:"400 8.5px/12px Roboto",color:"#2563eb"}}>Automation Log</span>
+      <span style={{marginLeft:"auto",font:"400 8.5px/12px Roboto",color:SB_BLUET}}>Automation Log</span>
     </div>
     <div style={{padding:"8px 10px 10px",display:"flex",flexDirection:"column",gap:7}}>
-      <div style={{border:`1px solid ${SB_LINE}`,background:"#f8fafc",borderRadius:4,padding:"6px 8px",font:"400 9px/12px Roboto",color:SB_INK}}>›&nbsp; Referral Information</div>
+      <div style={{border:`1px solid ${SB_LINE}`,background:SB_BG2,borderRadius:4,padding:"6px 8px",font:"400 9px/12px Roboto",color:SB_INK}}>›&nbsp; Referral Information</div>
       <div style={{display:"flex",gap:12,borderBottom:`1px solid ${SB_LINE}`}}>
-        <span style={{font:"500 8.5px/11px Roboto",color:"#2563eb",paddingBottom:4,borderBottom:"2px solid #2563eb"}}>Episode - Epi964256</span>
+        <span style={{font:"500 8.5px/11px Roboto",color:SB_BLUET,paddingBottom:4,borderBottom:"2px solid #2563eb"}}>Episode - Epi964256</span>
         <span style={{font:"400 8.5px/11px Roboto",color:SB_MUTED,paddingBottom:4}}>Episode - Epi746523</span>
       </div>
       <div style={{display:"flex",gap:6}}>
         {[["Episode Start Date","3/22/2024"],["Episode End Date","5/21/2024"],["Days To Recert","08 Days"]].map(c=>(
-          <span key={c[0]} style={{background:"#f8fafc",borderRadius:4,padding:"5px 8px",display:"flex",alignItems:"center",gap:6}}>
+          <span key={c[0]} style={{background:SB_BG2,borderRadius:4,padding:"5px 8px",display:"flex",alignItems:"center",gap:6}}>
             <span style={{font:"400 7px/9px Roboto",color:SB_MUTED,maxWidth:44}}>{c[0]}</span>
             <span style={{font:"500 9px/12px Roboto",color:SB_INK}}>{c[1]}</span>
           </span>
         ))}
       </div>
-      <div style={{border:`1px solid ${SB_LINE}`,background:"#f8fafc",borderRadius:4,padding:"6px 8px",font:"400 9px/12px Roboto",color:SB_INK}}>›&nbsp; Diagnosis Information</div>
+      <div style={{border:`1px solid ${SB_LINE}`,background:SB_BG2,borderRadius:4,padding:"6px 8px",font:"400 9px/12px Roboto",color:SB_INK}}>›&nbsp; Diagnosis Information</div>
       <div>
         <div style={{font:"500 10px/13px Roboto",color:SB_INK}}>Authorization Details</div>
         <div style={{font:"400 8px/11px Roboto",color:SB_MUTED,marginTop:1}}>Detailed view of authorizations and the Payor approval status.</div>
@@ -390,14 +392,14 @@ function SBDrawerPreview({ id }){
         <span style={{background:"#2563eb",borderRadius:3,padding:"3px 8px",font:"500 8px/11px Roboto",color:"#fff"}}>Edit Details</span>
       </div>
       <div style={{border:`1px solid ${SB_LINE}`,borderRadius:3,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:".5fr .9fr 1fr .8fr .8fr .5fr .7fr .8fr",gap:5,padding:"4px 6px",background:"#f8fafc",font:"400 7px/10px Roboto",color:SB_MUTED}}>
+        <div style={{display:"grid",gridTemplateColumns:".5fr .9fr 1fr .8fr .8fr .5fr .7fr .8fr",gap:5,padding:"4px 6px",background:SB_BG2,font:"400 7px/10px Roboto",color:SB_MUTED}}>
           <span>SVC</span><span>Ref ID</span><span>Authorization#</span><span>Init Dt</span><span>Sub Dt</span><span>Req</span><span>Approved</span><span>AT Status</span>
         </div>
         {[["SN","REF20240789","B245054741","04/25/25","04/26/25","03"],["PT","REF20240789","B245054742","04/25/25","04/26/25","03"]].map(r=>(
           <div key={r[2]} style={{display:"grid",gridTemplateColumns:".5fr .9fr 1fr .8fr .8fr .5fr .7fr .8fr",gap:5,padding:"5px 6px",borderTop:`1px solid ${SB_LINE}`,font:"400 8px/11px Roboto",color:SB_INK,alignItems:"center"}}>
             <span>{r[0]}</span><span>{r[1]}</span><span>{r[2]}</span><span>{r[3]}</span><span>{r[4]}</span><span>{r[5]}</span>
             <span><span style={{background:"#16a34a",color:"#fff",borderRadius:8,padding:"1px 6px",font:"500 7.5px/11px Roboto"}}>03</span></span>
-            <span style={{color:"#2563eb"}}>• Completed</span>
+            <span style={{color:SB_BLUET}}>• Completed</span>
           </div>
         ))}
       </div>
@@ -411,25 +413,25 @@ function SBDrawerPreview({ id }){
       </div>
     </div>
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"0 10px",borderBottom:`1px solid ${SB_LINE}`}}>
-      <span style={{padding:"7px 2px",font:"500 9px/12px Roboto",color:"#2563eb",borderBottom:"2px solid #2563eb"}}>Request Docs</span>
+      <span style={{padding:"7px 2px",font:"500 9px/12px Roboto",color:SB_BLUET,borderBottom:"2px solid #2563eb"}}>Request Docs</span>
       <span style={{padding:"7px 2px",font:"400 9px/12px Roboto",color:SB_MUTED}}>Response Docs</span>
-      <span style={{marginLeft:"auto",font:"500 8.5px/12px Roboto",color:"#2563eb"}}>⬇ Download All</span>
+      <span style={{marginLeft:"auto",font:"500 8.5px/12px Roboto",color:SB_BLUET}}>⬇ Download All</span>
     </div>
     <div style={{padding:"9px 10px 16px",display:"flex",flexDirection:"column",gap:7}}>
       <span style={{display:"flex",alignItems:"center",gap:5,font:"500 9px/12px Roboto",color:SB_INK}}><span style={{width:9,height:9,border:"1px solid #2563eb",borderRadius:2,display:"inline-block"}}></span>04/26/25</span>
       <div style={{border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"8px 9px",display:"flex",alignItems:"center",gap:6}}>
         <span style={{font:"400 9px/12px Roboto",color:SB_MUTED}}>📎</span>
         <span style={{font:"400 9px/12px Roboto",color:SB_INK}}>Auth Request Doc</span>
-        <span style={{marginLeft:"auto",font:"500 9px/12px Roboto",color:"#2563eb"}}>View</span>
+        <span style={{marginLeft:"auto",font:"500 9px/12px Roboto",color:SB_BLUET}}>View</span>
       </div>
     </div>
   </div>);
 }
 function SBSidePick({ id, selected, onSelect, title, blurb, preview }){
   const on = selected===id;
-  return (<div onClick={()=>onSelect(id)} style={{border:`1px solid ${on?SB_BLUE:SB_LINE}`,boxShadow:on?"0 0 0 2px rgba(37,99,235,.15)":"none",borderRadius:6,padding:12,cursor:"pointer",background:"#fff",display:"grid",gridTemplateColumns:"250px 1fr",gap:32,alignItems:"center"}}>
+  return (<div onClick={()=>onSelect(id)} style={{border:`1px solid ${on?SB_BLUE:SB_LINE}`,boxShadow:on?"0 0 0 2px rgba(37,99,235,.15)":"none",borderRadius:6,padding:12,cursor:"pointer",background:SB_BG,display:"grid",gridTemplateColumns:"250px 1fr",gap:32,alignItems:"center"}}>
     <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-      <span style={{width:15,height:15,marginTop:2,borderRadius:2,border:`1px solid ${on?SB_BLUE:"#cbd5e1"}`,background:on?SB_BLUE:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>
+      <span style={{width:15,height:15,marginTop:2,borderRadius:2,border:`1px solid ${on?SB_BLUE:SB_DASH}`,background:on?SB_BLUE:"#fff",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",font:"700 10px Roboto"}}>{on?"✓":""}</span>
       <span style={{display:"flex",flexDirection:"column",gap:3}}>
         <span style={{font:"500 13px/17px Roboto",color:SB_INK}}>{title}</span>
         <span style={{font:"400 11px/15px Roboto",color:SB_MUTED}}>{blurb}</span>
@@ -458,7 +460,7 @@ function SBBlocks({ items, set }){
         </span>
       </div>
     ))}
-    <button onClick={()=>set([...items,{ title:"New Block", type:"field-pairs", detail:"" }])} style={{alignSelf:"flex-start",marginTop:2,background:"#fff",border:`1px dashed #cbd5e1`,borderRadius:4,padding:"6px 12px",font:"400 12px Roboto",color:SB_BLUE,cursor:"pointer"}}>＋ Add block</button>
+    <button onClick={()=>set([...items,{ title:"New Block", type:"field-pairs", detail:"" }])} style={{alignSelf:"flex-start",marginTop:2,background:SB_BG,border:`1px dashed ${SB_DASH}`,borderRadius:4,padding:"6px 12px",font:"400 12px Roboto",color:SB_BLUE,cursor:"pointer"}}>＋ Add block</button>
   </div>);
 }
 
@@ -882,17 +884,28 @@ ${s.reviewMode?"[ ] Review Mode toggle switches the screen into review mode.\n":
 }
 
 // ── the drawer ───────────────────────────────────────────────
-function ScreenBuilderDrawer({ open, onClose }){
-  const [s, setS] = useSB(SB_DEFAULT);
-  const [openSec, setOpenSec] = useSB("01");
+const SB_SH = { vals:{}, subs:new Set() };
+function useSBShared(key, init, shared){
+  const [loc, setLoc] = useSB(init);
+  const [, force] = useSB(0);
+  useSBE(()=>{ if(!shared) return; const f=()=>force(x=>x+1); SB_SH.subs.add(f); return ()=>SB_SH.subs.delete(f); },[shared]);
+  if(!shared) return [loc, setLoc];
+  if(!(key in SB_SH.vals)) SB_SH.vals[key] = init;
+  const set = v => { const nv = typeof v==="function" ? v(SB_SH.vals[key]) : v; SB_SH.vals[key] = nv; SB_SH.subs.forEach(f=>f()); };
+  return [SB_SH.vals[key], set];
+}
+function ScreenBuilderDrawer({ open, onClose, embedded }){
+  const sh = !!embedded;
+  const [s, setS] = useSBShared("s", SB_DEFAULT, sh);
+  const [openSec, setOpenSec] = useSBShared("openSec", "01", sh);
   const bodyRef = useSBR(null);
-  const goSec = n => { setOpenSec(n); requestAnimationFrame(()=>{ if(bodyRef.current) bodyRef.current.scrollTop = 0; }); };
+  const goSec = n => { setView("form"); setOpenSec(n); requestAnimationFrame(()=>{ if(bodyRef.current) bodyRef.current.scrollTop = 0; }); };
   const sec = n => ({ open: openSec===n });
-  const [view, setView] = useSB("form");
+  const [view, setView] = useSBShared("view", "form", sh);
   const [copied, setCopied] = useSB(false);
   const set = (k,v)=>setS(p=>({ ...p, [k]:v }));
   const slugify = t => t.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-  useSBE(()=>{ const h=e=>{ if(e.key==="Escape") onClose(); }; document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); },[onClose]);
+  useSBE(()=>{ const h=e=>{ if(!embedded && e.key==="Escape") onClose(); }; document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); },[onClose]);
   const prompt = view==="prompt" ? sbBuildPrompt(s) : "";
   useSBE(()=>{ setOpenSec("01"); },[s.buildKind]);
   const copyFallback = ()=>{ try{ const t=document.createElement("textarea"); t.value=prompt; t.setAttribute("readonly",""); t.style.cssText="position:fixed;top:0;left:0;opacity:0"; document.body.appendChild(t); t.select(); t.setSelectionRange(0,t.value.length); const ok=document.execCommand("copy"); document.body.removeChild(t); return ok; }catch(e){ return false; } };
@@ -917,21 +930,24 @@ function ScreenBuilderDrawer({ open, onClose }){
   ];
   const lastStep = SB_STEPS[SB_STEPS.length-1].n;
 
-  return (<React.Fragment>
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,.45)",opacity:open?1:0,pointerEvents:open?"auto":"none",transition:"opacity .2s",zIndex:900}}></div>
-    {view==="form" && <SBRail open={open} steps={SB_STEPS} current={openSec} onPick={goSec} />}
-    <div style={{position:"fixed",top:0,right:SB_OFFSET,bottom:0,width:SB_W,maxWidth:"96vw",background:"#fff",boxShadow:"-8px 0 32px rgba(15,23,42,.22)",borderRadius:"10px 0 0 10px",overflow:"hidden",transform:open?"translateX(0)":"translateX(120%)",transition:"transform .26s cubic-bezier(.4,0,.2,1)",zIndex:901,display:"flex",flexDirection:"column",font:"400 14px/18px Roboto"}}>
-      <div style={{background:"linear-gradient(to right, rgb(56,71,90) 0%, rgb(28,45,66) 100%)",color:"#fff",padding:"16px 24px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+  if (embedded==="rail") return <SBRail embedded={true} open={true} steps={SB_STEPS} current={openSec} onPick={goSec} />;
+  const Wrap = embedded ? "div" : React.Fragment;
+  const wrapProps = embedded ? { style:{display:"grid",gridTemplateColumns:embedded==="content"?"minmax(0,1fr)":view==="form"?`${SB_RAIL_W}px minmax(0,1fr)`:"minmax(0,1fr)",height:"100%",minHeight:0,background:SB_BG} } : {};
+  return (<Wrap {...wrapProps}>
+    {!embedded && <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,.45)",opacity:open?1:0,pointerEvents:open?"auto":"none",transition:"opacity .2s",zIndex:900}}></div>}
+    {view==="form" && embedded!=="content" && <SBRail embedded={embedded} open={open} steps={SB_STEPS} current={openSec} onPick={goSec} />}
+    <div style={embedded?{position:"relative",minWidth:0,height:"100%",minHeight:0,background:SB_BG,overflow:"hidden",display:"flex",flexDirection:"column",font:"400 14px/18px Roboto"}:{position:"fixed",top:0,right:SB_OFFSET,bottom:0,width:SB_W,maxWidth:"96vw",background:SB_BG,boxShadow:"-8px 0 32px rgba(15,23,42,.22)",borderRadius:"10px 0 0 10px",overflow:"hidden",transform:open?"translateX(0)":"translateX(120%)",transition:"transform .26s cubic-bezier(.4,0,.2,1)",zIndex:901,display:"flex",flexDirection:"column",font:"400 14px/18px Roboto"}}>
+      <div style={{background:SB_HEAD,color:"#fff",padding:"16px 24px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
         <span style={{fontSize:18}}>📖</span>
         <div style={{display:"flex",flexDirection:"column"}}>
           <span style={{font:"500 16px/20px Roboto"}}>Screen Builder</span>
           <span style={{font:"400 12px/16px Roboto",color:"rgba(255,255,255,.6)"}}>{view==="form"?"Describe the screen — we write the prompt":"Copy this into the Neos Claude design chat"}</span>
         </div>
-        <button onClick={onClose} style={{marginLeft:"auto",background:"rgba(255,255,255,.12)",border:"none",color:"#fff",width:28,height:28,borderRadius:4,cursor:"pointer",font:"400 16px/1 Roboto"}}>×</button>
+        {!embedded && <button onClick={onClose} style={{marginLeft:"auto",background:"rgba(255,255,255,.12)",border:"none",color:"#fff",width:28,height:28,borderRadius:4,cursor:"pointer",font:"400 16px/1 Roboto"}}>×</button>}
       </div>
 
       {view==="form" ? (
-      <div ref={bodyRef} className="ws-scrollbody" style={{flex:1,overflowY:"auto",background:"#fff"}}>
+      <div ref={bodyRef} className="ws-scrollbody" style={{flex:1,overflowY:"auto",overflowX:"hidden",colorScheme:SB_DARK?"dark":"light",background:SB_BG}}>
         <SBSection n="01" title="What are you building" hint="A whole screen, or a side drawer that opens over an existing screen." {...sec("01")}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <SBPick id="screen" selected={s.buildKind} onSelect={v=>set("buildKind",v)} title="A new screen" blurb="A full table screen — its own summary box, filter bar and rows." />
@@ -951,7 +967,7 @@ function ScreenBuilderDrawer({ open, onClose }){
             <SBPick id="existing" selected={s.placement} onSelect={v=>set("placement",v)} title="Add to an existing menu" blurb="No new top-nav entry — the screen becomes another sub-tab inside a menu that's already there." />
           </div>
           {s.placement==="existing" && (
-            <div style={{border:"1px solid #bfdbfe",background:"#f4f8ff",borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{border:`1px solid ${SB_SELB}`,background:SB_SEL,borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
               <SBField label="Which existing menu"><SBSelect value={s.hostMenu} onChange={v=>setS(p=>({...p,hostMenu:v,bandTitle:(SB_HOSTS.find(h=>h.key===v)||{}).band||p.bandTitle,routerKey:v}))} options={SB_HOSTS.map(h=>h.key)} /></SBField>
               <div style={{font:"400 11px/16px Roboto",color:SB_MUTED}}>
                 <b style={{color:SB_INK,fontWeight:500}}>{(SB_HOSTS.find(h=>h.key===s.hostMenu)||{}).band}</b> currently has these sub-tabs: {((SB_HOSTS.find(h=>h.key===s.hostMenu)||{}).subs||[]).join(" · ")}. Your “{s.subTabLabel}” tab will be added {s.subTabPos==="first"?"before them":"after them"}.
@@ -975,8 +991,8 @@ function ScreenBuilderDrawer({ open, onClose }){
 
         <SBSection n="D1" title="Where it opens from" hint="Which screen, which table or section inside it, and which value the user clicks — plus where the file lives." {...sec("D1")}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-            <SBField label="Which screen"><SBSelect value={s.openFromScreen} onChange={v=>{ const src=SB_SOURCES.find(x=>x.screen===v)||SB_SOURCES[0]; setS(p=>({...p,openFromScreen:v,hostMenu:src.menu,openFromSection:src.sections[0].name,openFromColumn:src.sections[0].cols[0]})); }} options={SB_SOURCES.map(x=>x.screen)} /></SBField>
-            <SBField label="Which table or section"><SBSelect value={s.openFromSection} onChange={v=>{ const src=SB_SOURCES.find(x=>x.screen===s.openFromScreen)||SB_SOURCES[0]; const sec2=src.sections.find(x=>x.name===v)||src.sections[0]; setS(p=>({...p,openFromSection:v,openFromColumn:sec2.cols[0]})); }} options={((SB_SOURCES.find(x=>x.screen===s.openFromScreen)||SB_SOURCES[0]).sections).map(x=>x.name)} /></SBField>
+            <SBField label="Which screen"><SBSelect value={s.openFromScreen} onChange={v=>{ const src={SB_SOURCES}.find(x=>x.screen===v)||SB_SOURCES[0]; setS(p=>({...p,openFromScreen:v,hostMenu:src.menu,openFromSection:src.sections[0].name,openFromColumn:src.sections[0].cols[0]})); }} options={SB_SOURCES.map(x=>x.screen)} /></SBField>
+            <SBField label="Which table or section"><SBSelect value={s.openFromSection} onChange={v=>{ const src={SB_SOURCES}.find(x=>x.screen===s.openFromScreen)||SB_SOURCES[0]; const sec2=src.sections.find(x=>x.name===v)||src.sections[0]; setS(p=>({...p,openFromSection:v,openFromColumn:sec2.cols[0]})); }} options={((SB_SOURCES.find(x=>x.screen===s.openFromScreen)||SB_SOURCES[0]).sections).map(x=>x.name)} /></SBField>
             <SBField label="Which column / value is clicked"><SBSelect value={s.openFromColumn} onChange={v=>set("openFromColumn",v)} options={(((SB_SOURCES.find(x=>x.screen===s.openFromScreen)||SB_SOURCES[0]).sections.find(x=>x.name===s.openFromSection)||{cols:[]}).cols)} /></SBField>
           </div>
           <div style={{height:1,background:SB_LINE,margin:"2px 0"}}></div>
@@ -1008,7 +1024,7 @@ function ScreenBuilderDrawer({ open, onClose }){
               <SBField label="Group documents by" hint="leave empty for a flat list"><SBText value={s.drawerDocGroupBy} onChange={v=>set("drawerDocGroupBy",v)} /></SBField>
             </div>
             {s.drawerDocTabs.split("|").map(t=>t.trim()).filter(Boolean).length > 0 ? (
-              <div style={{border:"1px solid #bfdbfe",background:"#f4f8ff",borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{border:`1px solid ${SB_SELB}`,background:SB_SEL,borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
                 <span style={{font:"500 12px/16px Roboto",color:SB_INK}}>What does each tab list?</span>
                 {s.drawerDocTabs.split("|").map(t=>t.trim()).filter(Boolean).map(t=>(
                   <SBField key={t} label={t} hint="document names, comma-separated">
@@ -1039,7 +1055,7 @@ function ScreenBuilderDrawer({ open, onClose }){
             <SBToggle on={s.accordion} onChange={v=>set("accordion",v)} label="Expandable child accordion" sub="Caret in column 1 reveals a child table" />
           </div>
           {s.accordion && (
-            <div style={{border:`1px solid #bfdbfe`,background:"#f4f8ff",borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{border:`1px solid ${SB_SELB}`,background:SB_SEL,borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
               <span style={{font:"500 12px/16px Roboto",color:SB_INK}}>What does the expanded child show?</span>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {[["table","A nested table","Child rows with their own columns"],["fields","A field detail block","Label / value pairs, no table"]].map(([id,t,b])=>(
@@ -1084,7 +1100,7 @@ function ScreenBuilderDrawer({ open, onClose }){
         </SBSection>
 
         <SBSection n="05" title="Automation" hint="Set by your Style choice in step 04 — the two always match." {...sec("05")}>
-          <div style={{border:"1px solid #bfdbfe",background:"#f4f8ff",borderRadius:6,padding:"12px 14px",display:"flex",flexDirection:"column",gap:4}}>
+          <div style={{border:`1px solid ${SB_SELB}`,background:SB_SEL,borderRadius:6,padding:"12px 14px",display:"flex",flexDirection:"column",gap:4}}>
             <span style={{font:"500 13px/18px Roboto",color:SB_INK}}>{({full:"Automation (AT) Status row below the summary box",box:"Automation lives inside the summary box",none:"No automation on this screen"})[s.automation]}</span>
             <span style={{font:"400 12px/17px Roboto",color:SB_MUTED}}>Because you picked <b style={{color:SB_INK,fontWeight:500}}>Style {s.summaryStyle}</b> in step 04. Change step 04 to change this.</span>
           </div>
@@ -1100,7 +1116,7 @@ function ScreenBuilderDrawer({ open, onClose }){
         </SBSection>
 
         <SBSection n="06" title="Row click behaviour" hint="The table shows one line per record — this step decides what happens when the user clicks that line's first column. Pick one of three." {...sec("06")}>
-          <div style={{border:`1px solid ${SB_LINE}`,background:"#f8fafc",borderRadius:6,padding:"10px 12px",font:"400 12px/18px Roboto",color:SB_MUTED}}>
+          <div style={{border:`1px solid ${SB_LINE}`,background:SB_BG2,borderRadius:6,padding:"10px 12px",font:"400 12px/18px Roboto",color:SB_MUTED}}>
             This is separate from the row’s Action cell (“{s.actionTarget}”, step 02) and from the expand caret — a row can have all three.
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
@@ -1112,7 +1128,7 @@ function ScreenBuilderDrawer({ open, onClose }){
           </div>
           {s.target==="drawer" && <SBField label="Sidebar fields" hint="comma-separated, in order"><SBText value={s.drawerFields} onChange={v=>set("drawerFields",v)} /></SBField>}
           {s.target==="navigate" && (
-            <div style={{border:"1px solid #bfdbfe",background:"#f4f8ff",borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{border:`1px solid ${SB_SELB}`,background:SB_SEL,borderRadius:6,padding:12,display:"flex",flexDirection:"column",gap:10}}>
               <SBField label="Which screen does it open"><SBSelect value={s.navScreen} onChange={v=>set("navScreen",v)} options={SB_NAV_SCREENS.map(x=>x.id)} /></SBField>
               <div style={{font:"400 11px/15px Roboto",color:SB_MUTED}}>{(SB_NAV_SCREENS.find(x=>x.id===s.navScreen)||{}).blurb}</div>
               {s.navScreen==="new-screen" && <SBField label="Describe the new screen"><SBArea value={s.navNewScreenNote} onChange={v=>set("navNewScreenNote",v)} rows={2} placeholder="What it shows, which sections, which data…" /></SBField>}
@@ -1166,29 +1182,30 @@ function ScreenBuilderDrawer({ open, onClose }){
         <div style={{height:12}}></div>
       </div>
       ) : (
-      <div className="ws-scrollbody" style={{flex:1,overflowY:"auto",background:"#f8fafc",padding:20}}>
-        <div style={{background:"#fff",border:`1px solid ${SB_LINE}`,borderRadius:6,padding:16}}>
+      <div className="ws-scrollbody" style={{flex:1,overflowY:"auto",overflowX:"hidden",colorScheme:SB_DARK?"dark":"light",background:SB_BG2,padding:20}}>
+        <div style={{background:SB_BG,border:`1px solid ${SB_LINE}`,borderRadius:6,padding:16}}>
           <pre style={{margin:0,whiteSpace:"pre-wrap",wordBreak:"break-word",font:"400 11.5px/17px ui-monospace,Menlo,Consolas,monospace",color:SB_INK}}>{prompt}</pre>
         </div>
       </div>
       )}
 
-      <div style={{flexShrink:0,borderTop:`1px solid ${SB_LINE}`,background:"#fff",padding:"12px 20px",display:"flex",alignItems:"center",gap:10}}>
+      <div style={{flexShrink:0,borderTop:`1px solid ${SB_LINE}`,background:SB_BG,padding:"12px 20px",display:"flex",alignItems:"center",gap:10}}>
         {view==="form" ? (<React.Fragment>
-          <button onClick={()=>setS(SB_DEFAULT)} style={{background:"#fff",border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_MUTED,cursor:"pointer"}}>Reset</button>
-          {openSec!==lastStep && <button onClick={()=>setView("prompt")} style={{background:"#fff",border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_BLUE,cursor:"pointer"}}>Give a Prompt now</button>}
+          <button onClick={()=>setS(SB_DEFAULT)} style={{background:SB_BG,border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_MUTED,cursor:"pointer"}}>Reset</button>
+          {openSec!==lastStep && <button onClick={()=>setView("prompt")} style={{background:SB_BG,border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_BLUE,cursor:"pointer"}}>Create the Prompt now</button>}
           {openSec===lastStep
-            ? <button onClick={()=>setView("prompt")} style={{marginLeft:"auto",background:SB_BLUE,border:"none",borderRadius:4,padding:"9px 18px",font:"500 13px Roboto",color:"#fff",cursor:"pointer"}}>Give a Prompt →</button>
-            : <button onClick={()=>{ const i=SB_STEPS.findIndex(x=>x.n===openSec); goSec((SB_STEPS[i+1]||SB_STEPS[0]).n); }} style={{marginLeft:"auto",background:SB_BLUE,border:"none",borderRadius:4,padding:"9px 18px",font:"500 13px Roboto",color:"#fff",cursor:"pointer"}}>Next →</button>}
+            ? <button onClick={()=>setView("prompt")} style={{marginLeft:"auto",background:SB_BLUE,border:"none",borderRadius:4,padding:"9px 18px",font:"500 13px Roboto",color:"#fff",cursor:"pointer"}}>Create the Prompt →</button>
+            : <button onClick={()=>{ const i={SB_STEPS}.findIndex(x=>x.n===openSec); goSec((SB_STEPS[i+1]||SB_STEPS[0]).n); }} style={{marginLeft:"auto",background:SB_BLUE,border:"none",borderRadius:4,padding:"9px 18px",font:"500 13px Roboto",color:"#fff",cursor:"pointer",whiteSpace:"nowrap"}}>Next →</button>}
         </React.Fragment>) : (<React.Fragment>
-          <button onClick={()=>setView("form")} style={{background:"#fff",border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_INK,cursor:"pointer"}}>← Back to edit</button>
+          <button onClick={()=>setView("form")} style={{background:SB_BG,border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_INK,cursor:"pointer"}}>← Back to edit</button>
           <span style={{font:"400 12px/16px Roboto",color:SB_MUTED}}>{prompt.length.toLocaleString()} characters</span>
-          <button onClick={download} style={{marginLeft:"auto",background:"#fff",border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_INK,cursor:"pointer"}}>Download .md</button>
+          <button onClick={download} style={{marginLeft:"auto",background:SB_BG,border:`1px solid ${SB_LINE}`,borderRadius:4,padding:"9px 14px",font:"400 13px Roboto",color:SB_INK,cursor:"pointer"}}>Download .md</button>
           <button onClick={copy} style={{background:copied?"#16a34a":SB_BLUE,border:"none",borderRadius:4,padding:"9px 18px",font:"500 13px Roboto",color:"#fff",cursor:"pointer",minWidth:132}}>{copied?"Copied ✓":"Copy prompt"}</button>
+          {embedded && <button onClick={()=>window.dispatchEvent(new CustomEvent("neos-sb-execute",{detail:{prompt}}))} style={{background:"#16a34a",border:"none",borderRadius:4,padding:"9px 18px",font:"500 13px Roboto",color:"#fff",cursor:"pointer"}}>Execute the Prompt</button>}
         </React.Fragment>)}
       </div>
     </div>
-  </React.Fragment>);
+  </Wrap>);
 }
 
 if (typeof window !== "undefined") { window.ScreenBuilderDrawer = ScreenBuilderDrawer; window.sbBuildPrompt = sbBuildPrompt; }
