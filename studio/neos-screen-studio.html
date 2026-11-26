@@ -66,7 +66,7 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
                   <span style="font:500 13px/18px Roboto;color:#1C2D42;word-break:break-all">{{ fi.name }}</span>
                   <span style="font:400 11px Roboto;color:#6A717D">{{ fi.sub }}</span>
                 </span>
-              </button><button onClick="{{ fi.members }}" title="Edit collaborators" style="flex:none;background:transparent;border:none;padding:0 12px;font:500 11px Roboto;color:#1677FF;cursor:pointer;visibility:{{ fi.memVis }}">Collaborators</button></div>
+              </button><button onClick="{{ fi.dup }}" title="Duplicate project" style="flex:none;background:transparent;border:none;padding:0 6px 0 10px;font:500 11px Roboto;color:#1677FF;cursor:pointer">Duplicate</button><button onClick="{{ fi.members }}" title="Edit collaborators" style="flex:none;background:transparent;border:none;padding:0 12px;font:500 11px Roboto;color:#1677FF;cursor:pointer;visibility:{{ fi.memVis }}">Collaborators</button></div>
             </sc-for>
             <div style="border-top:1px solid #E8E9EA;background:#FAFBFC;padding:10px 14px;display:flex;flex-direction:column;gap:6px">
               <span style="font:500 12px Roboto;color:#1C2D42">New project</span>
@@ -90,115 +90,9 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
             <div style="position:absolute;right:0;top:calc(100% + 6px);z-index:60;width:250px;background:#fff;border:1px solid #E8E9EA;border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.3);overflow:hidden;display:flex;flex-direction:column">
               <button onClick="{{ newChatMenu }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">New chat</span><span style="font:400 11px Roboto;color:#6A717D">Clears the conversation; versions stay</span></button>
               
-              <button onClick="{{ openDesign }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Design system {{ dsCount }}</span><span style="font:400 11px Roboto;color:#6A717D">Figma frames, uploads and rules</span></button>
-              <button onClick="{{ openGit }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Git</span><span style="font:400 11px Roboto;color:#6A717D">{{ gitMenuSub }}</span></button>
-              <button onClick="{{ openSettings }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Settings</span><span style="font:400 11px Roboto;color:#6A717D">Editor layout, model, keys</span></button>
-              
-              <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openUsers }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Users</span><span style="font:400 11px Roboto;color:#6A717D">Who can sign in to Screen Studio</span></button></sc-if>
-              <button onClick="{{ signOut }}" style="text-align:left;background:#fff;border:none;border-bottom:1px solid #EEF0F3;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Sign out</span><span style="font:400 11px Roboto;color:#6A717D">{{ authName }}</span></button>
-              <label style="padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Load build</span><span style="font:400 11px Roboto;color:#6A717D">{{ headSub }}</span><input type="file" accept=".html,text/html" onChange="{{ onLoadBuild }}" style="display:none" /></label>
+              <button onClick="{{ openAccount }}" style="text-align:left;background:#fff;border:none;padding:9px 14px;display:flex;flex-direction:column;gap:1px;cursor:pointer" style-hover="background:#F5F9FF"><span style="font:500 13px Roboto;color:#1C2D42">Settings</span><span style="font:400 11px Roboto;color:#6A717D">Account, Claude, Git, design system</span></button>
             </div>
           </sc-if>
-          <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
-          <div onClick="{{ closePops }}" style="position:fixed;inset:0;z-index:59"></div>
-          <div style="position:absolute;right:0;top:calc(100% + 6px);z-index:60;width:360px;background:#fff;color:#3A424A;border:1px solid #E8E9EA;border-radius:8px;box-shadow:0 12px 32px rgba(6,17,33,.24);padding:16px;display:flex;flex-direction:column;gap:16px">
-            
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="font:500 13px Roboto;color:#1C2D42">Model</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #D8D8D8;border-radius:4px;overflow:hidden">
-                <button onClick="{{ setSonnet }}" style="background:{{ sonnetBg }};color:{{ sonnetColor }};border:none;padding:7px 0;font:500 13px Roboto;cursor:pointer">Sonnet 4.5</button>
-                <button onClick="{{ setHaiku }}" style="background:{{ haikuBg }};color:{{ haikuColor }};border:none;border-left:1px solid #D8D8D8;padding:7px 0;font:500 13px Roboto;cursor:pointer">Haiku 4.5</button>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <div style="font:500 13px Roboto;color:#1C2D42">Share links</div>
-              <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 10px;align-items:center;font:500 12px Roboto;color:#3A424A">
-                <span>Link address</span><input value="{{ pagesUrl }}" onChange="{{ onPagesUrl }}" placeholder="https://owner.github.io/repo/" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-                <span>Token</span><input type="password" value="{{ pagesToken }}" onChange="{{ onPagesToken }}" placeholder="github_pat_…" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-                <span>Pages repo</span><input value="{{ pagesRepo }}" onChange="{{ onPagesRepo }}" placeholder="owner/repo" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-                <span>Branch</span><input value="{{ pagesBranch }}" onChange="{{ onPagesBranch }}" placeholder="main" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-              </div>
-              <div style="font:400 11px/16px Roboto;color:#6A717D">Used by Share link. Separate from the Git panel token.</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="display:flex;align-items:center;gap:8px">
-                <div style="font:500 13px Roboto;color:#1C2D42">Claude access</div>
-                <div style="font:500 12px Roboto;color:{{ connColor }};margin-left:auto">{{ connLabel }}</div>
-              </div>
-              <div style="display:flex;border:1px solid #D8D8D8;border-radius:4px;overflow:hidden">
-                <button onClick="{{ setModeKey }}" style="flex:1;border:none;padding:6px 8px;font:500 12px Roboto;cursor:pointer;background:{{ modeKeyBg }};color:{{ modeKeyColor }}">Anthropic API key</button>
-                <button onClick="{{ setModeOauth }}" style="flex:1;border:none;border-left:1px solid #D8D8D8;padding:6px 8px;font:500 12px Roboto;cursor:pointer;background:{{ modeOauthBg }};color:{{ modeOauthColor }}">Claude OAuth token</button>
-              </div>
-              <sc-if value="{{ isKeyMode }}" hint-placeholder-val="{{ true }}">
-                <input type="password" value="{{ apiKey }}" onChange="{{ onKey }}" placeholder="sk-ant-api…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
-                <div style="font:400 12px/16px Roboto;color:#6A717D">Only needed outside this workspace, such as on a NEOS server. Stays in this browser.</div>
-              </sc-if>
-              <sc-if value="{{ isOauthMode }}" hint-placeholder-val="{{ false }}">
-                <input type="password" value="{{ oauthToken }}" onChange="{{ onOauth }}" placeholder="sk-ant-oat…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
-                <div style="font:400 12px/16px Roboto;color:#6A717D">Token created with Claude (claude setup-token). Stays in this browser. Anthropic may restrict these tokens to Claude Code and reject them here. If chat fails, switch back to an API key.</div>
-              </sc-if>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="font:500 13px Roboto;color:#1C2D42">Figma personal access token</div>
-              <input type="password" value="{{ figmaToken }}" onChange="{{ onFigmaToken }}" placeholder="figd_…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;border-top:1px solid #EEF0F3;padding-top:14px">
-              <div style="display:flex;flex-direction:column;min-width:0;flex:1">
-                <div style="font:500 13px Roboto;color:#1C2D42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ buildLabel }}</div>
-                <div style="font:400 12px Roboto;color:{{ buildStatusColor }}">{{ buildStatus }}</div>
-              </div>
-              <label style="flex:none;background:#fff;color:#3A424A;border:1px solid #D8D8D8;border-radius:4px;padding:5px 10px;font:500 12px Roboto;cursor:pointer;white-space:nowrap">Load build<input type="file" accept=".html,text/html" onChange="{{ onLoadBuild }}" style="display:none" /></label>
-            </div>
-          </div>
-        </sc-if>
-          <sc-if value="{{ gitOpen }}" hint-placeholder-val="{{ false }}">
-          <div onClick="{{ closePops }}" style="position:fixed;inset:0;z-index:59"></div>
-          <div style="position:absolute;right:0;top:calc(100% + 6px);z-index:60;box-sizing:border-box;width:min(360px, calc(100vw - 24px));max-height:calc(100vh - 64px);overflow-y:auto;background:#fff;color:#3A424A;border:1px solid #E8E9EA;border-radius:8px;box-shadow:0 12px 32px rgba(6,17,33,.24);padding:16px;display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;flex-direction:column;gap:2px">
-              <div style="font:500 14px Roboto;color:#1C2D42">Save to GitHub</div>
-              <div style="font:400 12px/17px Roboto;color:#6A717D">Each version becomes a commit on a separate work branch, never directly on the base branch. Open a pull request when you're ready to merge.</div>
-              <a href="https://vikram-e5.github.io/screen-studio/studio/neos-screen-studio.html" target="_blank" rel="noopener" style="margin-top:4px;font:400 12px/16px Menlo,Consolas,monospace;color:#1677FF;text-decoration:none;word-break:break-all">https://vikram-e5.github.io/screen-studio/studio/neos-screen-studio.html</a>
-            </div>
-            <button onClick="{{ publishStudio }}" style="background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:9px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ studioBtnLabel }}</button>
-            <div style="font:400 11px/16px Roboto;color:#6A717D;margin-top:-4px">Pushes this studio, both index files and every screen file to Vikram-e5/screen-studio on main. Same link every time. Keys are removed (GitHub blocks them); add them once in Settings on the link.</div>
-            <sc-if value="{{ hasStudioMsg }}" hint-placeholder-val="{{ false }}">
-              <div style="font:400 12px/17px Roboto;color:{{ studioMsgColor }};word-break:break-word;margin-top:-4px">{{ studioMsg }}</div>
-            </sc-if>
-            <div style="height:1px;background:#EEF0F3"></div>
-            <button type="button" onClick="{{ toggleGitCfg }}" aria-expanded="{{ gitCfgOpen }}" style="display:flex;align-items:center;gap:6px;background:transparent;border:none;padding:0;cursor:pointer;font:500 12px Roboto;color:#1C2D42;text-align:left">
-              <span style="display:inline-flex;transition:transform .15s;transform:{{ gitCfgChev }};color:#6A717D;font-size:9px">▶</span>
-              <span>Git settings for Screen Studio</span>
-            </button>
-            <sc-if value="{{ gitCfgOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 10px;align-items:center;font:500 12px Roboto;color:#3A424A">
-              <span>Token</span><input type="password" value="{{ gitToken }}" onChange="{{ onGitToken }}" placeholder="github_pat_…" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-              <span>Repository</span><input value="{{ gitRepo }}" onChange="{{ onGitRepo }}" placeholder="owner/repo" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-              <span>Base branch</span><input value="{{ gitBase }}" onChange="{{ onGitBase }}" placeholder="main" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-              <span>Work branch</span><input value="{{ gitBranch }}" onChange="{{ onGitBranch }}" placeholder="neos-studio/…" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-              <span>Folder</span><input value="{{ gitPath }}" onChange="{{ onGitPath }}" placeholder="path/in/repo (optional)" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
-            </div>
-            <div style="font:400 11px/16px Roboto;color:#6A717D">Use a fine-grained token with Contents and Pull requests set to read and write, for this repository only. It stays in this browser.</div>
-            <button onClick="{{ toggleGitAuto }}" style="display:flex;align-items:center;gap:10px;background:transparent;border:none;padding:0;cursor:pointer;text-align:left">
-              <span style="width:32px;height:18px;border-radius:9px;background:{{ gitAutoTrack }};position:relative;flex:none"><span style="position:absolute;top:2px;left:{{ gitAutoKnob }};width:14px;height:14px;border-radius:7px;background:#fff"></span></span>
-              <span style="font:400 13px Roboto;color:#3A424A">Commit every version automatically</span>
-            </button>
-            <div style="display:flex;gap:8px">
-              <button onClick="{{ gitCommitNow }}" style="flex:1;background:#fff;color:#1677FF;border:1px solid #1677FF;border-radius:4px;padding:7px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ gitCommitLabel }}</button>
-              <button onClick="{{ gitOpenPR }}" style="flex:1;background:#fff;color:#1677FF;border:1px solid #1677FF;border-radius:4px;padding:7px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ gitPRLabel }}</button>
-            </div>
-            </sc-if>
-            <sc-if value="{{ hasGitMsg }}" hint-placeholder-val="{{ false }}">
-              <div style="font:400 12px/17px Roboto;color:{{ gitMsgColor }};word-break:break-word">{{ gitMsg }}</div>
-            </sc-if>
-            <sc-if value="{{ hasGitLinks }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;flex-wrap:wrap;gap:12px;font:500 12px Roboto">
-                <sc-for list="{{ gitLinks }}" as="l" hint-placeholder-count="0">
-                  <a href="{{ l.href }}" target="_blank" rel="noopener" style="color:#1677FF;text-decoration:none">{{ l.label }}</a>
-                </sc-for>
-              </div>
-            </sc-if>
-          </div>
-        </sc-if>
         </div>
         <sc-if value="{{ isFloat }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ toggleCollapse }}" title="{{ collapseLabel }}" style="background:transparent;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:3px 9px;font:500 12px Roboto;cursor:pointer;white-space:nowrap">{{ collapseLabel }}</button>
@@ -590,50 +484,120 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
     </div>
   </sc-if>
 
-  <sc-if value="{{ usersOpen }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:70;background:rgba(6,17,33,.45);display:flex;align-items:center;justify-content:center;padding:24px">
-      <div onClick="{{ stop }}" style="width:min(560px,100%);max-height:100%;background:#fff;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 48px rgba(6,17,33,.35)">
-        <div style="flex:none;height:52px;display:flex;align-items:center;gap:10px;padding:0 12px 0 20px;background:linear-gradient(rgb(44,60,80) 0%, #1F1F1E 100%);color:#fff">
-          <div style="font:500 16px Roboto">Users</div>
-          <div style="font:400 12px Roboto;color:rgba(255,255,255,.7)">Stored in {{ usersFileLabel }}</div>
-          <button onClick="{{ closeModal }}" title="Close" style="margin-left:auto;width:32px;height:32px;background:transparent;border:none;color:#fff;cursor:pointer;border-radius:4px;font:400 18px Roboto" style-hover="background:rgba(255,255,255,.12)">×</button>
-        </div>
-        <div style="overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
-          <div style="display:flex;flex-direction:column;border:1px solid #E8E9EA;border-radius:6px">
-            <sc-for list="{{ userRows }}" as="u" hint-placeholder-count="1">
-              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid #EEF0F3">
-                <span style="font:500 13px Roboto;color:#1C2D42;flex:1">{{ u.name }}</span>
-                <span style="font:400 12px Roboto;color:#6A717D">{{ u.role }}</span>
-                <button onClick="{{ u.remove }}" style="background:#fff;border:1px solid #FFA39E;color:#CF1322;border-radius:4px;padding:2px 10px;font:400 12px Roboto;cursor:pointer;visibility:{{ u.rmVis }}">Remove</button>
-              </div>
-            </sc-for>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="font:500 13px Roboto;color:#1C2D42">Add or reset a user</div>
-            <div style="display:flex;gap:8px"><input type="text" value="{{ newUName }}" onChange="{{ onNewUName }}" placeholder="Username" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto;min-width:0;flex:1" /><input type="password" value="{{ newUPass }}" onChange="{{ onNewUPass }}" placeholder="Password (8+ characters)" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto;min-width:0;flex:1" /></div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <select onChange="{{ onNewURole }}" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto"><option value="user">user</option><option value="admin">admin</option></select>
-              <button onClick="{{ addUser }}" style="margin-left:auto;background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:7px 16px;font:500 13px Roboto;cursor:pointer">{{ usersBtn }}</button>
-            </div>
-            <div style="font:400 12px/17px Roboto;color:{{ usersMsgColor }}">{{ usersMsg }}</div>
-            <div style="font:400 11px/16px Roboto;color:#6A717D">Saving needs a GitHub token in Settings → Share links. Passwords are salted and hashed. Adding the username admin replaces the built-in super admin password.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </sc-if>
 
-  <sc-if value="{{ designOpen }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:70;background:rgba(6,17,33,.45);display:flex;align-items:center;justify-content:center;padding:24px">
-      <div onClick="{{ stop }}" style="width:min(1100px,100%);height:min(820px,100%);background:#F5F7FA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 48px rgba(6,17,33,.35)">
-        <div style="flex:none;height:52px;display:flex;align-items:center;gap:10px;padding:0 12px 0 20px;background:linear-gradient(rgb(44,60,80) 0%, #1F1F1E 100%);color:#fff">
-          <div style="font:500 16px Roboto">Design system</div>
-          <div style="font:400 12px Roboto;color:rgba(255,255,255,.7)">{{ libSummary }}</div>
-          <button onClick="{{ closeModal }}" title="Close" style="margin-left:auto;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#fff;cursor:pointer;border-radius:4px" style-hover="background:rgba(255,255,255,.12)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg>
-          </button>
+  <sc-if value="{{ stgOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.4)"></div>
+    <div style="position:fixed;inset:0;z-index:71;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none">
+      <div style="pointer-events:auto;width:min(940px,100%);height:min(720px,100%);background:#fff;color:#3A424A;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 48px rgba(0,0,0,.28)">
+        <div style="flex:none;height:56px;display:flex;align-items:center;padding:0 14px 0 20px;border-bottom:1px solid #EEF0F3">
+          <div style="font:500 16px Roboto;color:#1C2D42">Settings</div>
+          <button onClick="{{ closeModal }}" title="Close" style="margin-left:auto;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#3A424A;cursor:pointer;border-radius:6px" style-hover="background:#F1F3F6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg></button>
         </div>
-        <div style="flex:1;min-height:0;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:20px">
+        <div style="flex:1;min-height:0;display:flex">
+          <div style="flex:none;width:210px;box-sizing:border-box;border-right:1px solid #EEF0F3;padding:14px;display:flex;flex-direction:column;gap:2px;overflow:auto">
+            <button onClick="{{ stgGo_account }}" style="display:flex;align-items:center;gap:10px;width:100%;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;font:400 14px Roboto;color:#1C2D42;background:{{ stgBg_account }}" style-hover="background:#F1F3F6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path></svg>Account</button>
+            <div style="height:1px;background:#EEF0F3;margin:8px 4px"></div>
+            <button onClick="{{ stgGo_claude }}" style="display:flex;align-items:center;gap:10px;width:100%;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;font:400 14px Roboto;color:#1C2D42;background:{{ stgBg_claude }}" style-hover="background:#F1F3F6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg>Claude</button>
+            <button onClick="{{ stgGo_git }}" style="display:flex;align-items:center;gap:10px;width:100%;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;font:400 14px Roboto;color:#1C2D42;background:{{ stgBg_git }}" style-hover="background:#F1F3F6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="8" r="2"></circle><path d="M6 8v8M18 10c0 4-6 3-12 6"></path></svg>Git</button>
+            <button onClick="{{ stgGo_design }}" style="display:flex;align-items:center;gap:10px;width:100%;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;font:400 14px Roboto;color:#1C2D42;background:{{ stgBg_design }}" style-hover="background:#F1F3F6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><circle cx="16.5" cy="16.5" r="3.5"></circle></svg>Design system</button>
+            <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column">
+              <div style="height:1px;background:#EEF0F3;margin:8px 4px"></div>
+              <button onClick="{{ stgGo_users }}" style="display:flex;align-items:center;gap:10px;width:100%;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;font:400 14px Roboto;color:#1C2D42;background:{{ stgBg_users }}" style-hover="background:#F1F3F6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"></path><path d="M17 5.5a3 3 0 010 5.8M18.5 14.8c1.5.7 2.5 2.2 2.5 4.2"></path></svg>Users</button>
+            </div></sc-if>
+          </div>
+          <div style="flex:1;min-width:0;overflow:auto;padding:20px 28px 28px;background:#fff">
+            <sc-if value="{{ stgTab_account }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:16px"><div style="font:500 16px Roboto;color:#1C2D42;margin-bottom:4px">Profile</div><div style="display:flex;align-items:center;gap:12px;padding:6px 0 14px;border-bottom:1px solid #EEF0F3"><span style="width:40px;height:40px;border-radius:20px;background:#1F6F43;color:#fff;display:flex;align-items:center;justify-content:center;font:500 14px Roboto">{{ stgInitials }}</span><div style="display:flex;flex-direction:column"><span style="font:500 14px Roboto;color:#1C2D42">{{ authName }}</span><span style="font:400 12px Roboto;color:#6A717D">{{ stgRole }}</span></div><button onClick="{{ signOut }}" style="margin-left:auto;background:#F1F3F6;border:none;border-radius:8px;padding:7px 14px;font:500 13px Roboto;color:#1C2D42;cursor:pointer" style-hover="background:#E8E9EA">Sign out</button></div><div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #EEF0F3"><span style="font:400 14px Roboto;color:#1C2D42">Username</span><span style="margin-left:auto;font:400 14px Roboto;color:#6A717D">{{ authName }}</span></div><div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #EEF0F3"><span style="font:400 14px Roboto;color:#1C2D42">Role</span><span style="margin-left:auto;font:400 14px Roboto;color:#6A717D">{{ stgRole }}</span></div><div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #EEF0F3"><span style="font:400 14px Roboto;color:#1C2D42">Signed in until</span><span style="margin-left:auto;font:400 14px Roboto;color:#6A717D">{{ stgExp }}</span></div><div style="font:500 16px Roboto;color:#1C2D42;margin:18px 0 -4px">Build</div><div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #EEF0F3"><span style="font:400 14px Roboto;color:#1C2D42">Current build</span><span style="margin-left:auto;font:400 14px Roboto;color:#6A717D">{{ headSub }}</span></div><div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #EEF0F3"><span style="font:400 14px Roboto;color:#1C2D42">Load build from an .html file</span><label style="margin-left:auto;background:#F1F3F6;border-radius:8px;padding:7px 14px;font:500 13px Roboto;color:#1C2D42;cursor:pointer">Choose file<input type="file" accept=".html,text/html" onChange="{{ onLoadBuild }}" style="display:none" /></label></div></div></sc-if>
+            <sc-if value="{{ stgTab_claude }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:16px"><div style="font:500 16px Roboto;color:#1C2D42;margin-bottom:4px">Claude</div>            
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 13px Roboto;color:#1C2D42">Model</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #D8D8D8;border-radius:4px;overflow:hidden">
+                <button onClick="{{ setSonnet }}" style="background:{{ sonnetBg }};color:{{ sonnetColor }};border:none;padding:7px 0;font:500 13px Roboto;cursor:pointer">Sonnet 4.5</button>
+                <button onClick="{{ setHaiku }}" style="background:{{ haikuBg }};color:{{ haikuColor }};border:none;border-left:1px solid #D8D8D8;padding:7px 0;font:500 13px Roboto;cursor:pointer">Haiku 4.5</button>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font:500 13px Roboto;color:#1C2D42">Share links</div>
+              <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 10px;align-items:center;font:500 12px Roboto;color:#3A424A">
+                <span>Link address</span><input value="{{ pagesUrl }}" onChange="{{ onPagesUrl }}" placeholder="https://owner.github.io/repo/" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+                <span>Token</span><input type="password" value="{{ pagesToken }}" onChange="{{ onPagesToken }}" placeholder="github_pat_…" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+                <span>Pages repo</span><input value="{{ pagesRepo }}" onChange="{{ onPagesRepo }}" placeholder="owner/repo" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+                <span>Branch</span><input value="{{ pagesBranch }}" onChange="{{ onPagesBranch }}" placeholder="main" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+              </div>
+              <div style="font:400 11px/16px Roboto;color:#6A717D">Used by Share link. Separate from the Git panel token.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="font:500 13px Roboto;color:#1C2D42">Claude access</div>
+                <div style="font:500 12px Roboto;color:{{ connColor }};margin-left:auto">{{ connLabel }}</div>
+              </div>
+              <div style="display:flex;border:1px solid #D8D8D8;border-radius:4px;overflow:hidden">
+                <button onClick="{{ setModeKey }}" style="flex:1;border:none;padding:6px 8px;font:500 12px Roboto;cursor:pointer;background:{{ modeKeyBg }};color:{{ modeKeyColor }}">Anthropic API key</button>
+                <button onClick="{{ setModeOauth }}" style="flex:1;border:none;border-left:1px solid #D8D8D8;padding:6px 8px;font:500 12px Roboto;cursor:pointer;background:{{ modeOauthBg }};color:{{ modeOauthColor }}">Claude OAuth token</button>
+              </div>
+              <sc-if value="{{ isKeyMode }}" hint-placeholder-val="{{ true }}">
+                <input type="password" value="{{ apiKey }}" onChange="{{ onKey }}" placeholder="sk-ant-api…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
+                <div style="font:400 12px/16px Roboto;color:#6A717D">Only needed outside this workspace, such as on a NEOS server. Stays in this browser.</div>
+              </sc-if>
+              <sc-if value="{{ isOauthMode }}" hint-placeholder-val="{{ false }}">
+                <input type="password" value="{{ oauthToken }}" onChange="{{ onOauth }}" placeholder="sk-ant-oat…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
+                <div style="font:400 12px/16px Roboto;color:#6A717D">Token created with Claude (claude setup-token). Stays in this browser. Anthropic may restrict these tokens to Claude Code and reject them here. If chat fails, switch back to an API key.</div>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 13px Roboto;color:#1C2D42">Figma personal access token</div>
+              <input type="password" value="{{ figmaToken }}" onChange="{{ onFigmaToken }}" placeholder="figd_…" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto" />
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;border-top:1px solid #EEF0F3;padding-top:14px">
+              <div style="display:flex;flex-direction:column;min-width:0;flex:1">
+                <div style="font:500 13px Roboto;color:#1C2D42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ buildLabel }}</div>
+                <div style="font:400 12px Roboto;color:{{ buildStatusColor }}">{{ buildStatus }}</div>
+              </div>
+              <label style="flex:none;background:#fff;color:#3A424A;border:1px solid #D8D8D8;border-radius:4px;padding:5px 10px;font:500 12px Roboto;cursor:pointer;white-space:nowrap">Load build<input type="file" accept=".html,text/html" onChange="{{ onLoadBuild }}" style="display:none" /></label>
+            </div></div></sc-if>
+            <sc-if value="{{ stgTab_git }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:16px"><div style="font:500 16px Roboto;color:#1C2D42;margin-bottom:4px">Git</div>            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="font:500 14px Roboto;color:#1C2D42">Save to GitHub</div>
+              <div style="font:400 12px/17px Roboto;color:#6A717D">Each version becomes a commit on a separate work branch, never directly on the base branch. Open a pull request when you're ready to merge.</div>
+              <a href="https://vikram-e5.github.io/screen-studio/studio/neos-screen-studio.html" target="_blank" rel="noopener" style="margin-top:4px;font:400 12px/16px Menlo,Consolas,monospace;color:#1677FF;text-decoration:none;word-break:break-all">https://vikram-e5.github.io/screen-studio/studio/neos-screen-studio.html</a>
+            </div>
+            <button onClick="{{ publishStudio }}" style="background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:9px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ studioBtnLabel }}</button>
+            <div style="font:400 11px/16px Roboto;color:#6A717D;margin-top:-4px">Pushes this studio, both index files and every screen file to Vikram-e5/screen-studio on main. Same link every time. Keys are removed (GitHub blocks them); add them once in Settings on the link.</div>
+            <sc-if value="{{ hasStudioMsg }}" hint-placeholder-val="{{ false }}">
+              <div style="font:400 12px/17px Roboto;color:{{ studioMsgColor }};word-break:break-word;margin-top:-4px">{{ studioMsg }}</div>
+            </sc-if>
+            <div style="height:1px;background:#EEF0F3"></div>
+            <button type="button" onClick="{{ toggleGitCfg }}" aria-expanded="{{ gitCfgOpen }}" style="display:flex;align-items:center;gap:6px;background:transparent;border:none;padding:0;cursor:pointer;font:500 12px Roboto;color:#1C2D42;text-align:left">
+              <span style="display:inline-flex;transition:transform .15s;transform:{{ gitCfgChev }};color:#6A717D;font-size:9px">▶</span>
+              <span>Git settings for Screen Studio</span>
+            </button>
+            <sc-if value="{{ gitCfgOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 10px;align-items:center;font:500 12px Roboto;color:#3A424A">
+              <span>Token</span><input type="password" value="{{ gitToken }}" onChange="{{ onGitToken }}" placeholder="github_pat_…" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+              <span>Repository</span><input value="{{ gitRepo }}" onChange="{{ onGitRepo }}" placeholder="owner/repo" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+              <span>Base branch</span><input value="{{ gitBase }}" onChange="{{ onGitBase }}" placeholder="main" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+              <span>Work branch</span><input value="{{ gitBranch }}" onChange="{{ onGitBranch }}" placeholder="neos-studio/…" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+              <span>Folder</span><input value="{{ gitPath }}" onChange="{{ onGitPath }}" placeholder="path/in/repo (optional)" style="border:1px solid #D8D8D8;border-radius:4px;padding:6px 9px;font:400 13px Roboto;min-width:0" />
+            </div>
+            <div style="font:400 11px/16px Roboto;color:#6A717D">Use a fine-grained token with Contents and Pull requests set to read and write, for this repository only. It stays in this browser.</div>
+            <button onClick="{{ toggleGitAuto }}" style="display:flex;align-items:center;gap:10px;background:transparent;border:none;padding:0;cursor:pointer;text-align:left">
+              <span style="width:32px;height:18px;border-radius:9px;background:{{ gitAutoTrack }};position:relative;flex:none"><span style="position:absolute;top:2px;left:{{ gitAutoKnob }};width:14px;height:14px;border-radius:7px;background:#fff"></span></span>
+              <span style="font:400 13px Roboto;color:#3A424A">Commit every version automatically</span>
+            </button>
+            <div style="display:flex;gap:8px">
+              <button onClick="{{ gitCommitNow }}" style="flex:1;background:#fff;color:#1677FF;border:1px solid #1677FF;border-radius:4px;padding:7px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ gitCommitLabel }}</button>
+              <button onClick="{{ gitOpenPR }}" style="flex:1;background:#fff;color:#1677FF;border:1px solid #1677FF;border-radius:4px;padding:7px 10px;font:500 13px Roboto;cursor:pointer;white-space:nowrap">{{ gitPRLabel }}</button>
+            </div>
+            </sc-if>
+            <sc-if value="{{ hasGitMsg }}" hint-placeholder-val="{{ false }}">
+              <div style="font:400 12px/17px Roboto;color:{{ gitMsgColor }};word-break:break-word">{{ gitMsg }}</div>
+            </sc-if>
+            <sc-if value="{{ hasGitLinks }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-wrap:wrap;gap:12px;font:500 12px Roboto">
+                <sc-for list="{{ gitLinks }}" as="l" hint-placeholder-count="0">
+                  <a href="{{ l.href }}" target="_blank" rel="noopener" style="color:#1677FF;text-decoration:none">{{ l.label }}</a>
+                </sc-for>
+              </div>
+            </sc-if></div></sc-if>
+            <sc-if value="{{ stgTab_design }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:16px"><div style="font:500 16px Roboto;color:#1C2D42;margin-bottom:4px">Design system</div>        <div style="flex:1;min-height:0;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:20px">
           <div style="font:400 13px/20px Roboto;color:#6A717D;max-width:760px;text-wrap:pretty">Add Figma frames, screenshots or .fig files. Pinned items go to Claude with every request (turn off with DS in the chat). The rules at the bottom are always included.</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
             <div style="background:#fff;border:1px solid #E8E9EA;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px">
@@ -696,6 +660,29 @@ textarea[data-dark]::placeholder{color:rgba(255,255,255,.45)}
               <button onClick="{{ resetRules }}" style="margin-left:auto;background:#fff;color:#3A424A;border:1px solid #D8D8D8;border-radius:4px;padding:3px 10px;font:500 12px Roboto;cursor:pointer;white-space:nowrap">Reset to NEOS defaults</button>
             </div>
             <textarea value="{{ rules }}" onChange="{{ onRules }}" rows="14" style="border:1px solid #D8D8D8;border-radius:6px;padding:10px 12px;font:400 12px/18px Menlo,Consolas,monospace;color:#3A424A;resize:vertical"></textarea>
+          </div>
+        </div></div></sc-if>
+            <sc-if value="{{ stgTab_users }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:16px"><div style="font:500 16px Roboto;color:#1C2D42;margin-bottom:4px">Users</div>        <div style="overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;border:1px solid #E8E9EA;border-radius:6px">
+            <sc-for list="{{ userRows }}" as="u" hint-placeholder-count="1">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid #EEF0F3">
+                <span style="font:500 13px Roboto;color:#1C2D42;flex:1">{{ u.name }}</span>
+                <span style="font:400 12px Roboto;color:#6A717D">{{ u.role }}</span>
+                <button onClick="{{ u.remove }}" style="background:#fff;border:1px solid #FFA39E;color:#CF1322;border-radius:4px;padding:2px 10px;font:400 12px Roboto;cursor:pointer;visibility:{{ u.rmVis }}">Remove</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font:500 13px Roboto;color:#1C2D42">Add or reset a user</div>
+            <div style="display:flex;gap:8px"><input type="text" value="{{ newUName }}" onChange="{{ onNewUName }}" placeholder="Username" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto;min-width:0;flex:1" /><input type="password" value="{{ newUPass }}" onChange="{{ onNewUPass }}" placeholder="Password (8+ characters)" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto;min-width:0;flex:1" /></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select onChange="{{ onNewURole }}" style="border:1px solid #D8D8D8;border-radius:4px;padding:7px 10px;font:400 13px Roboto"><option value="user">user</option><option value="admin">admin</option></select>
+              <button onClick="{{ addUser }}" style="margin-left:auto;background:#1677FF;color:#fff;border:1px solid #1677FF;border-radius:4px;padding:7px 16px;font:500 13px Roboto;cursor:pointer">{{ usersBtn }}</button>
+            </div>
+            <div style="font:400 12px/17px Roboto;color:{{ usersMsgColor }}">{{ usersMsg }}</div>
+            <div style="font:400 11px/16px Roboto;color:#6A717D">Saving needs a GitHub token in Settings → Share links. Passwords are salted and hashed. Adding the username admin replaces the built-in super admin password.</div>
+          </div>
+        </div></div></sc-if>
           </div>
         </div>
       </div>
@@ -799,7 +786,7 @@ class Component extends DCLogic {
     let st = {};
     try { st = JSON.parse(localStorage.getItem(SS_SET) || "{}"); } catch (e) {}
     this.state = {
-      modal: null, presenting: false, zoom: 1, moreOpen: false, menuOpen: false, verOpen: false, vw: typeof innerWidth === "number" ? innerWidth : 1400, settingsOpen: false, gitOpen: false, gitBusy: false, gitMsg: "", gitErr: false, prUrl: "", gitTouched: [],
+      modal: null, presenting: false, zoom: 1, moreOpen: false, menuOpen: false, verOpen: false, stgTab: "account", vw: typeof innerWidth === "number" ? innerWidth : 1400, settingsOpen: false, gitOpen: false, gitBusy: false, gitMsg: "", gitErr: false, prUrl: "", gitTouched: [],
       gitToken: st.gitToken || SS_SHARE_TOKEN, gitRepo: "Vikram-e5/screen-studio", gitBase: "main", gitPath: "studio", gitBranch: st.gitBranch || "neos-studio/screen-studio", gitAuto: st.gitAuto !== false, dlOpen: false, attachOpen: false, boxFocus: false,
       shareOpen: false, shareMode: "random", shareName: "", shareBusy: false, shareMsg: "", shareErr: false, shareCopied: "",
       shares: (() => { try { return JSON.parse(localStorage.getItem("neos-studio-shares") || "[]"); } catch (e) { return []; } })(),
@@ -1018,6 +1005,16 @@ class Component extends DCLogic {
     this.setState({ newFileName: "", newProjMembers: "", fileMsg: "", fileOpen: false });
     this.setProjects(nf, () => { this.switchShell(id); this.saveProjects(nf); });
   }
+  duplicateProject(n) {
+    const s = this.state, f = s.htmlFiles.find(x => x.name === n), me = this.me();
+    const baseTitle = this.projTitle(n), root = f ? f.from : n;
+    const names = s.htmlFiles.map(x => (x.title || "").toLowerCase());
+    let title = baseTitle + " copy", k = 2; while (names.includes(title.toLowerCase())) title = baseTitle + " copy " + k++;
+    const id = this.nextFileName();
+    const nf = [...s.htmlFiles, { name: id, title, owner: me || "", members: [], from: root, created: Date.now() }];
+    this.setState({ fileOpen: false, fileMsg: "" });
+    this.setProjects(nf, () => { this.switchShell(id); this.saveProjects(nf); });
+  }
   editMembers(n) {
     const f = this.state.htmlFiles.find(x => x.name === n); if (!f) return;
     const v = window.prompt("Collaborators on " + (f.title || f.name) + " (usernames, comma separated):", (f.members || []).join(", "));
@@ -1104,7 +1101,7 @@ class Component extends DCLogic {
     }
     return html;
   }
-  shareFolder() { const d = new Date(); return d.getDate() + ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"][d.getMonth()]; }
+  shareFolder() { const d = new Date(); return "shared-links/" + d.getDate() + ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"][d.getMonth()]; }
   shareSlug() {
     const s = this.state;
     if (s.shareMode === "custom") return String(s.shareName || "").trim().toLowerCase().replace(/\.html?$/, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -1241,23 +1238,41 @@ class Component extends DCLogic {
         doc = r.ok ? (JSON.parse(await r.text() || "{}") || {}) : {};
       }
       this.markDeleted(Array.isArray(doc.deleted) ? {} : doc.deleted);
-      const remote = doc.links || [];
+      let remote = doc.links || [];
+      if (token) { try {
+        const rt = await this.gh("/repos/" + repo + "/git/trees/" + encodeURIComponent(branch) + "?recursive=1", { token });
+        const known = new Set(remote.map(x => x.path)), base = this.pagesBase(repo);
+        const found = (rt.tree || []).filter(x => x.type === "blob" && /^shared-links\/[^/]+\/[^/]+\.html$/.test(x.path) && !known.has(x.path)).map(x => ({ url: base + x.path, path: x.path, repo, branch, at: 0, status: "Live", label: "", notes: [] }));
+        remote = remote.concat(found);
+      } catch (e) {} }
       this.setState(x => ({ shares: this.mergeShares(remote, x.shares), sharesSync: "", sharesLoading: false }));
       remote.filter(x => x.status !== "Live").slice(0, 3).forEach(x => this.pollShare(x.url));
     } catch (e) { this.setState({ sharesSync: "", sharesLoading: false }); }
   }
-  async saveShares(retry) {
+  async saveShares() {
     const s = this.state, token = (s.pagesToken || "").trim(), repo = s.pagesRepo.trim(), branch = s.pagesBranch.trim() || "main";
     if (!token) return;
-    const body = JSON.stringify({ updated: new Date().toISOString(), deleted: Object.fromEntries(Object.entries(this.deletedUrls()).slice(-500)), links: s.shares.filter(x => x.repo === repo && !this.isDead(x)).map(x => ({ url: x.url, path: x.path, repo: x.repo, branch: x.branch, at: x.at, status: x.status === "Live" ? "Live" : "Publishing", label: x.label || "", notes: x.notes || [] })) }, null, 2);
-    try {
-      if (this.sharesSha === undefined) { const f = await this.gh("/repos/" + repo + "/contents/" + this.sharesFile() + "?ref=" + encodeURIComponent(branch), { allow404: true, token }); this.sharesSha = f ? f.sha : null; }
-      const r = await this.gh("/repos/" + repo + "/contents/" + this.sharesFile(), { method: "PUT", token, body: JSON.stringify(Object.assign({ message: "Update share links", content: this.b64(body), branch }, this.sharesSha ? { sha: this.sharesSha } : {})) });
-      this.sharesSha = r.content && r.content.sha;
-    } catch (e) {
-      if (!retry && /sha|409|conflict|does not match/i.test(e.message || "")) { this.sharesSha = undefined; await this.loadShares(); return this.saveShares(true); }
-      this.setState({ shareMsg: "Link published, but the saved list didn't update: " + (e.message || e), shareErr: true });
+    const slim = x => ({ url: x.url, path: x.path, repo: x.repo, branch: x.branch, at: x.at, status: x.status === "Live" ? "Live" : "Publishing", label: x.label || "", notes: x.notes || [] });
+    const url = "/repos/" + repo + "/contents/" + this.sharesFile();
+    let lastErr;
+    for (let i = 0; i < 4; i++) {
+      try {
+        const f = await this.gh(url + "?ref=" + encodeURIComponent(branch) + "&t=" + Date.now(), { allow404: true, token });
+        let doc = {}; try { doc = f ? (JSON.parse(this.unb64(f.content) || "{}") || {}) : {}; } catch (e) {}
+        this.markDeleted(Array.isArray(doc.deleted) ? {} : doc.deleted);
+        const merged = this.mergeShares(doc.links || [], this.state.shares).filter(x => x.repo === repo && !this.isDead(x));
+        const body = JSON.stringify({ updated: new Date().toISOString(), deleted: Object.fromEntries(Object.entries(this.deletedUrls()).slice(-500)), links: merged.map(slim) }, null, 2);
+        const r = await this.gh(url, { method: "PUT", token, body: JSON.stringify(Object.assign({ message: "Update share links", content: this.b64(body), branch }, f ? { sha: f.sha } : {})) });
+        this.sharesSha = r.content && r.content.sha;
+        this.setState(x => ({ shares: this.mergeShares(merged, x.shares) }));
+        return;
+      } catch (e) {
+        lastErr = e;
+        if (!/sha|409|422|conflict|does not match/i.test(e.message || "")) break;
+        await new Promise(r => setTimeout(r, 600 * (i + 1)));
+      }
     }
+    this.setState({ shareMsg: "Link published, but the saved list didn't update: " + (lastErr && lastErr.message || lastErr), shareErr: true });
   }
   parseShareUrl(url) {
     const m = String(url || "").trim().match(/^https?:\/\/([^.\/]+)\.github\.io\/(.+?)(?:[?#].*)?$/i);
@@ -1400,7 +1415,7 @@ class Component extends DCLogic {
   async loadBuildFile(e) {
     const f = e.target.files && e.target.files[0]; e.target.value = "";
     if (!f) return;
-    this.setState({ loadState: "loading", settingsOpen: false });
+    this.setState({ loadState: "loading", settingsOpen: false, modal: null });
     this.setBuild(await f.text(), f.name);
   }
 
@@ -1688,7 +1703,7 @@ class Component extends DCLogic {
     clearInterval(this.timer); this.timer = setInterval(() => this.setState(x => ({ tick: x.tick + 1 })), 1000);
     const commit = (label) => {
       const files = {}; Object.keys(this.work).forEach(n => { if (this.base[n] !== this.work[n]) files[n] = this.work[n]; });
-      const nv = [...this.state.versions, { label, files }];
+      const nv = [...this.state.versions, { label, files, at: Date.now() }];
       this.setState({ versions: nv, cur: nv.length - 1, selFile: "" }, () => this.refreshPreview());
       return nv.length - 1;
     };
@@ -1708,6 +1723,27 @@ class Component extends DCLogic {
       const v = this.touched.size ? commit(text.slice(0, 50) + " (partial)") : null;
       this.setState(x => ({ msgs: [...x.msgs, { role: "assistant", text: "Something went wrong: " + (e.message || e) + (v != null ? "\nEdits made before the error were saved as a version." : ""), err: true, v }] }));
     } finally { this.stopFn = null; clearInterval(this.timer); this.setState({ loading: false }); }
+  }
+  stampNice(at) { if (!at) return "no time"; const d = new Date(at); return d.getDate() + " " + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()] + ", " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+  async pushSnapshot(v) {
+    const s = this.state, ver = s.versions[v]; if (!ver) return null;
+    const repo = s.gitRepo.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, ""), work = this.gitWork();
+    const enc = b => b.split("/").map(encodeURIComponent).join("/");
+    const title = this.projTitle(s.buildName), slug = title.trim().replace(/[^\w.\- ]+/g, "").replace(/\s+/g, "-") || "project";
+    const d = new Date(ver.at || Date.now()), p2 = n => String(n).padStart(2, "0");
+    const stamp = d.getDate() + ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"][d.getMonth()] + "-" + p2(d.getHours()) + p2(d.getMinutes());
+    const ref = await this.gh("/repos/" + repo + "/git/ref/heads/" + enc(work)); const parent = ref.object.sha;
+    const pc = await this.gh("/repos/" + repo + "/git/commits/" + parent);
+    let have = []; try { const rt = await this.gh("/repos/" + repo + "/git/trees/" + pc.tree.sha + "?recursive=1"); have = (rt.tree || []).map(x => x.path); } catch (e) {}
+    let folder = slug + "/" + stamp, n = 2; while (have.some(p => p.startsWith(folder + "/"))) folder = slug + "/" + stamp + "-" + n++;
+    const all = Object.assign({}, this.base, ver.files || {});
+    const tree = Object.keys(all).filter(k => typeof all[k] === "string").map(k => ({ path: folder + "/" + k, mode: "100644", type: "blob", content: all[k] }));
+    tree.push({ path: folder + "/_version.json", mode: "100644", type: "blob", content: JSON.stringify({ project: title, version: v + 1, label: ver.label, at: new Date(ver.at || Date.now()).toISOString(), changedFiles: Object.keys(ver.files || {}) }, null, 2) });
+    const nt = await this.gh("/repos/" + repo + "/git/trees", { method: "POST", body: JSON.stringify({ base_tree: pc.tree.sha, tree }) });
+    const c = await this.gh("/repos/" + repo + "/git/commits", { method: "POST", body: JSON.stringify({ message: "Snapshot " + title + " " + stamp + ": " + ver.label + "\n\nVia NEOS Screen Studio (version " + (v + 1) + ")", tree: nt.sha, parents: [parent] }) });
+    await this.gh("/repos/" + repo + "/git/refs/heads/" + enc(work), { method: "PATCH", body: JSON.stringify({ sha: c.sha }) });
+    this.setState(x => ({ versions: x.versions.map((y, i) => i === v ? Object.assign({}, y, { snap: folder }) : y) }));
+    return folder;
   }
   gitWork() { const s = this.state; if (s.gitBranch.trim()) return s.gitBranch.trim(); const b = "neos-studio/" + new Date().toISOString().slice(0, 10); this.setState({ gitBranch: b }); return b; }
   gh(path, opt) {
@@ -1779,7 +1815,8 @@ class Component extends DCLogic {
       const r = await this.gitCommit(v);
       const url = "https://github.com/" + r.repo + "/commit/" + r.sha;
       if (v >= 0) this.setState(s => ({ versions: s.versions.map((x, i) => i === v ? Object.assign({}, x, { commit: r.sha }) : x) }));
-      const text = r.same ? "Nothing new to commit on " + r.work + "." : "Committed " + r.sha.slice(0, 7) + " to " + r.work + ".";
+      let snapNote = ""; if (v >= 0) { try { const f = await this.pushSnapshot(v); if (f) snapNote = " Source saved to " + f + "/."; } catch (e) { snapNote = " Snapshot failed: " + (e.message || e); } }
+      const text = (r.same ? "Nothing new to commit on " + r.work + "." : "Committed " + r.sha.slice(0, 7) + " to " + r.work + ".") + snapNote;
       this.setState(s => ({ gitMsg: text, gitErr: false, lastCommitUrl: r.same ? s.lastCommitUrl : url, msgs: quiet && r.same ? s.msgs : [...s.msgs, { role: "tool", text: "git: " + text.toLowerCase() }] }));
     } catch (e) {
       this.setState(s => ({ gitMsg: e.message || String(e), gitErr: true, msgs: [...s.msgs, { role: "tool", text: "git: commit failed. " + (e.message || e), warn: true }] }));
@@ -1860,18 +1897,21 @@ class Component extends DCLogic {
       versionInfo: s.cur < 0 ? "Original build" : verShort + " · " + (s.versions[s.cur] ? s.versions[s.cur].label : ""),
       changesLabel: "Changes" + (changed.length ? " (" + changed.length + ")" : ""),
       openChanges: () => this.setState(Object.assign({ modal: "changes", picking: false }, closeAll)),
-      openDesign: () => this.setState(Object.assign({ modal: "design", picking: false }, closeAll)),
+      openDesign: () => this.setState(Object.assign({ modal: "settings", stgTab: "design", picking: false }, closeAll)),
+      openAccount: () => this.setState(Object.assign({ modal: "settings", stgTab: "account", picking: false }, closeAll)),
+      stgOpen: s.modal === "settings", stgInitials: ((s.auth ? s.auth.name : "?").slice(0, 2)).toUpperCase(), stgRole: s.auth ? (s.auth.role === "admin" ? "Admin" : "User") : "", stgExp: s.auth ? new Date(s.auth.exp).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "",
+      ...Object.fromEntries(["account", "claude", "git", "design", "users"].flatMap(k => [["stgTab_" + k, s.stgTab === k], ["stgBg_" + k, s.stgTab === k ? "#E8E9EA" : "transparent"], ["stgGo_" + k, () => { this.setState({ stgTab: k }); if (k === "users") this.loadUsers(); }]])),
       closeModal: () => this.setState({ modal: null }), stop: e => e.stopPropagation(),
       locked: !s.auth, isAdmin: !!s.auth && s.auth.role === "admin", authName: s.auth ? s.auth.name : "",
       authUser: s.authUser, authPass: s.authPass, authErr: s.authErr, hasAuthErr: !!s.authErr, authBtn: s.authBusy ? "Signing in…" : "Sign in", authOpacity: s.authBusy ? .6 : 1,
       onAuthUser: e => this.setState({ authUser: e.target.value }), onAuthPass: e => this.setState({ authPass: e.target.value }), onAuthKey: e => { if (e.key === "Enter") this.login(); },
       login: () => this.login(), signOut: () => this.signOut(),
-      openUsers: () => { this.setState(Object.assign({ modal: "users" }, closeAll)); this.loadUsers(); },
-      usersOpen: s.modal === "users" && !!s.auth && s.auth.role === "admin", usersFileLabel: SS_USERS_FILE + " in " + s.pagesRepo,
+      openUsers: () => { this.setState(Object.assign({ modal: "settings", stgTab: "users" }, closeAll)); this.loadUsers(); },
+      usersFileLabel: SS_USERS_FILE + " in " + s.pagesRepo,
       userRows: (s.users.some(u => u.name === "admin") ? [] : [{ name: "admin", role: "super admin · built-in", rmVis: "hidden", remove: () => {} }]).concat(s.users.map(u => ({ name: u.name, role: u.role, rmVis: u.name === (s.auth && s.auth.name) ? "hidden" : "visible", remove: () => this.saveUsers(s.users.filter(x => x.name !== u.name), "Removed " + u.name + ".") }))),
       newUName: s.newUName, newUPass: s.newUPass, onNewUName: e => this.setState({ newUName: e.target.value }), onNewUPass: e => this.setState({ newUPass: e.target.value }), onNewURole: e => this.setState({ newURole: e.target.value }),
       addUser: () => this.addUser(), usersBtn: s.usersBusy ? "Working…" : "Save user", usersMsg: s.usersMsg, usersMsgColor: s.usersErr ? "#CF1322" : "#389E0D",
-      changesOpen: s.modal === "changes", designOpen: s.modal === "design",
+      changesOpen: s.modal === "changes",
       dsCount: s.library.length ? "(" + s.library.length + ")" : "",
       toggleDl: () => this.setState(Object.assign({}, closeAll, { dlOpen: !s.dlOpen })),
       toggleSettings: () => this.setState(Object.assign({}, closeAll, { settingsOpen: !s.settingsOpen })),
@@ -1879,7 +1919,7 @@ class Component extends DCLogic {
       closePops: () => this.setState(closeAll),
       toggleMenu: () => this.setState(Object.assign({}, closeAll, { menuOpen: !s.menuOpen })), menuOpen: s.menuOpen, menuBg: s.menuOpen ? "rgba(255,255,255,.1)" : "transparent",
       newChatMenu: () => { this.setState(closeAll); if (!s.loading) { this.lastSig = null; this.setState({ msgs: [], draft: "", atts: [], picked: null }); } },
-      openGit: () => this.setState(Object.assign({}, closeAll, { gitOpen: true })), openSettings: () => this.setState(Object.assign({}, closeAll, { settingsOpen: true })),
+      openGit: () => this.setState(Object.assign({ modal: "settings", stgTab: "git" }, closeAll)), openSettings: () => this.setState(Object.assign({ modal: "settings", stgTab: "claude" }, closeAll)),
       toggleShare: () => { if (!s.shareOpen) this.loadShares(); this.setState(Object.assign({}, closeAll, { shareOpen: !s.shareOpen, shareMsg: "", shareView: "home" })); },
       
       isShareHome: s.shareView !== "new", isShareNew: s.shareView === "new",
@@ -1924,11 +1964,11 @@ class Component extends DCLogic {
       shares: s.shares.map(x => ({ url: x.url, path: x.path, status: x.status, dot: x.status === "Live" ? "#389E0D" : x.status === "Publishing" ? "#D7A718" : "#CF1322", update: () => this.updateShare(x.url), notesLabel: (x.notes || []).length ? "View " + x.notes.length + (x.notes.length === 1 ? " release" : " releases") : "None yet", openNotes: () => this.setState({ notesOpen: true, notesItems: x.notes || [], notesTitle: x.url.replace(/^https?:\/\//, "") }), copy: () => this.copyLink(x.url), copyLabel: s.shareCopied === x.url ? "Copied" : "Copy", del: () => this.deleteShare(x) })),
       gitMenuSub: s.gitToken ? "Saving to " + (s.gitBranch || "a work branch") : "Not connected",
       toggleVer: () => this.setState(Object.assign({}, closeAll, { verOpen: !s.verOpen })), verOpen: s.verOpen, verBg: s.verOpen ? "rgba(255,255,255,.1)" : "transparent",
-      versionItems: [...s.versions.map((x, i) => ({ i, label: "v" + (i + 1) + " · " + x.label, sub: (x.commit ? "committed " + x.commit.slice(0, 7) + " · " : "") + Object.keys(x.files).length + " file(s) changed" })).reverse(), { i: -1, label: "Original · " + s.buildName, sub: "Project files as they are" }].map(x => { const on = x.i === s.cur; return { label: x.label, sub: x.sub, bg: on ? "#F0F5FF" : "#fff", dot: on ? "#1677FF" : "#D8D8D8", go: () => { this.setState({ verOpen: false }); this.setCur(x.i); } }; }),
+      versionItems: [...s.versions.map((x, i) => ({ i, label: "v" + (i + 1) + " · " + this.stampNice(x.at), sub: x.label + " · " + (x.snap ? "saved to " + x.snap + " · " : "") + (x.commit ? "committed " + x.commit.slice(0, 7) + " · " : "") + Object.keys(x.files).length + " file(s) changed" })).reverse(), { i: -1, label: "Original · " + s.buildName, sub: "Project files as they are" }].map(x => { const on = x.i === s.cur; return { label: x.label, sub: x.sub, bg: on ? "#F0F5FF" : "#fff", dot: on ? "#1677FF" : "#D8D8D8", go: () => { this.setState({ verOpen: false }); this.setCur(x.i); } }; }),
       fileName: this.projTitle(s.buildName), fileBg: s.fileOpen ? "rgba(255,255,255,.1)" : "transparent", fileOpen: s.fileOpen,
       toggleFile: () => this.setState(Object.assign({}, closeAll, { fileOpen: !s.fileOpen, fileMsg: "" })),
       verSub: s.cur < 0 ? "Project files as they are" : (s.versions[s.cur] ? s.versions[s.cur].label : ""),
-      fileItems: [{ name: "index-v2.html" }, { name: "index.html" }].concat(s.htmlFiles).filter(f => !f.owner || this.canSee(f)).map(f => { const n = f.name, on = n === s.buildName, own = f.owner ? (f.owner === this.me() ? "you" : f.owner) : ""; return { name: f.title || (n === "index.html" ? "NEOS classic" : n === "index-v2.html" ? "NEOS main" : n), sub: n + (f.owner ? " · owner " + own + ((f.members || []).length ? " · +" + f.members.length + " collaborator" + (f.members.length === 1 ? "" : "s") : "") : " · everyone") + (on ? " · " + s.versions.length + " version" + (s.versions.length === 1 ? "" : "s") : ""), bg: on ? "#F0F5FF" : "#fff", dot: on ? "#1677FF" : "#D8D8D8", memVis: f.owner && (f.owner === this.me() || (s.auth && s.auth.role === "admin")) ? "visible" : "hidden", members: () => this.editMembers(n), go: () => { this.setState({ fileOpen: false }); if (!on) this.switchShell(n); } }; }),
+      fileItems: [{ name: "index-v2.html" }, { name: "index.html" }].concat(s.htmlFiles).filter(f => !f.owner || this.canSee(f)).map(f => { const n = f.name, on = n === s.buildName, own = f.owner ? (f.owner === this.me() ? "you" : f.owner) : ""; return { name: f.title || (n === "index.html" ? "NEOS classic" : n === "index-v2.html" ? "NEOS main" : n), sub: n + (f.owner ? " · owner " + own + ((f.members || []).length ? " · +" + f.members.length + " collaborator" + (f.members.length === 1 ? "" : "s") : "") : " · everyone") + (on ? " · " + s.versions.length + " version" + (s.versions.length === 1 ? "" : "s") : ""), bg: on ? "#F0F5FF" : "#fff", dot: on ? "#1677FF" : "#D8D8D8", memVis: f.owner && (f.owner === this.me() || (s.auth && s.auth.role === "admin")) ? "visible" : "hidden", members: () => this.editMembers(n), dup: () => this.duplicateProject(n), go: () => { this.setState({ fileOpen: false }); if (!on) this.switchShell(n); } }; }),
       newFileName: s.newFileName, collabLink: this.projLink(s.buildName), selectAll: e => e.target.select(),
       copyLinkLabel: s.linkCopied ? "Copied" : "Copy link",
       copyCollabLink: () => { const url = this.projLink(s.buildName); const done = () => { this.setState({ linkCopied: true }); setTimeout(() => this.setState({ linkCopied: false }), 1600); }; try { navigator.clipboard.writeText(url).then(done, done); } catch (e) { done(); } },
