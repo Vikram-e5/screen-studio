@@ -1,10 +1,27 @@
 {
-  "updated": "2026-11-27T14:08:20.557Z",
+  "updated": "2026-11-27T14:08:40.115Z",
   "deleted": {
     "https://vikram-e5.github.io/screen-studio/13oct/neos-0dbcv.html": 1791964815352,
     "https://vikram-e5.github.io/screen-studio/13oct/neos-o6818.html": 1791964821219
   },
   "links": [
+    {
+      "url": "https://vikram-e5.github.io/screen-studio/27nov/prebill-future-state-2.html",
+      "path": "27nov/prebill-future-state-2.html",
+      "repo": "Vikram-e5/screen-studio",
+      "branch": "main",
+      "at": 1795788519422,
+      "status": "Publishing",
+      "label": "",
+      "notes": [
+        {
+          "v": 1,
+          "at": 1795788513469,
+          "note": "",
+          "build": "original"
+        }
+      ]
+    },
     {
       "url": "https://vikram-e5.github.io/screen-studio/27nov/prebill-current.html",
       "path": "27nov/prebill-current.html",
